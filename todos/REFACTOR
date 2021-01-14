@@ -1,0 +1,30 @@
+<------ ../TODO
+
+
+- - - - - - - HI PRI - - - - - -
+  - pheromone spread
+    - use getPheromoneAtPosition everywhere
+    - don't store COLONY: 0, etc. on every single grid cell
+  - stacking an action MUST be paired with critterStartCurrentAction which is
+    a big gotcha
+  - NxM entities don't render well with how I'm doing rotations, see renderTermite
+  - could be nice to encapsulate entities in a single file
+  - way to execute action at the END of the animation instead of the start
+    - problem with effect index is stacking e.g. TURN won't check if this is needed until
+      the effectIndex
+
+
+- - - - - - - LOW PRI - - - - - -
+  - get types file back up to date
+  - config
+    - add Config type to types.js
+    - does canvasWidth/Height need to be on global config?
+      - config in mouseSystem
+  - get optional chaining working
+  - refactor blocking types to live on the caste/type like actions do
+  - need to refactor s.t. payloads on actions are always objects -- since if payload is
+    e.g. the queen, then she has frameOffset and can mess up the rendering
+  - ant diagonal movement
+    - getting entity positions based on dir alignment in gridHelpers
+      - either doesn't matter, or only for MxN
+    - ants can pass through diagonal gaps

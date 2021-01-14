@@ -1,0 +1,65 @@
+// @flow
+
+const {
+  makeAction, isActionTypeQueued,
+  queueAction, stackAction, cancelAction,
+} = require('../simulation/actionQueue');
+const {
+  add, subtract, vectorTheta, makeVector, containsVector,
+  dist, equals, magnitude, round,
+} = require('../utils/vectors');
+const {clamp, closeTo, thetaToDir, isDiagonalMove} = require('../utils/helpers');
+const {lookupInGrid} = require('../utils/gridHelpers');
+const {removeEntity} = require('../simulation/entityOperations');
+const {dealDamageToEntity} = require('../simulation/miscOperations');
+
+/**
+ * This algorithm traces rays out from the explosive location
+ * dealing damage along the way.
+ *
+ * There is one ray per terminal location on the circumference
+ * of the explosion radius.
+ *
+ * Each ray has a total damage it can deal equal to the damage of
+ * the explosive. Whenever it deals damage, that damage is subtracted
+ * from the remaining damage it can deal. When it can't deal any more
+ * damage or when the ray reaches the end of its radius then it stops
+ */
+const triggerExplosion = (game, explosive): void => {
+  const quadrantThetas = [0, Math.PI/2, Math.PI, 3 * Math.PI /2];
+  for (const quadrant of quadrantThetas) {
+    for (let i = 0; i < explosive.explosionRadius; i++) {
+      let damage = explosive.damage;
+      const radius = explosive.explosionRadius;
+      for (let r = 1; r <= radius && damage > 0; r++) {
+        const position = add(
+          explosive.position,
+          makeVector(quadrant + (i/explosive.explosionRadius) * (Math.PI / 2), r),
+        );
+        let dealtDamage = false;
+        lookupInGrid(game.grid, round(position))
+          .map(id => game.entities[id])
+          .forEach(e => {
+            if (damage <= 0) return;
+            if (e.hp > damage) {
+              dealDamageToEntity(game, e, damage);
+              damage = 0;
+            } else {
+              damage -= e.hp;
+              dealDamageToEntity(game, e, e.hp);
+            }
+            dealtDamage = true;
+          });
+        // if you didn't hit anything, still reduce damage as the radius increases
+        if (!dealtDamage) {
+          damage -= 1;
+        }
+      }
+    }
+  }
+
+};
+
+module.exports = {
+  triggerExplosion,
+};

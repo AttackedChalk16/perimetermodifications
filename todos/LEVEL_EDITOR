@@ -1,0 +1,44 @@
+<------ ../TODO
+
+
+- - - - - - - - BUGS - - - - -
+  - pheromone visibility doesn't survive reset
+  - can place big entities s.t. they collide with other entities
+    - need to check every position of the entity
+    - some entities you should be able to stack
+      - background, spider web, dead_
+
+
+- - - - - LEVEL EDITOR - - - - - -
+  - allow closing of left or right sidebars to increase screen size
+
+
+- - - - - - COPY PASTE - - - - - -
+  - undo/redo hides the copy marquee
+  - want a way to copy-paste an entire world across tabs
+    - export as series of actions
+    - import into the clipboard
+    - click to rerun those actions but with an offset
+
+
+- - - - - - RECORDING - - - - - -
+  - recording:
+    - UI for this
+      - start/stop button
+      - reset button
+      - how to initiate playback? Only at start of game?
+      - which actions to record:
+        - SET_KEY_PRESS
+        - ANT_BITE
+        - START_EGG_LAYING
+        - SET_PHEROMONE_ACTIVE
+        - SET_SELECTED_PHEROMONE
+        - SET_LAYING_CASTE
+        - ENQUEUE_ENTITY_ACTION
+        - MARK_DIRT
+      - is it OK for other entities to just do whatever?
+  - playback:
+    - highlight buttons that were pressed
+    - have the joystick move
+    - ignore user actions (at the UI/keyboard listener level?)
+

@@ -1,0 +1,59 @@
+-------> ./todos/CHECKLISTS
+-------> ./todos/BUSINESS
+-------> ./todos/LEVEL_EDITOR
+-------> ./todos/REFACTOR
+-------> ./todos/INLINE
+
+- - - - - - TODO - - - - - -
+  - git
+    - fix links in package.json
+
+- - - - - - STARTING REFACTORS - - - - - -
+  - consolidate entity creation into one file per entity
+    - minimap rendering function too
+
+  - pheromones
+    - marked dirt should be a pheromoneSource
+    - allow pheromoneEmitters to emit dispersing pheromones
+    - add back in tokens as pheromone sources?
+      - this will be a property called emitter
+      - simulation/pheromones
+      - selectors/pheromones
+        - getQuantityForStalePos
+
+
+- - - - - - BARE BONES - - - - - -
+  - entities:
+    - missile
+    - bullet
+    - tower
+  - properties:
+    - ballistic
+      - velocity, theta
+      - die when they hit something, and do their damage to it
+  - actions:
+    - shoot
+    - aim
+
+- - - - - - - TO DRAW - - - - - -
+  - add cracked stone tilesheet for hp counting
+  - steel tilesheet
+
+- - - - - - - TO THINK ABOUT - - - - - - -
+  - how to convey crafting recipes
+    - e.g. tower comes from steel (and?), where does steel come from
+
+
+- - - - - - - BUGS - - - - - - -
+  - worm
+    - worm sprite indexing off-by-one when controlled?
+    - worm should be able to double back on itself when stuck
+
+
+- - - - - - - REFACTORS - - - - - - -
+  - pheromone refactor to allow 0 values
+    - getPheromoneAtPosition everywhere
+    - setPheromone checking for undefined value
+    - deleting the pheromone when you get to 0?
+
+

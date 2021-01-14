@@ -1,0 +1,18 @@
+<------- ../TODO
+
+- - - - - - - ENTITY CREATION - - - - - -
+  - add the entity  to entities/registry keyed by type, in render order
+  - add the entity file to the entities directory
+    - need a config, render, and make
+  - add the entities options and arguments to ui/LevelEditor
+  - if the entity has any special properties, add them to the gameState
+    initialization and add an updating function for them in the tickReducer
+    - and add/remove them in entities/entityOperations.[add/remove]Entity
+  - if it blocks pheromones, add to the config
+
+- - - - - - PHEROMONE - - - - - - -
+  - add to pheromone configs
+  - add to antDecideMove function for this pheromone
+  - set its visibility in state/gameState
+  - add to getPheromoneSources to support emitting pheromone while queen moves
+

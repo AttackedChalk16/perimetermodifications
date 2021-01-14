@@ -1,0 +1,9 @@
+<----- ../TODO
+
+js/ui/Components/Slider.react.js:  // TODO slider originalValue should come from globalconfig
+js/ui/Components/NumberField.react.js: * submitOnEnter: boolean, // TODO: not implemented
+js/ui/Components/AudioWidget.react.js:      // TODO: shuffle the playOrder array
+js/simulation/entityOperations.js:    // TODO: do I need to do this filter? NOTE that having it breaks critter pheromone
+js/simulation/agentOperations.js:  // TODO: handling "improper" task transitions like this is not scaleable
+js/utils/gridHelpers.js:  initGrid, // TODO: move gridHelpers out of utils/
+js/systems/spriteSheetSystem.js:  // TODO: don't load sprites if they're already loaded

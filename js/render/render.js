@@ -1,0 +1,520 @@
+// @flow
+
+const {
+  subtract, add, makeVector, vectorTheta, dist,
+  magnitude, scale, toRect,
+} = require('../utils/vectors');
+const {lookupInGrid, getEntityPositions} = require('../utils/gridHelpers');
+const {clamp} = require('../utils/helpers');
+const {
+  onScreen, getPositionsInFront,
+  getControlledEntityInteraction,
+} = require('../selectors/misc');
+const globalConfig = require('../config');
+const {
+  getInterpolatedPos, getSpriteAndOffset, getInterpolatedTheta,
+  getPheromoneSprite, getTileSprite,
+} = require('../selectors/sprites');
+const {renderMinimap} = require('./renderMinimap');
+const {Entities} = require('../entities/registry');
+
+import type {Game, Entity, Hill, Ant, Food} from '../types';
+
+let start = null;
+let framesRendered = 0;
+let cur = null;
+const render = (game: Game): void => {
+  window.requestAnimationFrame((timestamp) => {
+    if (start == null) {
+      start = timestamp;
+    }
+    // don't call renderFrame multiple times on the same timestamp
+    if (timestamp == cur) {
+      return;
+    }
+
+    framesRendered++;
+    // console.log("fps:", framesRendered / ((cur - start) / 1000));
+    cur = timestamp;
+
+    renderFrame(game);
+  });
+}
+
+
+let canvas = null;
+let ctx = null;
+const renderFrame = (game: Game): void => {
+  canvas = document.getElementById('canvas');
+  if (!canvas) return; // don't break
+  ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, globalConfig.config.canvasWidth, globalConfig.config.canvasHeight);
+
+  const pxWidth = globalConfig.config.canvasWidth / 4;
+  const pxHeight = pxWidth * (game.viewHeight / game.viewWidth);
+  if (!game.maxMinimap) {
+    const bigDims = {
+      pxWidth: globalConfig.config.canvasWidth,
+      pxHeight: globalConfig.config.canvasHeight,
+      viewWidth: game.viewWidth,
+      viewHeight: game.viewHeight,
+      viewPos: {...game.viewPos},
+    };
+    const miniDims = {
+      pxWidth,
+      pxHeight,
+      viewWidth: game.viewWidth * 2,
+      viewHeight: game.viewHeight * 2,
+      viewPos: {
+        x: game.viewPos.x - game.viewWidth / 2,
+        y: game.viewPos.y - game.viewHeight / 2,
+      },
+    };
+    // HACK: only pxWidth/pxHeight can really actually be set in main view
+    renderView(canvas, ctx, game, bigDims);
+    ctx.save();
+    ctx.translate(
+      globalConfig.config.canvasWidth - pxWidth - 8,
+      8,
+    );
+    renderMinimap(ctx, game, miniDims);
+    ctx.restore();
+  } else {
+    const nextViewPos = {
+      x: game.viewPos.x - game.viewWidth / 2,
+      y: game.viewPos.y - game.viewHeight / 2,
+    };
+    const bigDims = {
+      pxWidth: globalConfig.config.canvasWidth,
+      pxHeight: globalConfig.config.canvasHeight,
+      viewWidth: game.viewWidth * 3,
+      viewHeight: game.viewHeight * 3,
+      viewPos: {
+        x: clamp(nextViewPos.x, 0, game.gridWidth - game.viewWidth * 3),
+        y: clamp(nextViewPos.y, 0, game.gridHeight - game.viewHeight * 3),
+      },
+    };
+    const miniDims = {
+      pxWidth,
+      pxHeight,
+      viewWidth: game.viewWidth,
+      viewHeight: game.viewHeight,
+      viewPos: {...game.viewPos},
+    };
+    renderMinimap(ctx, game, bigDims);
+    ctx.save();
+    ctx.translate(
+      globalConfig.config.canvasWidth - pxWidth - 8,
+      8,
+    );
+    ctx.globalAlpha = 0.8;
+    // HACK: only pxWidth/pxHeight can really actually be set in main view
+    renderView(canvas, ctx, game, miniDims, true /*isMini*/);
+    ctx.restore();
+  }
+};
+
+const renderView = (canvas, ctx2d, game, dims, isMini): void => {
+  const {pxWidth, pxHeight, viewWidth, viewHeight, viewPos} = dims;
+
+	const px = viewWidth / pxWidth;
+  const pxy = viewHeight / pxHeight;
+
+  ////////////////////////////////////////////
+  // canvas scaling
+  ////////////////////////////////////////////
+  // scale world to the canvas
+  ctx.save();
+  ctx.scale(
+    pxWidth / viewWidth,
+    pxHeight / viewHeight,
+  );
+  ctx.lineWidth = px;
+  // translate to viewPos
+  ctx.translate(-1 * viewPos.x, -1 * viewPos.y);
+  ////////////////////////////////////////////
+
+  // Image-based rendering
+  refreshStaleImage(game, dims);
+
+  if (game.viewImage.canvas != null) {
+    if (isMini) {
+      ctx.drawImage(
+        game.viewImage.canvas,
+        // canvas true dimensions:
+        dims.viewPos.x / px, dims.viewPos.y / pxy,
+        dims.viewWidth / px, dims.viewHeight / pxy,
+        // minimap dimensions:
+        dims.viewPos.x, dims.viewPos.y,
+        dims.viewWidth, dims.viewHeight,
+      );
+    } else {
+      ctx.drawImage(
+        game.viewImage.canvas,
+        0, 0, game.gridWidth, game.gridHeight,
+      );
+    }
+  } else {
+    // background
+    ctx.fillStyle = 'rgba(186, 175, 137, 1)';
+    if (isMini) {
+      ctx.fillRect(
+        dims.viewPos.x, dims.viewPos.y, dims.viewWidth, dims.viewHeight,
+      );
+    } else {
+      ctx.fillRect(
+        0, 0, game.gridWidth, game.gridHeight,
+      );
+    }
+    // render not-animated entities
+    for (const id in game.NOT_ANIMATED) {
+      renderEntity(ctx, game, game.entities[id], true);
+    }
+  }
+
+  // animated things go on top of image:
+  renderPheromones(ctx, game);
+  for (const entityType in Entities) {
+    for (const id of game[entityType]) {
+      const entity = game.entities[id];
+      if (!entity) {
+        console.log(
+          "tried to render a null entity from grid",
+          entityType,
+          pos, entityID,
+        );
+        continue;
+      }
+      if (entity.notAnimated) break;
+      renderEntity(ctx, game, entity);
+    }
+  }
+
+  // render relevant square in front of controlledEntity
+  const controlledEntity = game.controlledEntity;
+  if (controlledEntity != null && game.tickInterval != null) {
+    ctx.save();
+    const controlledEntityAction = getControlledEntityInteraction(game, controlledEntity);
+    ctx.fillStyle = 'rgba(70,130,180, 0.1)';
+    ctx.strokeStyle = 'steelblue';
+    ctx.lineWidth = ctx.lineWidth * 2;
+    if (controlledEntityAction.type == 'PICKUP') {
+      ctx.fillRect(
+        controlledEntityAction.payload.position.x,
+        controlledEntityAction.payload.position.y,
+        1, 1,
+      );
+      ctx.strokeRect(
+        controlledEntityAction.payload.position.x,
+        controlledEntityAction.payload.position.y,
+        1, 1,
+      );
+    }
+    if (controlledEntityAction.type == 'PUTDOWN') {
+      const putdownPos = getPositionsInFront(game, controlledEntity)
+        .find(pos => {
+          return lookupInGrid(game.grid, pos)
+            .map(id => game.entities[id])
+            .filter(e => !e.notBlockingPutdown)
+            .length == 0;
+        });
+      if (putdownPos != null) {
+        ctx.fillRect(putdownPos.x, putdownPos.y, 1, 1);
+        ctx.strokeRect(putdownPos.x, putdownPos.y, 1, 1);
+      }
+    }
+    ctx.restore();
+  }
+
+  // render dirt putdown positions
+  ctx.lineWidth = ctx.lineWidth * 2;
+  for (const pos of game.dirtPutdownPositions) {
+    if (!onScreen(game, {position: pos, width: 1, height: 1})) continue;
+    ctx.fillStyle = 'rgba(139,0,0, 0.1)';
+    ctx.strokeStyle = 'red';
+    ctx.fillRect(pos.x, pos.y, 1, 1);
+    ctx.strokeRect(pos.x, pos.y, 1, 1);
+  }
+
+  // marquee
+  if (
+    game.isExperimental && document.onmousemove != null &&
+    (game.mouse.isLeftDown || game.keepMarquee)
+  ) {
+    ctx.strokeStyle = 'black';
+    const {curPos, downPos} = game.mouse;
+    let rect = toRect(curPos, downPos);
+    if (game.keepMarquee && !game.mouse.isLeftDown) {
+      rect = game.clipboard;
+    }
+    ctx.strokeRect(rect.position.x, rect.position.y, rect.width, rect.height);
+  }
+
+  ctx.restore();
+}
+
+const refreshStaleImage = (game, dims): void => {
+  if (!game.viewImage.isStale && !game.viewImage.allStale) return;
+  const {pxWidth, pxHeight, viewWidth, viewHeight, viewPos} = dims;
+	const px = viewWidth / pxWidth;
+  if (game.viewImage.canvas == null) {
+    game.viewImage.canvas = document.createElement('canvas');
+  }
+  // changing these clears the canvas, which we don't want to do unless we need to
+  if (game.viewImage.canvas.width != Math.round(game.gridWidth / px)) {
+    game.viewImage.canvas.width = Math.round(game.gridWidth / px);
+    game.viewImage.allStale = true;
+  }
+  if (game.viewImage.canvas.height != Math.round(game.gridHeight / (viewHeight / pxHeight))) {
+    game.viewImage.canvas.height = Math.round(game.gridHeight / (viewHeight / pxHeight));
+    game.viewImage.allStale = true;
+  }
+  const ctx = game.viewImage.canvas.getContext('2d');
+
+  // scale world to the canvas
+  ctx.save();
+  ctx.scale(
+    pxWidth / viewWidth,
+    pxHeight / viewHeight,
+  );
+  ctx.lineWidth = px;
+
+  if (game.viewImage.allStale) {
+    // background
+    ctx.fillStyle = 'rgba(186, 175, 137, 1)';
+    ctx.fillRect(
+      0, 0, game.gridWidth, game.gridHeight,
+    );
+    ctx.globalAlpha = 0.2;
+    for (let y = 0; y < game.gridHeight; y++) {
+      // ctx.globalAlpha += y / game.gridHeight / 100;
+      for (let x = 0; x < game.gridWidth; x++) {
+        const obj = getTileSprite(game, {type: 'DIRT', dictIndexStr: 'lrtb'});
+        if (obj != null && obj.img != null) {
+          ctx.drawImage(
+            obj.img,
+            obj.x, obj.y, obj.width, obj.height,
+            x, y, 1, 1,
+          );
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // render not-animated entities
+    for (const id in game.NOT_ANIMATED) {
+      renderEntity(ctx, game, game.entities[id]);
+    }
+  } else {
+    const staleEntities = {};
+    for (const posKey in game.viewImage.stalePositions) {
+      const pos = game.viewImage.stalePositions[posKey];
+      // background
+      ctx.fillStyle = 'rgba(186, 175, 137, 1)';
+      ctx.fillRect(pos.x, pos.y, 1, 1);
+      const obj = getTileSprite(game, {type: 'DIRT', dictIndexStr: 'lrtb'});
+      if (obj != null && obj.img != null) {
+        ctx.globalAlpha = 0.2;
+        ctx.drawImage(
+          obj.img,
+          obj.x, obj.y, obj.width, obj.height,
+          pos.x, pos.y, 1, 1,
+        );
+        ctx.globalAlpha = 1;
+      }
+      for (const entityID of lookupInGrid(game.grid, pos)) {
+        const entity = game.entities[entityID];
+        if (!entity) {
+          console.log("tried to render a null entity from grid", pos, entityID);
+          continue;
+        }
+        if (!entity.notAnimated) continue;
+        if (staleEntities[entity.type] == null) {
+          staleEntities[entity.type] = {};
+        }
+        staleEntities[entity.type][entityID] = entity;
+      }
+    }
+    for (const entityType in Entities) {
+      for (const entityID in staleEntities[entityType]) {
+        renderEntity(ctx, game, game.entities[entityID], Entities[entityType].render);
+      }
+    }
+    game.viewImage.stalePositions = {};
+  }
+
+  ctx.restore();
+  game.viewImage.isStale = false;
+  game.viewImage.allStale = false;
+};
+
+const renderEntity = (ctx, game, entity, alwaysOnScreen): void => {
+  if (entity == null || entity.position == null) return;
+  const {render} = Entities[entity.type];
+  if (
+    !onScreen(game, entity)
+    && !entity.notAnimated
+    && !alwaysOnScreen
+    && (!entity.segmented || game.maxMinimap)
+  ) {
+    return;
+  }
+  if (entity.isAgent) {
+    // interpolate position between previous position and current position
+    entity = {
+      ...entity,
+      position: getInterpolatedPos(game, entity),
+      theta: getInterpolatedTheta(game, entity),
+    };
+  }
+
+  Entities[entity.type].render(ctx, game, entity);
+
+  if (game.showEntityIDs) {
+    // ctx.translate(game.viewPos.x, game.viewPos.y);
+    ctx.fillStyle = 'red';
+    ctx.font = '1px sans serif';
+    ctx.fillText(
+      parseInt(entity.id), entity.position.x, entity.position.y + 1, 1,
+    );
+  }
+
+  // render held entity(s)
+  if (entity.actions) {
+    const curAction = entity.actions[0];
+    const isPickingUp = curAction != null && curAction.type == "PICKUP";
+    if (entity.holding != null && !isPickingUp) {
+      const {width, height} = entity;
+      for (let i = 0; i < entity.holdingIDs.length; i++) {
+
+        const heldEntity = game.entities[entity.holdingIDs[i]];
+        const renderFn = Entities[heldEntity.type].render;
+        ctx.save();
+        ctx.translate(
+          entity.position.x + width / 2,
+          entity.position.y + height / 2,
+        );
+        ctx.rotate(entity.theta - Math.PI / 2);
+        ctx.translate(-entity.width / 2, -entity.height / 2);
+        if (entity.holdingIDs.length == 1) {
+          ctx.translate(width / 2 - 0.45/2, -0.1);
+          ctx.scale(0.45, 0.45);
+        } else {
+          ctx.translate(i*width/3, -0.1);
+          ctx.scale(0.48, 0.48);
+        }
+        renderFn(ctx, game, {...heldEntity, position: {x: 0, y: 0}});
+        ctx.restore();
+      }
+    }
+  }
+
+  // render positions in front
+  if (game.showPositionsInFront) {
+    const positionsInFront = getPositionsInFront(game, entity);
+    for (const pos of positionsInFront) {
+      const {x, y} = pos;
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(x, y, 1, 1);
+    }
+  }
+
+  // render true position
+  if (game.showTruePositions) {
+    ctx.fillStyle = 'rgba(200, 0, 0, 0.4)';
+    ctx.fillRect(entity.position.x, entity.position.y, 1, 1);
+  }
+
+  // render hitbox
+  if (game.showHitboxes) {
+    const positionsInFront = getEntityPositions(game, entity);
+    for (const pos of positionsInFront) {
+      const {x, y} = pos;
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(x, y, 1, 1);
+    }
+  }
+
+  // render true hitbox
+  if (game.showTrueHitboxes) {
+    const entityPositions = [];
+    for (let x = 0; x < game.gridWidth; x++) {
+      for (let y = 0; y < game.gridHeight; y++) {
+        const entitiesAtPos = lookupInGrid(game.grid, {x, y});
+        for (const id of entitiesAtPos) {
+          if (id == entity.id) {
+            entityPositions.push({x, y});
+          }
+        }
+      }
+    }
+    for (const pos of entityPositions) {
+      const {x, y} = pos;
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(x, y, 1, 1);
+    }
+  }
+};
+
+
+const renderPheromones = (ctx, game): void => {
+  const config = globalConfig.pheromones;
+  const {grid} = game;
+  for (
+    let x = Math.max(0, Math.floor(game.viewPos.x));
+    x < Math.min(game.viewPos.x + game.viewWidth, game.gridWidth);
+    x++
+  ) {
+    for (
+      let y = Math.max(0, Math.floor(game.viewPos.y));
+      y < Math.min(game.viewPos.y + game.viewHeight, game.gridHeight);
+      y++
+    ) {
+      if (!onScreen(game, {position: {x, y}, width: 1, height: 1})) continue;
+      for (const playerID in game.players) {
+        if (playerID != game.playerID) continue;
+        const player = game.players[playerID];
+        const pheromonesAtCell = grid[x][y][player.id];
+        for (const pheromoneType in pheromonesAtCell) {
+          if (!game.pheromoneDisplay[pheromoneType]) continue;
+          const quantity = pheromonesAtCell[pheromoneType];
+          let alpha = Math.min(quantity / config[pheromoneType].quantity / 2, 0.5);
+          if (alpha < 0.1) {
+            // continue; // don't bother rendering
+          }
+          alpha += 0.15;
+          if (quantity <= 0) {
+            continue;
+          }
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = config[pheromoneType].color;
+          if (game.showPheromoneValues) {
+            ctx.strokeRect(x, y, 1, 1);
+            ctx.font = '1px sans serif';
+            ctx.fillText(parseInt(Math.ceil(quantity)), x, y + 1, 1);
+          } else {
+            const obj = getPheromoneSprite(game, {x, y}, player.id, pheromoneType);
+            if (obj.img != null) {
+              ctx.save();
+              ctx.translate(x + 0.5, y + 0.5);
+              ctx.rotate(obj.theta);
+              ctx.drawImage(
+                obj.img,
+                obj.x, obj.y, obj.width, obj.height,
+                -0.5, -0.5, 1, 1,
+              );
+              ctx.restore();
+            } else {
+              ctx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+module.exports = {render};
