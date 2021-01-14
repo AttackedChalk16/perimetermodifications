@@ -20,10 +20,6 @@ const config = {
   damage: 4,
   timer: 1500,
   age: 0,
-  blockingTypes: [
-    'FOOD', 'DIRT', 'AGENT',
-    'STONE', 'DOODAD', 'WORM',
-  ],
 
   DIE: {
     duration: 300,
@@ -41,10 +37,7 @@ const make = (
     ...makeEntity('DYNAMITE', position, config.width, config.height),
     ...config,
     playerID,
-    prevHP: config.hp,
-    prevHPAge: 0,
     actions: [],
-    task: null,
   };
 };
 

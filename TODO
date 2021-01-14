@@ -5,32 +5,32 @@
 -------> ./todos/INLINE
 
 - - - - - - TODO - - - - - -
-  - git
-    - fix links in package.json
-
-- - - - - - STARTING REFACTORS - - - - - -
-  - consolidate entity creation into one file per entity
-    - minimap rendering function too
+  - issues:
+    - missile:
+      - rotating erratically
+      - original rendering is off
+        - have only ant render at 90deg?
+      - moves too slow and in too straight a trajectory
+      - drawn path not aligned with center of entity
+      - reseting with a missile in the world breaks on held warhead
 
   - pheromones
     - marked dirt should be a pheromoneSource
     - allow pheromoneEmitters to emit dispersing pheromones
-    - add back in tokens as pheromone sources?
-      - this will be a property called emitter
-      - simulation/pheromones
-      - selectors/pheromones
-        - getQuantityForStalePos
+  - minimap rendering functions too
 
 
 - - - - - - BARE BONES - - - - - -
   - entities:
     - missile
+      - system for creating them
+        - pick launch location that's far away with actual ballistics trajectory
+        - could have multiple "launch platforms" tuned to target the screen
     - bullet
     - tower
   - properties:
     - ballistic
       - velocity, theta
-      - die when they hit something, and do their damage to it
   - actions:
     - shoot
     - aim

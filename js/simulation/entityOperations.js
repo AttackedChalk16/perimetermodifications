@@ -278,13 +278,23 @@ const addEntity = (game: Game, entity: Entity): Game => {
   if (entity.isExplosive) {
     game.EXPLOSIVE[entity.id] = true;
   }
+  // special case for missiles
+  if (entity.warhead) {
+    if (entity.warhead.id == -1) {
+      addEntity(game, entity.warhead);
+    }
+    entity.holding = entity.warhead;
+    entity.holdingIDs.push(entity.warhead.id);
+  }
 
   // update the pheromone worker that this entity exists
   if (game.pheromoneWorker && game.time > 1) {
     game.pheromoneWorker.postMessage({type: 'ADD_ENTITY', entity});
   }
-  insertEntityInGrid(game, entity);
 
+  if (entity.position != null) {
+    insertEntityInGrid(game, entity);
+  }
 
   return game;
 };
@@ -347,7 +357,7 @@ const moveEntity = (game: Game, entity: Entity, nextPos: Vector): Game => {
   const nextTheta = vectorTheta(subtract(entity.prevPosition, entity.position));
   if (!closeTo(nextTheta, entity.theta)) {
     rotateEntity(
-      game, entity,
+      game, entity, nextTheta,
     );
   }
   return game;

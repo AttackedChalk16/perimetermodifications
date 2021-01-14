@@ -26,7 +26,9 @@ const collidesWith = (
 }
 
 // use special logic to see what is considered a collision at a given space
-const collisionsAtSpace = (game, entity, blockingTypes, pos, neighbor: boolean): boolean => {
+const collisionsAtSpace = (
+  game, entity, blockingTypes, pos, neighbor: boolean
+): Array<Entity> => {
   const collisions = lookupInGrid(game.grid, pos)
     .map(id => game.entities[id])
     // regular entities do not block themselves, but segmented entities do

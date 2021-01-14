@@ -1,4 +1,4 @@
-MAD 2021
+Perimeter 2021
 
 To run locally:
 

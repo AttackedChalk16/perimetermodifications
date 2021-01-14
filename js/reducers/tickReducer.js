@@ -23,7 +23,7 @@ const {
 const {collides, collidesWith} = require('../selectors/collisions');
 const {
   add, equals, subtract, magnitude, scale,
-  makeVector, vectorTheta, floor,
+  makeVector, vectorTheta, floor, round,
 } = require('../utils/vectors');
 const {
   clamp, closeTo, encodePosition, decodePosition,
@@ -38,6 +38,7 @@ const {
   getPheromoneAtPosition,
 } = require('../selectors/pheromones');
 const globalConfig = require('../config');
+const {dealDamageToEntity} = require('../simulation/miscOperations');
 
 import type {
   Game, Entity, Action, Ant,
@@ -107,6 +108,7 @@ const doTick = (game: Game): Game => {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updateBallistics(game);
   updateExplosives(game);
   render(game);
 
@@ -183,7 +185,33 @@ const updateExplosives = (game): void => {
       queueAction(game, explosive, makeAction(game, explosive, 'DIE'));
     }
   }
-}
+};
+
+const updateBallistics = (game): void => {
+  for (const id in game.BALLISTIC) {
+    const ballistic = game.entities[id];
+    ballistic.age += game.timeSinceLastTick;
+    // if it has collided with something, deal damage to it and die
+    const collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
+    if (collisions.length > 0) {
+      collisions.forEach(e => dealDamageToEntity(game, e, ballistic.damage));
+      queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+      continue;
+    }
+
+    // otherwise continue along its trajectory
+    ballistic.prevPositions.push({...ballistic.ballisticPosition});
+    let {age, initialTheta, velocity} = ballistic;
+    const {x, y} = ballistic.initialPosition;
+    age /= 10000;
+    ballistic.ballisticPosition = {
+      x: x + velocity * age * Math.cos(initialTheta),
+      y: y + velocity * age * Math.sin(initialTheta)
+        - 0.5 * globalConfig.config.gravity * age * age,
+    };
+    moveEntity(game, ballistic, round(ballistic.ballisticPosition));
+  }
+};
 
 //////////////////////////////////////////////////////////////////////////
 // Move controlledEntity/View

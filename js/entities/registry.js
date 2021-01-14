@@ -15,17 +15,18 @@ const globalConfig = require('../config');
 
 const Entities = {
   BACKGROUND: require('./background.js'),
-  STONE: require('./stone.js'),
   DOODAD: require('./doodad.js'),
-  DIRT: require('./dirt.js'),
-  FOOD: require('./food.js'),
 
+  STONE: require('./stone.js'),
+  DIRT: require('./dirt.js'),
+
+  FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
-
   TOKEN: require('./token.js'),
 
   DYNAMITE: require('./dynamite.js'),
+  MISSILE: require('./missile.js'),
 };
 
 module.exports = {

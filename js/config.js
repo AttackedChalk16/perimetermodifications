@@ -17,6 +17,7 @@ const config = {
   ],
 
   dispersingPheromoneUpdateRate: 6,
+  gravity: -4,
 };
 
 const pheromoneBlockingTypes = [

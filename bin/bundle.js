@@ -15,7 +15,8 @@ var config = {
 
   audioFiles: [{ path: 'audio/Song Oct. 9.wav', type: 'wav' }],
 
-  dispersingPheromoneUpdateRate: 6
+  dispersingPheromoneUpdateRate: 6,
+  gravity: -2.5
 };
 
 var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD'];
@@ -210,7 +211,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":23,"../selectors/sprites":31,"../utils/vectors":75,"./makeEntity":8}],3:[function(require,module,exports){
+},{"../render/renderAgent":24,"../selectors/sprites":32,"../utils/vectors":76,"./makeEntity":8}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -245,7 +246,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":31,"./makeEntity":8}],4:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":8}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -284,7 +285,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":31,"./makeEntity":8}],5:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":8}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -346,7 +347,6 @@ var config = {
   damage: 4,
   timer: 1500,
   age: 0,
-  blockingTypes: ['FOOD', 'DIRT', 'AGENT', 'STONE', 'DOODAD', 'WORM'],
 
   DIE: {
     duration: 300,
@@ -358,10 +358,7 @@ var config = {
 var make = function make(game, position, playerID) {
   return _extends({}, makeEntity('DYNAMITE', position, config.width, config.height), config, {
     playerID: playerID,
-    prevHP: config.hp,
-    prevHPAge: 0,
-    actions: [],
-    task: null
+    actions: []
   });
 };
 
@@ -391,7 +388,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":31,"../simulation/actionQueue":33,"./makeEntity":8}],7:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":34,"./makeEntity":8}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -432,7 +429,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":31,"./makeEntity":8}],8:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":8}],8:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -454,6 +451,91 @@ module.exports = {
 },{}],9:[function(require,module,exports){
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../selectors/sprites'),
+    getInterpolatedIndex = _require2.getInterpolatedIndex;
+
+var _require3 = require('../simulation/actionQueue'),
+    getDuration = _require3.getDuration;
+
+var globalConfig = require('../config');
+
+/**
+ *  Explosives explode when they die. They can be killed by
+ *  running out of hp or by having an age (in ms) greater than their timer
+ *  time (set timer to null if you don't want it to do this).
+ */
+
+var config = {
+  isBallistic: true,
+  damage: 1,
+  hp: 1,
+  width: 1,
+  height: 2,
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE'],
+
+  DIE: {
+    duration: 1,
+    spriteOrder: [0]
+  }
+};
+
+var make = function make(game, position, playerID, warhead, theta, velocity) {
+  return _extends({}, makeEntity('MISSILE', position, config.width, config.height), config, {
+    holding: null,
+    holdingIDs: [],
+    warhead: warhead,
+    age: 0,
+    theta: theta,
+    velocity: velocity,
+    playerID: playerID,
+    actions: [],
+    initialPosition: _extends({}, position),
+    ballisticPosition: _extends({}, position),
+    initialTheta: theta,
+    prevPositions: [_extends({}, position)]
+  });
+};
+
+var render = function render(ctx, game, missile) {
+  ctx.save();
+  var width = missile.width,
+      height = missile.height,
+      theta = missile.theta,
+      ballisticPosition = missile.ballisticPosition,
+      prevPositions = missile.prevPositions;
+
+  var position = ballisticPosition;
+
+  // trace out the trajectory
+  ctx.strokeStyle = 'black';
+  ctx.beginPath();
+  ctx.moveTo(position.x, position.y);
+  for (var i = prevPositions.length - 1; i >= 0; i--) {
+    ctx.lineTo(prevPositions[i].x, prevPositions[i].y);
+  }
+  ctx.stroke();
+
+  ctx.translate(position.x + width / 2, position.y + height / 2);
+  ctx.rotate(theta - 3 * Math.PI / 2);
+  ctx.translate(-width / 2, -height / 2);
+
+  ctx.strokeStyle = 'black';
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, missile.width, missile.height);
+  ctx.strokeRect(0, 0, missile.width, missile.height);
+
+  ctx.restore();
+};
+
+module.exports = { config: config, make: make, render: render };
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":34,"./makeEntity":8}],10:[function(require,module,exports){
+'use strict';
+
 var globalConfig = require('../config');
 
 /**
@@ -468,23 +550,24 @@ var globalConfig = require('../config');
 
 var Entities = {
   BACKGROUND: require('./background.js'),
-  STONE: require('./stone.js'),
   DOODAD: require('./doodad.js'),
-  DIRT: require('./dirt.js'),
-  FOOD: require('./food.js'),
 
+  STONE: require('./stone.js'),
+  DIRT: require('./dirt.js'),
+
+  FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
-
   TOKEN: require('./token.js'),
 
-  DYNAMITE: require('./dynamite.js')
+  DYNAMITE: require('./dynamite.js'),
+  MISSILE: require('./missile.js')
 };
 
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./dirt.js":4,"./doodad.js":5,"./dynamite.js":6,"./food.js":7,"./stone.js":10,"./token.js":11,"./worm.js":12}],10:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./dirt.js":4,"./doodad.js":5,"./dynamite.js":6,"./food.js":7,"./missile.js":9,"./stone.js":11,"./token.js":12,"./worm.js":13}],11:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -517,7 +600,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":31,"./makeEntity":8}],11:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":8}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -554,7 +637,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":8}],12:[function(require,module,exports){
+},{"../config":1,"./makeEntity":8}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -667,7 +750,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":23,"../render/renderSegmented":26,"../utils/vectors":75,"./agent.js":2}],13:[function(require,module,exports){
+},{"../render/renderAgent":24,"../render/renderSegmented":27,"../utils/vectors":76,"./agent.js":2}],14:[function(require,module,exports){
 'use strict';
 
 var _require = require('redux'),
@@ -696,16 +779,16 @@ function renderUI(store) {
     modal: state.modal
   }), document.getElementById('container'));
 }
-},{"./reducers/rootReducer":20,"./ui/Main.react":62,"react":111,"react-dom":108,"redux":112}],14:[function(require,module,exports){
+},{"./reducers/rootReducer":21,"./ui/Main.react":63,"react":112,"react-dom":109,"redux":113}],15:[function(require,module,exports){
 // @flow
 
 module.exports = {
   testLevel: require('./testLevel'),
 }
 
-},{"./testLevel":15}],15:[function(require,module,exports){
+},{"./testLevel":16}],16:[function(require,module,exports){
 module.exports = {"numPlayers":1,"gridWidth":25,"gridHeight":25,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":5,"y":13},"width":1,"height":1},"args":[1,null]},{"type":"CREATE_ENTITIES","entityType":"WORM","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[[{"x":13,"y":15},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":15,"y":17},{"x":16,"y":17},{"x":16,"y":18}],1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":16},"width":1,"height":9},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":24},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":1,"y":24},"width":19,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":10,"y":22},"width":1,"height":3},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":19},"width":1,"height":5},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":21,"y":24},"width":5,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":4,"y":2},"width":5,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":9,"y":1},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":9},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":6,"y":8},"width":2,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DOODAD","rect":{"position":{"x":18,"y":2},"width":3,"height":4},"args":[3,4,"QUESTION"]},{"type":"CREATE_ENTITIES","entityType":"BACKGROUND","rect":{"position":{"x":14,"y":0},"width":2,"height":2},"args":[1,1,"FLOOR_TILE"]}]};
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -1228,7 +1311,7 @@ function createEntitiesReducer(game, action) {
 }
 
 module.exports = { gameReducer: gameReducer };
-},{"../config":1,"../entities/registry":9,"../render/render":22,"../selectors/pheromones":30,"../simulation/actionQueue":33,"../simulation/entityOperations":35,"../simulation/pheromones":38,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],17:[function(require,module,exports){
+},{"../config":1,"../entities/registry":10,"../render/render":23,"../selectors/pheromones":31,"../simulation/actionQueue":34,"../simulation/entityOperations":36,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],18:[function(require,module,exports){
 'use strict';
 
 var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
@@ -1258,7 +1341,7 @@ var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
 };
 
 module.exports = { hotKeysReducer: hotKeysReducer };
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1282,7 +1365,7 @@ var modalReducer = function modalReducer(state, action) {
 };
 
 module.exports = { modalReducer: modalReducer };
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1317,7 +1400,7 @@ var mouseReducer = function mouseReducer(mouse, action) {
 };
 
 module.exports = { mouseReducer: mouseReducer };
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1764,7 +1847,7 @@ function upgradeReducer(state, action) {
 }
 
 module.exports = { rootReducer: rootReducer };
-},{"../levels/levels":14,"../simulation/entityOperations":35,"../state/gameState":39,"../state/state":40,"../utils/helpers":73,"./gameReducer":16,"./hotKeysReducer":17,"./modalReducer":18,"./mouseReducer":19,"./tickReducer":21}],21:[function(require,module,exports){
+},{"../levels/levels":15,"../simulation/entityOperations":36,"../state/gameState":40,"../state/state":41,"../utils/helpers":74,"./gameReducer":17,"./hotKeysReducer":18,"./modalReducer":19,"./mouseReducer":20,"./tickReducer":22}],22:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1816,7 +1899,8 @@ var _require8 = require('../utils/vectors'),
     scale = _require8.scale,
     makeVector = _require8.makeVector,
     vectorTheta = _require8.vectorTheta,
-    floor = _require8.floor;
+    floor = _require8.floor,
+    round = _require8.round;
 
 var _require9 = require('../utils/helpers'),
     clamp = _require9.clamp,
@@ -1842,6 +1926,9 @@ var _require14 = require('../selectors/pheromones'),
     getPheromoneAtPosition = _require14.getPheromoneAtPosition;
 
 var globalConfig = require('../config');
+
+var _require15 = require('../simulation/miscOperations'),
+    dealDamageToEntity = _require15.dealDamageToEntity;
 
 var totalTime = 0;
 var tickReducer = function tickReducer(game, action) {
@@ -1909,6 +1996,7 @@ var doTick = function doTick(game) {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updateBallistics(game);
   updateExplosives(game);
   render(game);
 
@@ -1996,6 +2084,44 @@ var updateExplosives = function updateExplosives(game) {
     if ((explosive.timer != null && explosive.age > explosive.timer || explosive.timer == null) && explosive.position != null && !isActionTypeQueued(explosive, 'DIE')) {
       queueAction(game, explosive, makeAction(game, explosive, 'DIE'));
     }
+  }
+};
+
+var updateBallistics = function updateBallistics(game) {
+  var _loop = function _loop(id) {
+    var ballistic = game.entities[id];
+    ballistic.age += game.timeSinceLastTick;
+    // if it has collided with something, deal damage to it and die
+    var collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
+    if (collisions.length > 0) {
+      collisions.forEach(function (e) {
+        return dealDamageToEntity(game, e, ballistic.damage);
+      });
+      queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+      return 'continue';
+    }
+
+    // otherwise continue along its trajectory
+    ballistic.prevPositions.push(_extends({}, ballistic.ballisticPosition));
+    var age = ballistic.age,
+        initialTheta = ballistic.initialTheta,
+        velocity = ballistic.velocity;
+    var _ballistic$initialPos = ballistic.initialPosition,
+        x = _ballistic$initialPos.x,
+        y = _ballistic$initialPos.y;
+
+    age /= 10000;
+    ballistic.ballisticPosition = {
+      x: x + velocity * age * Math.cos(initialTheta),
+      y: y + velocity * age * Math.sin(initialTheta) - 0.5 * globalConfig.config.gravity * age * age
+    };
+    moveEntity(game, ballistic, round(ballistic.ballisticPosition));
+  };
+
+  for (var id in game.BALLISTIC) {
+    var _ret = _loop(id);
+
+    if (_ret === 'continue') continue;
   }
 };
 
@@ -2215,7 +2341,7 @@ var updateRain = function updateRain(game) {
 };
 
 module.exports = { tickReducer: tickReducer };
-},{"../config":1,"../render/render":22,"../selectors/collisions":27,"../selectors/misc":28,"../selectors/neighbors":29,"../selectors/pheromones":30,"../selectors/sprites":31,"../simulation/actionOperations":32,"../simulation/actionQueue.js":33,"../simulation/agentOperations":34,"../simulation/entityOperations":35,"../simulation/pheromones":38,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],22:[function(require,module,exports){
+},{"../config":1,"../render/render":23,"../selectors/collisions":28,"../selectors/misc":29,"../selectors/neighbors":30,"../selectors/pheromones":31,"../selectors/sprites":32,"../simulation/actionOperations":33,"../simulation/actionQueue.js":34,"../simulation/agentOperations":35,"../simulation/entityOperations":36,"../simulation/miscOperations":38,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2851,7 +2977,7 @@ var renderPheromones = function renderPheromones(ctx, game) {
 };
 
 module.exports = { render: render };
-},{"../config":1,"../entities/registry":9,"../selectors/misc":28,"../selectors/sprites":31,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75,"./renderMinimap":25}],23:[function(require,module,exports){
+},{"../config":1,"../entities/registry":10,"../selectors/misc":29,"../selectors/sprites":32,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"./renderMinimap":26}],24:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3080,7 +3206,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":28,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75,"./renderHealthBar":24}],24:[function(require,module,exports){
+},{"../selectors/misc":29,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"./renderHealthBar":25}],25:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3122,7 +3248,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":72,"../utils/vectors":75}],25:[function(require,module,exports){
+},{"../utils/gridHelpers":73,"../utils/vectors":76}],26:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3460,7 +3586,7 @@ var onMinimap = function onMinimap(dims, entity) {
 module.exports = {
   renderMinimap: renderMinimap
 };
-},{"../selectors/misc":28,"../selectors/sprites":31,"../utils/gridHelpers":72,"../utils/vectors":75,"./renderSegmented":26}],26:[function(require,module,exports){
+},{"../selectors/misc":29,"../selectors/sprites":32,"../utils/gridHelpers":73,"../utils/vectors":76,"./renderSegmented":27}],27:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -3608,10 +3734,8 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":28,"../selectors/sprites":31,"../utils/vectors":75,"./renderHealthBar":24}],27:[function(require,module,exports){
+},{"../selectors/misc":29,"../selectors/sprites":32,"../utils/vectors":76,"./renderHealthBar":25}],28:[function(require,module,exports){
 'use strict';
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 var _require = require('../utils/gridHelpers'),
     lookupInGrid = _require.lookupInGrid,
@@ -3636,7 +3760,7 @@ var collidesWith = function collidesWith(game, entity, blockingTypes) {
       var pos = _step.value;
 
       var thisCell = collisionsAtSpace(game, entity, blockingTypes, pos);
-      collisions.push.apply(collisions, _toConsumableArray(thisCell));
+      collisions.push.apply(collisions, thisCell);
     }
   } catch (err) {
     _didIteratorError = true;
@@ -3677,7 +3801,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":72}],28:[function(require,module,exports){
+},{"../utils/gridHelpers":73}],29:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3870,7 +3994,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":27,"../selectors/neighbors":29,"../simulation/actionQueue":33,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],29:[function(require,module,exports){
+},{"../selectors/collisions":28,"../selectors/neighbors":30,"../simulation/actionQueue":34,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],30:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -4137,7 +4261,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":27,"../utils/gridHelpers":72,"../utils/vectors":75}],30:[function(require,module,exports){
+},{"../selectors/collisions":28,"../utils/gridHelpers":73,"../utils/vectors":76}],31:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4274,7 +4398,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":29,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],31:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":30,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],32:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4718,7 +4842,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":28,"../selectors/neighbors":29,"../simulation/actionQueue":33,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],32:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":29,"../selectors/neighbors":30,"../simulation/actionQueue":34,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],33:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4889,7 +5013,7 @@ var entityDie = function entityDie(game, entity) {
 module.exports = {
   entityStartCurrentAction: entityStartCurrentAction
 };
-},{"../entities/registry":9,"../selectors/misc":28,"../selectors/sprites":31,"../simulation/actionQueue":33,"../simulation/agentOperations":34,"../simulation/entityOperations":35,"../simulation/explosiveOperations":36,"../utils/helpers":73,"../utils/vectors":75}],33:[function(require,module,exports){
+},{"../entities/registry":10,"../selectors/misc":29,"../selectors/sprites":32,"../simulation/actionQueue":34,"../simulation/agentOperations":35,"../simulation/entityOperations":36,"../simulation/explosiveOperations":37,"../utils/helpers":74,"../utils/vectors":76}],34:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5115,7 +5239,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":30,"../utils/helpers":73,"../utils/vectors":75}],34:[function(require,module,exports){
+},{"../selectors/pheromones":31,"../utils/helpers":74,"../utils/vectors":76}],35:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5470,7 +5594,7 @@ module.exports = {
   agentDecideMove: agentDecideMove,
   agentSwitchTask: agentSwitchTask
 };
-},{"../config":1,"../entities/registry":9,"../selectors/collisions":27,"../selectors/misc":28,"../selectors/neighbors":29,"../selectors/pheromones":30,"../simulation/actionQueue":33,"../simulation/entityOperations":35,"../simulation/pheromones":38,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/stochastic":74,"../utils/vectors":75}],35:[function(require,module,exports){
+},{"../config":1,"../entities/registry":10,"../selectors/collisions":28,"../selectors/misc":29,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/actionQueue":34,"../simulation/entityOperations":36,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/stochastic":75,"../utils/vectors":76}],36:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5872,12 +5996,23 @@ var addEntity = function addEntity(game, entity) {
   if (entity.isExplosive) {
     game.EXPLOSIVE[entity.id] = true;
   }
+  // special case for missiles
+  if (entity.warhead) {
+    if (entity.warhead.id == -1) {
+      addEntity(game, entity.warhead);
+    }
+    entity.holding = entity.warhead;
+    entity.holdingIDs.push(entity.warhead.id);
+  }
 
   // update the pheromone worker that this entity exists
   if (game.pheromoneWorker && game.time > 1) {
     game.pheromoneWorker.postMessage({ type: 'ADD_ENTITY', entity: entity });
   }
-  insertEntityInGrid(game, entity);
+
+  if (entity.position != null) {
+    insertEntityInGrid(game, entity);
+  }
 
   return game;
 };
@@ -5963,7 +6098,7 @@ var moveEntity = function moveEntity(game, entity, nextPos) {
   // only rotate if you have to, so as not to blow away prevTheta
   var nextTheta = vectorTheta(subtract(entity.prevPosition, entity.position));
   if (!closeTo(nextTheta, entity.theta)) {
-    rotateEntity(game, entity);
+    rotateEntity(game, entity, nextTheta);
   }
   return game;
 };
@@ -6173,7 +6308,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":8,"../entities/registry":9,"../selectors/neighbors":29,"../selectors/pheromones":30,"../simulation/pheromones":38,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],36:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":8,"../entities/registry":10,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],37:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -6282,7 +6417,7 @@ var triggerExplosion = function triggerExplosion(game, explosive) {
 module.exports = {
   triggerExplosion: triggerExplosion
 };
-},{"../simulation/actionQueue":33,"../simulation/entityOperations":35,"../simulation/miscOperations":37,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],37:[function(require,module,exports){
+},{"../simulation/actionQueue":34,"../simulation/entityOperations":36,"../simulation/miscOperations":38,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],38:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -6309,7 +6444,7 @@ var dealDamageToEntity = function dealDamageToEntity(game, entity, damage) {
 module.exports = {
   dealDamageToEntity: dealDamageToEntity
 };
-},{"../simulation/actionQueue":33,"../simulation/entityOperations":35}],38:[function(require,module,exports){
+},{"../simulation/actionQueue":34,"../simulation/entityOperations":36}],39:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -6669,7 +6804,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":29,"../selectors/pheromones":30,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],39:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":30,"../selectors/pheromones":31,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],40:[function(require,module,exports){
 'use strict';
 
 var _require = require('../entities/makeEntity'),
@@ -6836,7 +6971,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
 };
 
 module.exports = { initBaseState: initBaseState, initPlayer: initPlayer };
-},{"../config":1,"../entities/makeEntity":8,"../entities/registry":9,"../simulation/entityOperations":35,"../utils/gridHelpers":72,"../utils/stochastic":74,"../utils/vectors":75}],40:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":8,"../entities/registry":10,"../simulation/entityOperations":36,"../utils/gridHelpers":73,"../utils/stochastic":75,"../utils/vectors":76}],41:[function(require,module,exports){
 'use strict';
 
 var initState = function initState() {
@@ -6851,7 +6986,7 @@ var initState = function initState() {
 };
 
 module.exports = { initState: initState };
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7000,7 +7135,7 @@ var handleGameWon = function handleGameWon(store, dispatch, state, reason) {
 };
 
 module.exports = { initGameOverSystem: initGameOverSystem };
-},{"../render/render":22,"../ui/components/Button.react":65,"../ui/components/Divider.react":67,"../ui/components/Modal.react":69,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75,"axios":76,"react":111}],42:[function(require,module,exports){
+},{"../render/render":23,"../ui/components/Button.react":66,"../ui/components/Divider.react":68,"../ui/components/Modal.react":70,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"axios":77,"react":112}],43:[function(require,module,exports){
 'use strict';
 
 var initKeyboardControlsSystem = function initKeyboardControlsSystem(store) {
@@ -7135,7 +7270,7 @@ var getUpDownLeftRight = function getUpDownLeftRight(ev) {
 };
 
 module.exports = { initKeyboardControlsSystem: initKeyboardControlsSystem };
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 var _require = require('../config'),
@@ -7355,7 +7490,7 @@ var getMousePixel = function getMousePixel(ev, canvas) {
 };
 
 module.exports = { initMouseControlsSystem: initMouseControlsSystem };
-},{"../config":1,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75}],44:[function(require,module,exports){
+},{"../config":1,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],45:[function(require,module,exports){
 'use strict';
 
 var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
@@ -7370,7 +7505,7 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
 };
 
 module.exports = { initPheromoneWorkerSystem: initPheromoneWorkerSystem };
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -7414,7 +7549,7 @@ var initRainSystem = function initRainSystem(store) {
 };
 
 module.exports = { initRainSystem: initRainSystem };
-},{"../config":1,"../simulation/pheromones":38,"../utils/stochastic":74}],46:[function(require,module,exports){
+},{"../config":1,"../simulation/pheromones":39,"../utils/stochastic":75}],47:[function(require,module,exports){
 'use strict';
 
 var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
@@ -7460,7 +7595,7 @@ var loadSprite = function loadSprite(dispatch, state, name, src) {
 };
 
 module.exports = { initSpriteSheetSystem: initSpriteSheetSystem };
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 var levels = require('../levels/levels');
@@ -7493,7 +7628,7 @@ function loadLevel(store, levelName, additionalUpgrades) {
 module.exports = {
   loadLevel: loadLevel
 };
-},{"../levels/levels":14}],48:[function(require,module,exports){
+},{"../levels/levels":15}],49:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -7632,7 +7767,7 @@ function withPropsChecker(WrappedComponent) {
 }
 
 module.exports = React.memo(Canvas);
-},{"../config":1,"react":111}],49:[function(require,module,exports){
+},{"../config":1,"react":112}],50:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -7720,7 +7855,7 @@ var AudioWidget = function AudioWidget(props) {
 };
 
 module.exports = AudioWidget;
-},{"./Button.react":50,"react":111}],50:[function(require,module,exports){
+},{"./Button.react":51,"react":112}],51:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -7804,7 +7939,7 @@ function Button(props) {
 }
 
 module.exports = Button;
-},{"react":111}],51:[function(require,module,exports){
+},{"react":112}],52:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7844,7 +7979,7 @@ function Checkbox(props) {
 }
 
 module.exports = Checkbox;
-},{"react":111}],52:[function(require,module,exports){
+},{"react":112}],53:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7860,7 +7995,7 @@ function Divider(props) {
 }
 
 module.exports = Divider;
-},{"react":111}],53:[function(require,module,exports){
+},{"react":112}],54:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7901,7 +8036,7 @@ var Dropdown = function Dropdown(props) {
 };
 
 module.exports = Dropdown;
-},{"react":111}],54:[function(require,module,exports){
+},{"react":112}],55:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7975,7 +8110,7 @@ function Modal(props) {
 }
 
 module.exports = Modal;
-},{"../../utils/helpers":73,"./Button.react":50,"react":111}],55:[function(require,module,exports){
+},{"../../utils/helpers":74,"./Button.react":51,"react":112}],56:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8065,7 +8200,7 @@ var submitValue = function submitValue(onChange, nextVal, onlyInt) {
 };
 
 module.exports = NumberField;
-},{"react":111}],56:[function(require,module,exports){
+},{"react":112}],57:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8154,7 +8289,7 @@ var RadioPicker = function (_React$Component) {
 }(React.Component);
 
 module.exports = RadioPicker;
-},{"react":111}],57:[function(require,module,exports){
+},{"react":112}],58:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8225,7 +8360,7 @@ function Slider(props) {
 }
 
 module.exports = Slider;
-},{"./NumberField.react":55,"react":111}],58:[function(require,module,exports){
+},{"./NumberField.react":56,"react":112}],59:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8404,7 +8539,7 @@ function ExperimentalSidebar(props) {
 }
 
 module.exports = ExperimentalSidebar;
-},{"./Components/Button.react":50,"./Components/Checkbox.react":51,"./Components/Divider.react":52,"./Components/Dropdown.react":53,"./Components/Slider.react":57,"react":111}],59:[function(require,module,exports){
+},{"./Components/Button.react":51,"./Components/Checkbox.react":52,"./Components/Divider.react":53,"./Components/Dropdown.react":54,"./Components/Slider.react":58,"react":112}],60:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8561,7 +8696,7 @@ function registerHotkeys(dispatch) {
 }
 
 module.exports = Game;
-},{"../config":1,"../selectors/misc":28,"../simulation/actionQueue":33,"../systems/gameOverSystem":41,"../systems/keyboardControlsSystem":42,"../systems/mouseControlsSystem":43,"../systems/pheromoneWorkerSystem":44,"../systems/rainSystem":45,"../systems/spriteSheetSystem":46,"../utils/gridHelpers":72,"../utils/helpers":73,"../utils/vectors":75,"./Canvas.react":48,"./Components/Button.react":50,"./Components/Checkbox.react":51,"./Components/RadioPicker.react":56,"./ExperimentalSidebar.react":58,"./TopBar.react":63,"react":111}],60:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":29,"../simulation/actionQueue":34,"../systems/gameOverSystem":42,"../systems/keyboardControlsSystem":43,"../systems/mouseControlsSystem":44,"../systems/pheromoneWorkerSystem":45,"../systems/rainSystem":46,"../systems/spriteSheetSystem":47,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"./Canvas.react":49,"./Components/Button.react":51,"./Components/Checkbox.react":52,"./Components/RadioPicker.react":57,"./ExperimentalSidebar.react":59,"./TopBar.react":64,"react":112}],61:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -8636,6 +8771,11 @@ function LevelEditor(props) {
     numSegments: 8,
     doodad: 'QUESTION',
     stoneSubType: 'STONE',
+
+    // missiles
+    theta: -1,
+    velocity: 10,
+    warheadType: 'DYNAMITE',
 
     // copy-paste mode
     clipboardMode: 'COPY',
@@ -9323,6 +9463,15 @@ function createEntities(game, dispatch, editor, rect) {
     case 'AGENT':
       args = [editor.playerID];
       break;
+    case 'MISSILE':
+      {
+        var warhead = null;
+        if (editor.warheadType != 'NONE') {
+          warhead = Entities[editor.warheadType].make(game, null, editor.playerID);
+        }
+        args = [editor.playerID, warhead, editor.theta, editor.velocity];
+        break;
+      }
     case 'WORM':
       // create initial segments:
       var randNeighbor = function randNeighbor(pos) {
@@ -9432,6 +9581,41 @@ function createEntityOptions(game, editor, setEditor) {
         })
       ));
       break;
+    case 'MISSILE':
+      {
+        var warheadTypes = [];
+        for (var entityType in Entities) {
+          if (Entities[entityType].config.isExplosive) {
+            warheadTypes.push(entityType);
+          }
+        }
+        options.push(React.createElement(
+          'span',
+          null,
+          'Warhead Type:',
+          React.createElement(Dropdown, {
+            options: ['NONE'].concat(warheadTypes),
+            selected: editor.warheadType,
+            onChange: function onChange(warheadType) {
+              return setEditor(_extends({}, editor, { warheadType: warheadType }));
+            }
+          }),
+          'Theta:',
+          React.createElement(NumberField, {
+            value: editor.theta,
+            onChange: function onChange(theta) {
+              return setEditor(_extends({}, editor, { theta: theta }));
+            }
+          }),
+          'Velocity:',
+          React.createElement(NumberField, {
+            value: editor.velocity,
+            onChange: function onChange(velocity) {
+              return setEditor(_extends({}, editor, { velocity: velocity }));
+            }
+          })
+        ));
+      }
   }
 
   return React.createElement(
@@ -9442,7 +9626,7 @@ function createEntityOptions(game, editor, setEditor) {
 }
 
 module.exports = LevelEditor;
-},{"../config":1,"../entities/registry":9,"../render/render":22,"../systems/mouseControlsSystem":43,"../utils/vectors":75,"./components/Button.react":65,"./components/Checkbox.react":66,"./components/Divider.react":67,"./components/Dropdown.react":68,"./components/NumberField.react":70,"./components/Slider.react":71,"react":111}],61:[function(require,module,exports){
+},{"../config":1,"../entities/registry":10,"../render/render":23,"../systems/mouseControlsSystem":44,"../utils/vectors":76,"./components/Button.react":66,"./components/Checkbox.react":67,"./components/Divider.react":68,"./components/Dropdown.react":69,"./components/NumberField.react":71,"./components/Slider.react":72,"react":112}],62:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -9793,7 +9977,7 @@ function playLevel(store, levelName, setLoadingProgress, setIsLoaded) {
 }
 
 module.exports = Lobby;
-},{"../config":1,"../levels/levels":14,"../systems/spriteSheetSystem":46,"../thunks/levelThunks":47,"../ui/components/Modal.react":69,"../utils/helpers":73,"./components/AudioWidget.react":64,"./components/Button.react":65,"./components/Checkbox.react":66,"./components/Divider.react":67,"./components/Dropdown.react":68,"axios":76,"react":111}],62:[function(require,module,exports){
+},{"../config":1,"../levels/levels":15,"../systems/spriteSheetSystem":47,"../thunks/levelThunks":48,"../ui/components/Modal.react":70,"../utils/helpers":74,"./components/AudioWidget.react":65,"./components/Button.react":66,"./components/Checkbox.react":67,"./components/Divider.react":68,"./components/Dropdown.react":69,"axios":77,"react":112}],63:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9840,7 +10024,7 @@ function Main(props) {
 }
 
 module.exports = Main;
-},{"./Game.react":59,"./LevelEditor.react":60,"./Lobby.react":61,"react":111}],63:[function(require,module,exports){
+},{"./Game.react":60,"./LevelEditor.react":61,"./Lobby.react":62,"react":112}],64:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10019,23 +10203,23 @@ function dismissModal(dispatch) {
 }
 
 module.exports = memo(TopBar);
-},{"../config":1,"../utils/helpers":73,"./Components/AudioWidget.react":49,"./Components/Button.react":50,"./Components/Modal.react":54,"react":111}],64:[function(require,module,exports){
-arguments[4][49][0].apply(exports,arguments)
-},{"./Button.react":65,"dup":49,"react":111}],65:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":74,"./Components/AudioWidget.react":50,"./Components/Button.react":51,"./Components/Modal.react":55,"react":112}],65:[function(require,module,exports){
 arguments[4][50][0].apply(exports,arguments)
-},{"dup":50,"react":111}],66:[function(require,module,exports){
+},{"./Button.react":66,"dup":50,"react":112}],66:[function(require,module,exports){
 arguments[4][51][0].apply(exports,arguments)
-},{"dup":51,"react":111}],67:[function(require,module,exports){
+},{"dup":51,"react":112}],67:[function(require,module,exports){
 arguments[4][52][0].apply(exports,arguments)
-},{"dup":52,"react":111}],68:[function(require,module,exports){
+},{"dup":52,"react":112}],68:[function(require,module,exports){
 arguments[4][53][0].apply(exports,arguments)
-},{"dup":53,"react":111}],69:[function(require,module,exports){
+},{"dup":53,"react":112}],69:[function(require,module,exports){
 arguments[4][54][0].apply(exports,arguments)
-},{"../../utils/helpers":73,"./Button.react":65,"dup":54,"react":111}],70:[function(require,module,exports){
+},{"dup":54,"react":112}],70:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"dup":55,"react":111}],71:[function(require,module,exports){
-arguments[4][57][0].apply(exports,arguments)
-},{"./NumberField.react":70,"dup":57,"react":111}],72:[function(require,module,exports){
+},{"../../utils/helpers":74,"./Button.react":66,"dup":55,"react":112}],71:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56,"react":112}],72:[function(require,module,exports){
+arguments[4][58][0].apply(exports,arguments)
+},{"./NumberField.react":71,"dup":58,"react":112}],73:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -10171,7 +10355,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":73,"../utils/vectors":75}],73:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":74,"../utils/vectors":76}],74:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -10282,7 +10466,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":75}],74:[function(require,module,exports){
+},{"./vectors":76}],75:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -10337,7 +10521,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],75:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -10536,9 +10720,9 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}],76:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":78}],77:[function(require,module,exports){
+},{"./lib/axios":79}],78:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -10719,7 +10903,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":84,"../core/createError":85,"./../core/settle":89,"./../helpers/buildURL":93,"./../helpers/cookies":95,"./../helpers/isURLSameOrigin":98,"./../helpers/parseHeaders":100,"./../utils":102}],78:[function(require,module,exports){
+},{"../core/buildFullPath":85,"../core/createError":86,"./../core/settle":90,"./../helpers/buildURL":94,"./../helpers/cookies":96,"./../helpers/isURLSameOrigin":99,"./../helpers/parseHeaders":101,"./../utils":103}],79:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -10777,7 +10961,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":79,"./cancel/CancelToken":80,"./cancel/isCancel":81,"./core/Axios":82,"./core/mergeConfig":88,"./defaults":91,"./helpers/bind":92,"./helpers/isAxiosError":97,"./helpers/spread":101,"./utils":102}],79:[function(require,module,exports){
+},{"./cancel/Cancel":80,"./cancel/CancelToken":81,"./cancel/isCancel":82,"./core/Axios":83,"./core/mergeConfig":89,"./defaults":92,"./helpers/bind":93,"./helpers/isAxiosError":98,"./helpers/spread":102,"./utils":103}],80:[function(require,module,exports){
 'use strict';
 
 /**
@@ -10798,7 +10982,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -10857,14 +11041,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":79}],81:[function(require,module,exports){
+},{"./Cancel":80}],82:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],82:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -10961,7 +11145,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":93,"./../utils":102,"./InterceptorManager":83,"./dispatchRequest":86,"./mergeConfig":88}],83:[function(require,module,exports){
+},{"../helpers/buildURL":94,"./../utils":103,"./InterceptorManager":84,"./dispatchRequest":87,"./mergeConfig":89}],84:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11015,7 +11199,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":102}],84:[function(require,module,exports){
+},{"./../utils":103}],85:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -11037,7 +11221,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":94,"../helpers/isAbsoluteURL":96}],85:[function(require,module,exports){
+},{"../helpers/combineURLs":95,"../helpers/isAbsoluteURL":97}],86:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -11057,7 +11241,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":87}],86:[function(require,module,exports){
+},{"./enhanceError":88}],87:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11138,7 +11322,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":81,"../defaults":91,"./../utils":102,"./transformData":90}],87:[function(require,module,exports){
+},{"../cancel/isCancel":82,"../defaults":92,"./../utils":103,"./transformData":91}],88:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11182,7 +11366,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -11271,7 +11455,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":102}],89:[function(require,module,exports){
+},{"../utils":103}],90:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -11298,7 +11482,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":85}],90:[function(require,module,exports){
+},{"./createError":86}],91:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11320,7 +11504,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":102}],91:[function(require,module,exports){
+},{"./../utils":103}],92:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -11422,7 +11606,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":77,"./adapters/xhr":77,"./helpers/normalizeHeaderName":99,"./utils":102,"_process":121}],92:[function(require,module,exports){
+},{"./adapters/http":78,"./adapters/xhr":78,"./helpers/normalizeHeaderName":100,"./utils":103,"_process":122}],93:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -11435,7 +11619,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],93:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11507,7 +11691,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":102}],94:[function(require,module,exports){
+},{"./../utils":103}],95:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11523,7 +11707,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],95:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11578,7 +11762,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":102}],96:[function(require,module,exports){
+},{"./../utils":103}],97:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11594,7 +11778,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],97:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11607,7 +11791,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11677,7 +11861,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":102}],99:[function(require,module,exports){
+},{"./../utils":103}],100:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -11691,7 +11875,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":102}],100:[function(require,module,exports){
+},{"../utils":103}],101:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11746,7 +11930,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":102}],101:[function(require,module,exports){
+},{"./../utils":103}],102:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11775,7 +11959,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -12128,7 +12312,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":92}],103:[function(require,module,exports){
+},{"./helpers/bind":93}],104:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -12220,7 +12404,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 (function (process){(function (){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -12326,7 +12510,7 @@ checkPropTypes.resetWarningCache = function() {
 module.exports = checkPropTypes;
 
 }).call(this)}).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":105,"_process":121}],105:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":106,"_process":122}],106:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -12340,7 +12524,7 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],106:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react-dom.development.js
@@ -37356,7 +37540,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":121,"object-assign":103,"prop-types/checkPropTypes":104,"react":111,"scheduler":117,"scheduler/tracing":118}],107:[function(require,module,exports){
+},{"_process":122,"object-assign":104,"prop-types/checkPropTypes":105,"react":112,"scheduler":118,"scheduler/tracing":119}],108:[function(require,module,exports){
 /** @license React v16.14.0
  * react-dom.production.min.js
  *
@@ -37650,7 +37834,7 @@ exports.flushSync=function(a,b){if((W&(fj|gj))!==V)throw Error(u(187));var c=W;W
 exports.unmountComponentAtNode=function(a){if(!gk(a))throw Error(u(40));return a._reactRootContainer?(Nj(function(){ik(null,null,a,!1,function(){a._reactRootContainer=null;a[Od]=null})}),!0):!1};exports.unstable_batchedUpdates=Mj;exports.unstable_createPortal=function(a,b){return kk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!gk(c))throw Error(u(200));if(null==a||void 0===a._reactInternalFiber)throw Error(u(38));return ik(a,b,c,!1,d)};exports.version="16.14.0";
 
-},{"object-assign":103,"react":111,"scheduler":117}],108:[function(require,module,exports){
+},{"object-assign":104,"react":112,"scheduler":118}],109:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -37692,7 +37876,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":106,"./cjs/react-dom.production.min.js":107,"_process":121}],109:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":107,"./cjs/react-dom.production.min.js":108,"_process":122}],110:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react.development.js
@@ -39608,7 +39792,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":121,"object-assign":103,"prop-types/checkPropTypes":104}],110:[function(require,module,exports){
+},{"_process":122,"object-assign":104,"prop-types/checkPropTypes":105}],111:[function(require,module,exports){
 /** @license React v16.14.0
  * react.production.min.js
  *
@@ -39635,7 +39819,7 @@ key:d,ref:g,props:e,_owner:k}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:A,_ctor:a,_status:-1,_result:null}};exports.memo=function(a,b){return{$$typeof:z,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return Z().useCallback(a,b)};exports.useContext=function(a,b){return Z().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return Z().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return Z().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return Z().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return Z().useMemo(a,b)};exports.useReducer=function(a,b,c){return Z().useReducer(a,b,c)};exports.useRef=function(a){return Z().useRef(a)};exports.useState=function(a){return Z().useState(a)};exports.version="16.14.0";
 
-},{"object-assign":103}],111:[function(require,module,exports){
+},{"object-assign":104}],112:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -39646,7 +39830,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react.development.js":109,"./cjs/react.production.min.js":110,"_process":121}],112:[function(require,module,exports){
+},{"./cjs/react.development.js":110,"./cjs/react.production.min.js":111,"_process":122}],113:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -40324,7 +40508,7 @@ exports.compose = compose;
 exports.createStore = createStore;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":121,"symbol-observable":119}],113:[function(require,module,exports){
+},{"_process":122,"symbol-observable":120}],114:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler-tracing.development.js
@@ -40677,7 +40861,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":121}],114:[function(require,module,exports){
+},{"_process":122}],115:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler-tracing.production.min.js
  *
@@ -40689,7 +40873,7 @@ exports.unstable_wrap = unstable_wrap;
 
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],115:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler.development.js
@@ -41551,7 +41735,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":121}],116:[function(require,module,exports){
+},{"_process":122}],117:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler.production.min.js
  *
@@ -41574,7 +41758,7 @@ exports.unstable_getCurrentPriorityLevel=function(){return R};exports.unstable_g
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();if("object"===typeof c&&null!==c){var e=c.delay;e="number"===typeof e&&0<e?d+e:d;c="number"===typeof c.timeout?c.timeout:Y(a)}else c=Y(a),e=d;c=e+c;a={id:P++,callback:b,priorityLevel:a,startTime:e,expirationTime:c,sortIndex:-1};e>d?(a.sortIndex=e,J(O,a),null===L(N)&&a===L(O)&&(U?h():U=!0,g(W,e-d))):(a.sortIndex=c,J(N,a),T||S||(T=!0,f(X)));return a};
 exports.unstable_shouldYield=function(){var a=exports.unstable_now();V(a);var b=L(N);return b!==Q&&null!==Q&&null!==b&&null!==b.callback&&b.startTime<=a&&b.expirationTime<Q.expirationTime||k()};exports.unstable_wrapCallback=function(a){var b=R;return function(){var c=R;R=b;try{return a.apply(this,arguments)}finally{R=c}}};
 
-},{}],117:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -41585,7 +41769,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":115,"./cjs/scheduler.production.min.js":116,"_process":121}],118:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":116,"./cjs/scheduler.production.min.js":117,"_process":122}],119:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -41596,7 +41780,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":113,"./cjs/scheduler-tracing.production.min.js":114,"_process":121}],119:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":114,"./cjs/scheduler-tracing.production.min.js":115,"_process":122}],120:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -41628,7 +41812,7 @@ if (typeof self !== 'undefined') {
 var result = (0, _ponyfill2['default'])(root);
 exports['default'] = result;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill.js":120}],120:[function(require,module,exports){
+},{"./ponyfill.js":121}],121:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41652,7 +41836,7 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -41838,4 +42022,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[13]);
+},{}]},{},[14]);

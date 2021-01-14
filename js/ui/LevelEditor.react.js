@@ -58,6 +58,11 @@ function LevelEditor(props: Props): React.Node {
     doodad: 'QUESTION',
     stoneSubType: 'STONE',
 
+    // missiles
+    theta: -1,
+    velocity: 20,
+    warheadType: 'DYNAMITE',
+
     // copy-paste mode
     clipboardMode: 'COPY',
 
@@ -668,6 +673,14 @@ function createEntities(game, dispatch, editor, rect): void {
     case 'AGENT':
       args = [editor.playerID];
       break;
+    case 'MISSILE': {
+      let warhead = null;
+      if (editor.warheadType != 'NONE') {
+        warhead = Entities[editor.warheadType].make(game, null, editor.playerID);
+      }
+      args = [editor.playerID, warhead, editor.theta, editor.velocity];
+      break;
+    }
     case 'WORM':
       // create initial segments:
       const randNeighbor = (pos) => {
@@ -759,6 +772,32 @@ function createEntityOptions(game, editor, setEditor): React.Node {
         />
       </span>);
       break;
+    case 'MISSILE': {
+      const warheadTypes = [];
+      for (const entityType in Entities) {
+        if (Entities[entityType].config.isExplosive) {
+          warheadTypes.push(entityType);
+        }
+      }
+      options.push(<span>
+        Warhead Type:
+        <Dropdown
+          options={['NONE', ...warheadTypes]}
+          selected={editor.warheadType}
+          onChange={(warheadType) => setEditor({...editor, warheadType})}
+        />
+        Theta:
+        <NumberField
+          value={editor.theta}
+          onChange={(theta) => setEditor({...editor, theta})}
+        />
+        Velocity:
+        <NumberField
+          value={editor.velocity}
+          onChange={(velocity) => setEditor({...editor, velocity})}
+        />
+      </span>);
+    }
   }
 
   return (

@@ -15,7 +15,8 @@ var config = {
 
   audioFiles: [{ path: 'audio/Song Oct. 9.wav', type: 'wav' }],
 
-  dispersingPheromoneUpdateRate: 6
+  dispersingPheromoneUpdateRate: 6,
+  gravity: -2.5
 };
 
 var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD'];
@@ -210,7 +211,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":14,"../selectors/sprites":21,"../utils/vectors":28,"./makeEntity":8}],3:[function(require,module,exports){
+},{"../render/renderAgent":15,"../selectors/sprites":22,"../utils/vectors":29,"./makeEntity":8}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -245,7 +246,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":21,"./makeEntity":8}],4:[function(require,module,exports){
+},{"../selectors/sprites":22,"./makeEntity":8}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -284,7 +285,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":21,"./makeEntity":8}],5:[function(require,module,exports){
+},{"../selectors/sprites":22,"./makeEntity":8}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -346,7 +347,6 @@ var config = {
   damage: 4,
   timer: 1500,
   age: 0,
-  blockingTypes: ['FOOD', 'DIRT', 'AGENT', 'STONE', 'DOODAD', 'WORM'],
 
   DIE: {
     duration: 300,
@@ -358,10 +358,7 @@ var config = {
 var make = function make(game, position, playerID) {
   return _extends({}, makeEntity('DYNAMITE', position, config.width, config.height), config, {
     playerID: playerID,
-    prevHP: config.hp,
-    prevHPAge: 0,
-    actions: [],
-    task: null
+    actions: []
   });
 };
 
@@ -391,7 +388,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":21,"../simulation/actionQueue":22,"./makeEntity":8}],7:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":22,"../simulation/actionQueue":23,"./makeEntity":8}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -432,7 +429,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":21,"./makeEntity":8}],8:[function(require,module,exports){
+},{"../selectors/sprites":22,"./makeEntity":8}],8:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -454,6 +451,91 @@ module.exports = {
 },{}],9:[function(require,module,exports){
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../selectors/sprites'),
+    getInterpolatedIndex = _require2.getInterpolatedIndex;
+
+var _require3 = require('../simulation/actionQueue'),
+    getDuration = _require3.getDuration;
+
+var globalConfig = require('../config');
+
+/**
+ *  Explosives explode when they die. They can be killed by
+ *  running out of hp or by having an age (in ms) greater than their timer
+ *  time (set timer to null if you don't want it to do this).
+ */
+
+var config = {
+  isBallistic: true,
+  damage: 1,
+  hp: 1,
+  width: 1,
+  height: 2,
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE'],
+
+  DIE: {
+    duration: 1,
+    spriteOrder: [0]
+  }
+};
+
+var make = function make(game, position, playerID, warhead, theta, velocity) {
+  return _extends({}, makeEntity('MISSILE', position, config.width, config.height), config, {
+    holding: null,
+    holdingIDs: [],
+    warhead: warhead,
+    age: 0,
+    theta: theta,
+    velocity: velocity,
+    playerID: playerID,
+    actions: [],
+    initialPosition: _extends({}, position),
+    ballisticPosition: _extends({}, position),
+    initialTheta: theta,
+    prevPositions: [_extends({}, position)]
+  });
+};
+
+var render = function render(ctx, game, missile) {
+  ctx.save();
+  var width = missile.width,
+      height = missile.height,
+      theta = missile.theta,
+      ballisticPosition = missile.ballisticPosition,
+      prevPositions = missile.prevPositions;
+
+  var position = ballisticPosition;
+
+  // trace out the trajectory
+  ctx.strokeStyle = 'black';
+  ctx.beginPath();
+  ctx.moveTo(position.x, position.y);
+  for (var i = prevPositions.length - 1; i >= 0; i--) {
+    ctx.lineTo(prevPositions[i].x, prevPositions[i].y);
+  }
+  ctx.stroke();
+
+  ctx.translate(position.x + width / 2, position.y + height / 2);
+  ctx.rotate(theta - 3 * Math.PI / 2);
+  ctx.translate(-width / 2, -height / 2);
+
+  ctx.strokeStyle = 'black';
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, missile.width, missile.height);
+  ctx.strokeRect(0, 0, missile.width, missile.height);
+
+  ctx.restore();
+};
+
+module.exports = { config: config, make: make, render: render };
+},{"../config":1,"../selectors/sprites":22,"../simulation/actionQueue":23,"./makeEntity":8}],10:[function(require,module,exports){
+'use strict';
+
 var globalConfig = require('../config');
 
 /**
@@ -468,23 +550,24 @@ var globalConfig = require('../config');
 
 var Entities = {
   BACKGROUND: require('./background.js'),
-  STONE: require('./stone.js'),
   DOODAD: require('./doodad.js'),
-  DIRT: require('./dirt.js'),
-  FOOD: require('./food.js'),
 
+  STONE: require('./stone.js'),
+  DIRT: require('./dirt.js'),
+
+  FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
-
   TOKEN: require('./token.js'),
 
-  DYNAMITE: require('./dynamite.js')
+  DYNAMITE: require('./dynamite.js'),
+  MISSILE: require('./missile.js')
 };
 
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./dirt.js":4,"./doodad.js":5,"./dynamite.js":6,"./food.js":7,"./stone.js":10,"./token.js":11,"./worm.js":12}],10:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./dirt.js":4,"./doodad.js":5,"./dynamite.js":6,"./food.js":7,"./missile.js":9,"./stone.js":11,"./token.js":12,"./worm.js":13}],11:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -517,7 +600,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":21,"./makeEntity":8}],11:[function(require,module,exports){
+},{"../selectors/sprites":22,"./makeEntity":8}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -554,7 +637,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":8}],12:[function(require,module,exports){
+},{"../config":1,"./makeEntity":8}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -667,7 +750,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":14,"../render/renderSegmented":16,"../utils/vectors":28,"./agent.js":2}],13:[function(require,module,exports){
+},{"../render/renderAgent":15,"../render/renderSegmented":17,"../utils/vectors":29,"./agent.js":2}],14:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1300,7 +1383,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   return nextDispersingPheromones;
 };
 
-},{"./config":1,"./selectors/neighbors":19,"./selectors/pheromones":20,"./simulation/entityOperations":23,"./simulation/pheromones":24,"./utils/gridHelpers":25,"./utils/helpers":26,"./utils/stochastic":27,"./utils/vectors":28}],14:[function(require,module,exports){
+},{"./config":1,"./selectors/neighbors":20,"./selectors/pheromones":21,"./simulation/entityOperations":24,"./simulation/pheromones":25,"./utils/gridHelpers":26,"./utils/helpers":27,"./utils/stochastic":28,"./utils/vectors":29}],15:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -1529,7 +1612,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":18,"../utils/gridHelpers":25,"../utils/helpers":26,"../utils/vectors":28,"./renderHealthBar":15}],15:[function(require,module,exports){
+},{"../selectors/misc":19,"../utils/gridHelpers":26,"../utils/helpers":27,"../utils/vectors":29,"./renderHealthBar":16}],16:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -1571,7 +1654,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":25,"../utils/vectors":28}],16:[function(require,module,exports){
+},{"../utils/gridHelpers":26,"../utils/vectors":29}],17:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -1719,10 +1802,8 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":18,"../selectors/sprites":21,"../utils/vectors":28,"./renderHealthBar":15}],17:[function(require,module,exports){
+},{"../selectors/misc":19,"../selectors/sprites":22,"../utils/vectors":29,"./renderHealthBar":16}],18:[function(require,module,exports){
 'use strict';
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 var _require = require('../utils/gridHelpers'),
     lookupInGrid = _require.lookupInGrid,
@@ -1747,7 +1828,7 @@ var collidesWith = function collidesWith(game, entity, blockingTypes) {
       var pos = _step.value;
 
       var thisCell = collisionsAtSpace(game, entity, blockingTypes, pos);
-      collisions.push.apply(collisions, _toConsumableArray(thisCell));
+      collisions.push.apply(collisions, thisCell);
     }
   } catch (err) {
     _didIteratorError = true;
@@ -1788,7 +1869,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":25}],18:[function(require,module,exports){
+},{"../utils/gridHelpers":26}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1981,7 +2062,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":17,"../selectors/neighbors":19,"../simulation/actionQueue":22,"../utils/gridHelpers":25,"../utils/helpers":26,"../utils/vectors":28}],19:[function(require,module,exports){
+},{"../selectors/collisions":18,"../selectors/neighbors":20,"../simulation/actionQueue":23,"../utils/gridHelpers":26,"../utils/helpers":27,"../utils/vectors":29}],20:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -2248,7 +2329,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":17,"../utils/gridHelpers":25,"../utils/vectors":28}],20:[function(require,module,exports){
+},{"../selectors/collisions":18,"../utils/gridHelpers":26,"../utils/vectors":29}],21:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2385,7 +2466,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":19,"../utils/gridHelpers":25,"../utils/helpers":26,"../utils/vectors":28}],21:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":20,"../utils/gridHelpers":26,"../utils/helpers":27,"../utils/vectors":29}],22:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2829,7 +2910,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":18,"../selectors/neighbors":19,"../simulation/actionQueue":22,"../utils/gridHelpers":25,"../utils/helpers":26,"../utils/vectors":28}],22:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":19,"../selectors/neighbors":20,"../simulation/actionQueue":23,"../utils/gridHelpers":26,"../utils/helpers":27,"../utils/vectors":29}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3055,7 +3136,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":20,"../utils/helpers":26,"../utils/vectors":28}],23:[function(require,module,exports){
+},{"../selectors/pheromones":21,"../utils/helpers":27,"../utils/vectors":29}],24:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3457,12 +3538,23 @@ var addEntity = function addEntity(game, entity) {
   if (entity.isExplosive) {
     game.EXPLOSIVE[entity.id] = true;
   }
+  // special case for missiles
+  if (entity.warhead) {
+    if (entity.warhead.id == -1) {
+      addEntity(game, entity.warhead);
+    }
+    entity.holding = entity.warhead;
+    entity.holdingIDs.push(entity.warhead.id);
+  }
 
   // update the pheromone worker that this entity exists
   if (game.pheromoneWorker && game.time > 1) {
     game.pheromoneWorker.postMessage({ type: 'ADD_ENTITY', entity: entity });
   }
-  insertEntityInGrid(game, entity);
+
+  if (entity.position != null) {
+    insertEntityInGrid(game, entity);
+  }
 
   return game;
 };
@@ -3548,7 +3640,7 @@ var moveEntity = function moveEntity(game, entity, nextPos) {
   // only rotate if you have to, so as not to blow away prevTheta
   var nextTheta = vectorTheta(subtract(entity.prevPosition, entity.position));
   if (!closeTo(nextTheta, entity.theta)) {
-    rotateEntity(game, entity);
+    rotateEntity(game, entity, nextTheta);
   }
   return game;
 };
@@ -3758,7 +3850,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":8,"../entities/registry":9,"../selectors/neighbors":19,"../selectors/pheromones":20,"../simulation/pheromones":24,"../utils/gridHelpers":25,"../utils/helpers":26,"../utils/vectors":28}],24:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":8,"../entities/registry":10,"../selectors/neighbors":20,"../selectors/pheromones":21,"../simulation/pheromones":25,"../utils/gridHelpers":26,"../utils/helpers":27,"../utils/vectors":29}],25:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4118,7 +4210,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":19,"../selectors/pheromones":20,"../utils/gridHelpers":25,"../utils/helpers":26,"../utils/vectors":28}],25:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":20,"../selectors/pheromones":21,"../utils/gridHelpers":26,"../utils/helpers":27,"../utils/vectors":29}],26:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -4254,7 +4346,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":26,"../utils/vectors":28}],26:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":27,"../utils/vectors":29}],27:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -4365,7 +4457,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":28}],27:[function(require,module,exports){
+},{"./vectors":29}],28:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -4420,7 +4512,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4619,4 +4711,4 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}]},{},[13]);
+},{}]},{},[14]);
