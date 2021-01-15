@@ -126,6 +126,7 @@ const initBaseState = (
     PHEROMONE_EMITTER: {}, // entities that emit a pheromone
     BALLISTIC: {}, // entities that follow a ballistic trajectory
     EXPLOSIVE: {}, // entities that explode when they die
+    TOWER: {}, // entities that track a target to aim at
   };
 
   // lookup for entityIDs by entityType

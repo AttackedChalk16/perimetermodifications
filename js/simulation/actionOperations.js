@@ -67,6 +67,9 @@ const entityStartCurrentAction = (
     case 'DIE':
       entityDie(game, entity);
       break;
+    case 'SHOOT':
+      entityShoot(game, entity, curAction.payload);
+      break;
   }
 };
 
@@ -117,6 +120,31 @@ const agentDoMove = (game: Game, entity: Entity, nextPos: Vector): boolean => {
 
   return true;
 }
+
+const entityShoot = (game: Game, entity: Entity, payload) => {
+  const {theta, projectileType} = payload;
+  let projectile = null;
+  switch (projectileType) {
+    case 'BULLET': {
+      const position = round(add(makeVector(theta, -2), entity.position));
+      projectile = Entities.BULLET.make(game, position, entity.playerID, theta + Math.PI);
+      break;
+    }
+    case 'MISSILE': {
+      const position = round(add(makeVector(theta, -4), entity.position));
+      projectile = Entities.MISSILE.make(
+        game, position, entity.playerID,
+        Entities.DYNAMITE.make(game, position, entity.playerID),
+        theta + Math.PI,
+      );
+      break;
+    }
+  }
+  if (projectile != null) {
+    addEntity(game, projectile);
+  }
+
+};
 
 const entityDie = (game: Game, entity: Entity): void => {
   if (entity.isExplosive) {

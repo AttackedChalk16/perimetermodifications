@@ -24,9 +24,11 @@ const Entities = {
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
+  TURRET: require('./turret.js'),
 
   DYNAMITE: require('./dynamite.js'),
   MISSILE: require('./missile.js'),
+  BULLET: require('./bullet.js'),
 };
 
 module.exports = {

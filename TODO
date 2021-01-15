@@ -5,14 +5,12 @@
 -------> ./todos/INLINE
 
 - - - - - - TODO - - - - - -
+  - get a good average fps algorithm going
   - issues:
-    - missile:
-      - rotating erratically
-      - original rendering is off
-        - have only ant render at 90deg?
-      - moves too slow and in too straight a trajectory
-      - drawn path not aligned with center of entity
-      - reseting with a missile in the world breaks on held warhead
+    - resetting after a missile is exploded causes its payload to stay behind
+    - not able to edit player 2
+    - dirt should probably be marked as stale when it dies?
+    - turret is too good at shooting down missiles
 
   - pheromones
     - marked dirt should be a pheromoneSource
@@ -21,19 +19,10 @@
 
 
 - - - - - - BARE BONES - - - - - -
-  - entities:
-    - missile
-      - system for creating them
-        - pick launch location that's far away with actual ballistics trajectory
-        - could have multiple "launch platforms" tuned to target the screen
-    - bullet
-    - tower
-  - properties:
-    - ballistic
-      - velocity, theta
-  - actions:
-    - shoot
-    - aim
+  - system for creating missiles
+    - pick launch location that's far away with actual ballistics trajectory
+    - could have multiple "launch platforms" tuned to target the screen
+
 
 - - - - - - - TO DRAW - - - - - -
   - add cracked stone tilesheet for hp counting

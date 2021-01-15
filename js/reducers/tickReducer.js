@@ -7,6 +7,7 @@ const {
 } = require('../simulation/pheromones');
 const {
   lookupInGrid, getEntityPositions,
+  entityInsideGrid,
 } = require('../utils/gridHelpers');
 const {
   makeAction, isActionTypeQueued, getDuration,
@@ -20,6 +21,7 @@ const {render} = require('../render/render');
 const {
   getPosBehind, getPositionsInFront, onScreen,
 } = require('../selectors/misc');
+const {oneOf} = require('../utils/stochastic');
 const {collides, collidesWith} = require('../selectors/collisions');
 const {
   add, equals, subtract, magnitude, scale,
@@ -39,6 +41,7 @@ const {
 } = require('../selectors/pheromones');
 const globalConfig = require('../config');
 const {dealDamageToEntity} = require('../simulation/miscOperations');
+const {Entities} = require('../entities/registry');
 
 import type {
   Game, Entity, Action, Ant,
@@ -108,6 +111,7 @@ const doTick = (game: Game): Game => {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updateTowers(game);
   updateBallistics(game);
   updateExplosives(game);
   render(game);
@@ -194,14 +198,25 @@ const updateBallistics = (game): void => {
     // if it has collided with something, deal damage to it and die
     const collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
     if (collisions.length > 0) {
-      collisions.forEach(e => dealDamageToEntity(game, e, ballistic.damage));
-      queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
-      continue;
+      if (ballistic.missRate == null ||
+        (ballistic.missRate != null && Math.random() > ballistic.missRate)
+      ) {
+        collisions.forEach(e => dealDamageToEntity(game, e, ballistic.damage));
+        queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+        continue;
+      }
     }
 
     // otherwise continue along its trajectory
-    ballistic.prevPositions.push({...ballistic.ballisticPosition});
-    let {age, initialTheta, velocity} = ballistic;
+    let {age, initialTheta, velocity, width, height} = ballistic;
+    const prevPosition = add(
+      ballistic.ballisticPosition,
+      {x: width / 2, y: height / 2},
+    );
+    if (ballistic.prevPositions) {
+      ballistic.prevPositions.push(prevPosition);
+    }
+
     const {x, y} = ballistic.initialPosition;
     age /= 10000;
     ballistic.ballisticPosition = {
@@ -209,7 +224,81 @@ const updateBallistics = (game): void => {
       y: y + velocity * age * Math.sin(initialTheta)
         - 0.5 * globalConfig.config.gravity * age * age,
     };
+    ballistic.ballisticTheta = vectorTheta(subtract(
+      add(
+        ballistic.ballisticPosition,
+        {x: width / 2, y: height / 2},
+      ),
+      prevPosition,
+    ));
+
     moveEntity(game, ballistic, round(ballistic.ballisticPosition));
+    if (!entityInsideGrid(game, ballistic)) {
+      queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+    }
+  }
+};
+
+const updateTowers = (game): void => {
+  for (const id in game.TOWER) {
+    const tower = game.entities[id];
+    const config = Entities[tower.type].config;
+
+    // choose target if possible
+    if (tower.targetID == null) {
+      const possibleTargets = [];
+      for (const missileID of game.MISSILE) {
+        const missile = game.entities[missileID];
+        if (missile.playerID != tower.playerID) {
+          possibleTargets.push(missileID);
+        }
+      }
+      tower.targetID = oneOf(possibleTargets);
+    }
+
+    // aim at target
+    let targetTheta = config.minTheta;
+    if (tower.targetID != null) {
+      const target = game.entities[tower.targetID];
+      // clear dead target
+      if (target == null) {
+        tower.targetID = null;
+
+      // else aim at living target
+      } else {
+        const targetPos = game.entities[tower.targetID].position;
+        targetTheta = vectorTheta(subtract(targetPos, tower.position)) % (Math.PI / 2);
+        targetTheta = clamp(targetTheta, config.minTheta, config.maxTheta);
+      }
+    }
+    if (closeTo(tower.theta, targetTheta)) {
+      tower.thetaAccel /= -2;
+    } else if (tower.theta < targetTheta) {
+      tower.thetaAccel = config.thetaAccel;
+    } else if (tower.theta > targetTheta) {
+      tower.thetaAccel = -1 * config.thetaAccel;
+    }
+    tower.thetaSpeed += tower.thetaAccel;
+    tower.thetaSpeed = clamp(tower.thetaSpeed, -config.maxThetaSpeed, config.maxThetaSpeed);
+    tower.theta += tower.thetaSpeed;
+    const clamped = clamp(tower.theta, config.minTheta, config.maxTheta);
+    if (!closeTo(clamped, tower.theta)) {
+      tower.thetaSpeed = 0;
+      tower.thetaAccel = 0;
+    }
+    tower.theta = clamped;
+
+    // shoot at target
+    if (tower.targetID != null && !isActionTypeQueued(tower, 'SHOOT')) {
+      queueAction(
+        game, tower,
+        makeAction(
+          game, tower, 'SHOOT',
+          {theta: tower.theta, projectileType: tower.projectileType}
+        ),
+      );
+    }
+
   }
 };
 

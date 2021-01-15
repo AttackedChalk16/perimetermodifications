@@ -16,7 +16,7 @@ var config = {
   audioFiles: [{ path: 'audio/Song Oct. 9.wav', type: 'wav' }],
 
   dispersingPheromoneUpdateRate: 6,
-  gravity: -2.5
+  gravity: -100
 };
 
 var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD'];
@@ -211,7 +211,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":24,"../selectors/sprites":32,"../utils/vectors":76,"./makeEntity":8}],3:[function(require,module,exports){
+},{"../render/renderAgent":28,"../selectors/sprites":36,"../utils/vectors":80,"./makeEntity":9}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -246,7 +246,89 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":8}],4:[function(require,module,exports){
+},{"../selectors/sprites":36,"./makeEntity":9}],4:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../utils/vectors'),
+    add = _require.add;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var _require3 = require('../selectors/sprites'),
+    getInterpolatedIndex = _require3.getInterpolatedIndex;
+
+var _require4 = require('../simulation/actionQueue'),
+    getDuration = _require4.getDuration;
+
+var globalConfig = require('../config');
+
+/**
+ *  Explosives explode when they die. They can be killed by
+ *  running out of hp or by having an age (in ms) greater than their timer
+ *  time (set timer to null if you don't want it to do this).
+ */
+
+var config = {
+  isBallistic: true,
+  damage: 1,
+  hp: 1,
+  width: 1,
+  height: 1,
+  velocity: 500,
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'BULLET', 'TOWER'],
+
+  DIE: {
+    duration: 1,
+    spriteOrder: [0]
+  },
+  missRate: 0.5
+};
+
+var make = function make(game, position, playerID, theta, velocity) {
+  return _extends({}, makeEntity('BULLET', position, config.width, config.height), config, {
+    playerID: playerID,
+
+    // required for ballistics
+    age: 0,
+    actions: [],
+    theta: theta,
+    velocity: velocity != null ? velocity : config.velocity,
+    initialPosition: _extends({}, position),
+    ballisticPosition: _extends({}, position),
+    ballisticTheta: theta,
+    initialTheta: theta
+  });
+};
+
+var render = function render(ctx, game, bullet) {
+  ctx.save();
+  var width = bullet.width,
+      height = bullet.height,
+      theta = bullet.theta,
+      ballisticTheta = bullet.ballisticTheta,
+      ballisticPosition = bullet.ballisticPosition,
+      prevPositions = bullet.prevPositions;
+
+  var position = ballisticPosition;
+
+  ctx.translate(position.x + width / 2, position.y + height / 2);
+  ctx.rotate(ballisticTheta + Math.PI / 2);
+  ctx.translate(-width / 2, -height / 2);
+
+  ctx.fillStyle = 'orange';
+  ctx.strokeStyle = 'black';
+  var bulletWidth = 0.2;
+  ctx.fillRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
+  ctx.strokeRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
+
+  ctx.restore();
+};
+
+module.exports = { config: config, make: make, render: render };
+},{"../config":1,"../selectors/sprites":36,"../simulation/actionQueue":38,"../utils/vectors":80,"./makeEntity":9}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -285,7 +367,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":8}],5:[function(require,module,exports){
+},{"../selectors/sprites":36,"./makeEntity":9}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -316,7 +398,7 @@ var render = function render(ctx, game, doodad) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"./makeEntity":8}],6:[function(require,module,exports){
+},{"./makeEntity":9}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -388,7 +470,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":34,"./makeEntity":8}],7:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":36,"../simulation/actionQueue":38,"./makeEntity":9}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -429,7 +511,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":8}],8:[function(require,module,exports){
+},{"../selectors/sprites":36,"./makeEntity":9}],9:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -448,19 +530,22 @@ var makeEntity = function makeEntity(type, position, width, height) {
 module.exports = {
 	makeEntity: makeEntity
 };
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _require = require('./makeEntity'),
-    makeEntity = _require.makeEntity;
+var _require = require('../utils/vectors'),
+    add = _require.add;
 
-var _require2 = require('../selectors/sprites'),
-    getInterpolatedIndex = _require2.getInterpolatedIndex;
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
 
-var _require3 = require('../simulation/actionQueue'),
-    getDuration = _require3.getDuration;
+var _require3 = require('../selectors/sprites'),
+    getInterpolatedIndex = _require3.getInterpolatedIndex;
+
+var _require4 = require('../simulation/actionQueue'),
+    getDuration = _require4.getDuration;
 
 var globalConfig = require('../config');
 
@@ -476,7 +561,8 @@ var config = {
   hp: 1,
   width: 1,
   height: 2,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE'],
+  velocity: 50,
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURRET'],
 
   DIE: {
     duration: 1,
@@ -489,15 +575,19 @@ var make = function make(game, position, playerID, warhead, theta, velocity) {
     holding: null,
     holdingIDs: [],
     warhead: warhead,
-    age: 0,
-    theta: theta,
-    velocity: velocity,
     playerID: playerID,
+
+    // required for ballistics
+    age: 0,
     actions: [],
+    theta: theta,
+    velocity: velocity != null ? velocity : config.velocity,
     initialPosition: _extends({}, position),
     ballisticPosition: _extends({}, position),
+    ballisticTheta: theta,
     initialTheta: theta,
-    prevPositions: [_extends({}, position)]
+
+    prevPositions: [add(position, { x: config.width / 2, y: config.height / 2 })]
   });
 };
 
@@ -506,6 +596,7 @@ var render = function render(ctx, game, missile) {
   var width = missile.width,
       height = missile.height,
       theta = missile.theta,
+      ballisticTheta = missile.ballisticTheta,
       ballisticPosition = missile.ballisticPosition,
       prevPositions = missile.prevPositions;
 
@@ -514,14 +605,14 @@ var render = function render(ctx, game, missile) {
   // trace out the trajectory
   ctx.strokeStyle = 'black';
   ctx.beginPath();
-  ctx.moveTo(position.x, position.y);
+  ctx.moveTo(position.x + width / 2, position.y + height / 2);
   for (var i = prevPositions.length - 1; i >= 0; i--) {
     ctx.lineTo(prevPositions[i].x, prevPositions[i].y);
   }
   ctx.stroke();
 
   ctx.translate(position.x + width / 2, position.y + height / 2);
-  ctx.rotate(theta - 3 * Math.PI / 2);
+  ctx.rotate(ballisticTheta + Math.PI / 2);
   ctx.translate(-width / 2, -height / 2);
 
   ctx.strokeStyle = 'black';
@@ -533,7 +624,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":34,"./makeEntity":8}],10:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":36,"../simulation/actionQueue":38,"../utils/vectors":80,"./makeEntity":9}],11:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -559,15 +650,17 @@ var Entities = {
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
+  TURRET: require('./turret.js'),
 
   DYNAMITE: require('./dynamite.js'),
-  MISSILE: require('./missile.js')
+  MISSILE: require('./missile.js'),
+  BULLET: require('./bullet.js')
 };
 
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./dirt.js":4,"./doodad.js":5,"./dynamite.js":6,"./food.js":7,"./missile.js":9,"./stone.js":11,"./token.js":12,"./worm.js":13}],11:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./bullet.js":4,"./dirt.js":5,"./doodad.js":6,"./dynamite.js":7,"./food.js":8,"./missile.js":10,"./stone.js":12,"./token.js":13,"./turret.js":14,"./worm.js":15}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -600,7 +693,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":8}],12:[function(require,module,exports){
+},{"../selectors/sprites":36,"./makeEntity":9}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -637,7 +730,104 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":8}],13:[function(require,module,exports){
+},{"../config":1,"./makeEntity":9}],14:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity.js'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../utils/vectors'),
+    add = _require2.add,
+    subtract = _require2.subtract,
+    equals = _require2.equals,
+    makeVector = _require2.makeVector,
+    vectorTheta = _require2.vectorTheta;
+
+var _require3 = require('../render/renderAgent'),
+    renderAgent = _require3.renderAgent;
+
+var config = {
+  isTower: true,
+  hp: 3,
+  width: 1,
+  height: 1,
+  thetaAccel: 0.00005,
+  minTheta: 0.2,
+  maxTheta: Math.PI - 0.2,
+  maxThetaSpeed: 0.04,
+
+  // action overrides
+  DIE: {
+    duration: 2,
+    spriteOrder: [0]
+  },
+  SHOOT: {
+    duration: 150,
+    spriteOrder: [0]
+  }
+
+};
+
+var make = function make(game, position, playerID, projectileType, fireRate, theta) {
+  var configCopy = _extends({}, config);
+  if (fireRate != null) {
+    configCopy.SHOOT = _extends({}, configCopy.SHOOT, {
+      duration: fireRate
+    });
+  }
+  return _extends({}, makeEntity('TURRET', position, config.width, config.height), configCopy, {
+    playerID: playerID,
+
+    // angle of the turret
+    theta: theta != null ? theta : config.minTheta,
+    thetaSpeed: 0,
+    thetaAccel: 0,
+
+    // what the tower wants to aim at
+    targetID: null,
+
+    projectileType: projectileType,
+
+    actions: []
+
+  });
+};
+
+var render = function render(ctx, game, turret) {
+  var position = turret.position,
+      width = turret.width,
+      height = turret.height,
+      theta = turret.theta;
+
+  ctx.save();
+  ctx.translate(position.x, position.y);
+
+  // barrel of turret
+  ctx.save();
+  ctx.fillStyle = "black";
+  var turretWidth = 1.5;
+  var turretHeight = 0.3;
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(theta);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.restore();
+
+  // base of turret
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
+  ctx.restore();
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../render/renderAgent":28,"../utils/vectors":80,"./makeEntity.js":9}],15:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -750,7 +940,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":24,"../render/renderSegmented":27,"../utils/vectors":76,"./agent.js":2}],14:[function(require,module,exports){
+},{"../render/renderAgent":28,"../render/renderSegmented":31,"../utils/vectors":80,"./agent.js":2}],16:[function(require,module,exports){
 'use strict';
 
 var _require = require('redux'),
@@ -779,16 +969,22 @@ function renderUI(store) {
     modal: state.modal
   }), document.getElementById('container'));
 }
-},{"./reducers/rootReducer":21,"./ui/Main.react":63,"react":112,"react-dom":109,"redux":113}],15:[function(require,module,exports){
+},{"./reducers/rootReducer":25,"./ui/Main.react":67,"react":116,"react-dom":113,"redux":117}],17:[function(require,module,exports){
 // @flow
 
 module.exports = {
   testLevel: require('./testLevel'),
+  smallBallisticsLevel: require('./smallBallisticsLevel'),
+  mediumBallisticsLevel: require('./mediumBallisticsLevel'),
 }
 
-},{"./testLevel":16}],16:[function(require,module,exports){
+},{"./mediumBallisticsLevel":18,"./smallBallisticsLevel":19,"./testLevel":20}],18:[function(require,module,exports){
+module.exports = {"numPlayers":2,"gridWidth":100,"gridHeight":100,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":64},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":64,"y":62},"width":7,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":71,"y":63},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":71,"y":65},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":63},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":73,"y":64},"width":1,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":67,"y":61},"width":3,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":65,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":70,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":62,"y":65},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":74,"y":65},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":51},"width":101,"height":49},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":64},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":66},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":65,"y":65},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":65},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":62,"y":66},"width":3,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":68},"width":5,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":69},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":61,"y":66},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":69},"width":8,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":72},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":69},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":68},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":68},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":51},"width":9,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":51},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":52},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":54},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":56},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":54},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":-2,"y":56},"width":6,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":56},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":57},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":82,"y":50},"width":20,"height":1},"args":[1,1]}]};
+},{}],19:[function(require,module,exports){
+module.exports = {"numPlayers":2,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":26},"width":50,"height":24},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":36},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":37},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":37},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":38},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":45},"width":9,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":47},"width":6,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":49},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":48},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":8,"y":40},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":34},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":33},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":33},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":36},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":24},"width":20,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":22},"width":15,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":23},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":25},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":21},"width":10,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":20},"width":6,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":19},"width":4,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":5,"y":32},"width":46,"height":18},"args":["STONE",1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":40},"width":8,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":44},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":41},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":42},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":43},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":46},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":39},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":38},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":34,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":43},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":39,"y":39},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":36},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":37},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":43},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":37,"y":39},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":22,"y":42},"width":1,"height":1},"args":[1]}]};
+},{}],20:[function(require,module,exports){
 module.exports = {"numPlayers":1,"gridWidth":25,"gridHeight":25,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":5,"y":13},"width":1,"height":1},"args":[1,null]},{"type":"CREATE_ENTITIES","entityType":"WORM","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[[{"x":13,"y":15},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":15,"y":17},{"x":16,"y":17},{"x":16,"y":18}],1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":16},"width":1,"height":9},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":24},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":1,"y":24},"width":19,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":10,"y":22},"width":1,"height":3},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":19},"width":1,"height":5},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":21,"y":24},"width":5,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":4,"y":2},"width":5,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":9,"y":1},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":9},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":6,"y":8},"width":2,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DOODAD","rect":{"position":{"x":18,"y":2},"width":3,"height":4},"args":[3,4,"QUESTION"]},{"type":"CREATE_ENTITIES","entityType":"BACKGROUND","rect":{"position":{"x":14,"y":0},"width":2,"height":2},"args":[1,1,"FLOOR_TILE"]}]};
-},{}],17:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -1311,7 +1507,7 @@ function createEntitiesReducer(game, action) {
 }
 
 module.exports = { gameReducer: gameReducer };
-},{"../config":1,"../entities/registry":10,"../render/render":23,"../selectors/pheromones":31,"../simulation/actionQueue":34,"../simulation/entityOperations":36,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],18:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../render/render":27,"../selectors/pheromones":35,"../simulation/actionQueue":38,"../simulation/entityOperations":40,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],22:[function(require,module,exports){
 'use strict';
 
 var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
@@ -1341,7 +1537,7 @@ var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
 };
 
 module.exports = { hotKeysReducer: hotKeysReducer };
-},{}],19:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1365,7 +1561,7 @@ var modalReducer = function modalReducer(state, action) {
 };
 
 module.exports = { modalReducer: modalReducer };
-},{}],20:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1400,7 +1596,7 @@ var mouseReducer = function mouseReducer(mouse, action) {
 };
 
 module.exports = { mouseReducer: mouseReducer };
-},{}],21:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1847,7 +2043,7 @@ function upgradeReducer(state, action) {
 }
 
 module.exports = { rootReducer: rootReducer };
-},{"../levels/levels":15,"../simulation/entityOperations":36,"../state/gameState":40,"../state/state":41,"../utils/helpers":74,"./gameReducer":17,"./hotKeysReducer":18,"./modalReducer":19,"./mouseReducer":20,"./tickReducer":22}],22:[function(require,module,exports){
+},{"../levels/levels":17,"../simulation/entityOperations":40,"../state/gameState":44,"../state/state":45,"../utils/helpers":78,"./gameReducer":21,"./hotKeysReducer":22,"./modalReducer":23,"./mouseReducer":24,"./tickReducer":26}],26:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1862,7 +2058,8 @@ var _require = require('../simulation/pheromones'),
 
 var _require2 = require('../utils/gridHelpers'),
     lookupInGrid = _require2.lookupInGrid,
-    getEntityPositions = _require2.getEntityPositions;
+    getEntityPositions = _require2.getEntityPositions,
+    entityInsideGrid = _require2.entityInsideGrid;
 
 var _require3 = require('../simulation/actionQueue.js'),
     makeAction = _require3.makeAction,
@@ -1887,48 +2084,54 @@ var _require6 = require('../selectors/misc'),
     getPositionsInFront = _require6.getPositionsInFront,
     onScreen = _require6.onScreen;
 
-var _require7 = require('../selectors/collisions'),
-    collides = _require7.collides,
-    collidesWith = _require7.collidesWith;
+var _require7 = require('../utils/stochastic'),
+    oneOf = _require7.oneOf;
 
-var _require8 = require('../utils/vectors'),
-    add = _require8.add,
-    equals = _require8.equals,
-    subtract = _require8.subtract,
-    magnitude = _require8.magnitude,
-    scale = _require8.scale,
-    makeVector = _require8.makeVector,
-    vectorTheta = _require8.vectorTheta,
-    floor = _require8.floor,
-    round = _require8.round;
+var _require8 = require('../selectors/collisions'),
+    collides = _require8.collides,
+    collidesWith = _require8.collidesWith;
 
-var _require9 = require('../utils/helpers'),
-    clamp = _require9.clamp,
-    closeTo = _require9.closeTo,
-    encodePosition = _require9.encodePosition,
-    decodePosition = _require9.decodePosition;
+var _require9 = require('../utils/vectors'),
+    add = _require9.add,
+    equals = _require9.equals,
+    subtract = _require9.subtract,
+    magnitude = _require9.magnitude,
+    scale = _require9.scale,
+    makeVector = _require9.makeVector,
+    vectorTheta = _require9.vectorTheta,
+    floor = _require9.floor,
+    round = _require9.round;
 
-var _require10 = require('../selectors/sprites'),
-    getInterpolatedIndex = _require10.getInterpolatedIndex,
-    getDictIndexStr = _require10.getDictIndexStr;
+var _require10 = require('../utils/helpers'),
+    clamp = _require10.clamp,
+    closeTo = _require10.closeTo,
+    encodePosition = _require10.encodePosition,
+    decodePosition = _require10.decodePosition;
 
-var _require11 = require('../simulation/actionOperations'),
-    entityStartCurrentAction = _require11.entityStartCurrentAction;
+var _require11 = require('../selectors/sprites'),
+    getInterpolatedIndex = _require11.getInterpolatedIndex,
+    getDictIndexStr = _require11.getDictIndexStr;
 
-var _require12 = require('../simulation/agentOperations'),
-    agentDecideAction = _require12.agentDecideAction;
+var _require12 = require('../simulation/actionOperations'),
+    entityStartCurrentAction = _require12.entityStartCurrentAction;
 
-var _require13 = require('../selectors/neighbors'),
-    getFreeNeighborPositions = _require13.getFreeNeighborPositions,
-    areNeighbors = _require13.areNeighbors;
+var _require13 = require('../simulation/agentOperations'),
+    agentDecideAction = _require13.agentDecideAction;
 
-var _require14 = require('../selectors/pheromones'),
-    getPheromoneAtPosition = _require14.getPheromoneAtPosition;
+var _require14 = require('../selectors/neighbors'),
+    getFreeNeighborPositions = _require14.getFreeNeighborPositions,
+    areNeighbors = _require14.areNeighbors;
+
+var _require15 = require('../selectors/pheromones'),
+    getPheromoneAtPosition = _require15.getPheromoneAtPosition;
 
 var globalConfig = require('../config');
 
-var _require15 = require('../simulation/miscOperations'),
-    dealDamageToEntity = _require15.dealDamageToEntity;
+var _require16 = require('../simulation/miscOperations'),
+    dealDamageToEntity = _require16.dealDamageToEntity;
+
+var _require17 = require('../entities/registry'),
+    Entities = _require17.Entities;
 
 var totalTime = 0;
 var tickReducer = function tickReducer(game, action) {
@@ -1996,6 +2199,7 @@ var doTick = function doTick(game) {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updateTowers(game);
   updateBallistics(game);
   updateExplosives(game);
   render(game);
@@ -2094,18 +2298,27 @@ var updateBallistics = function updateBallistics(game) {
     // if it has collided with something, deal damage to it and die
     var collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
     if (collisions.length > 0) {
-      collisions.forEach(function (e) {
-        return dealDamageToEntity(game, e, ballistic.damage);
-      });
-      queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
-      return 'continue';
+      if (ballistic.missRate == null || ballistic.missRate != null && Math.random() > ballistic.missRate) {
+        collisions.forEach(function (e) {
+          return dealDamageToEntity(game, e, ballistic.damage);
+        });
+        queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+        return 'continue';
+      }
     }
 
     // otherwise continue along its trajectory
-    ballistic.prevPositions.push(_extends({}, ballistic.ballisticPosition));
     var age = ballistic.age,
         initialTheta = ballistic.initialTheta,
-        velocity = ballistic.velocity;
+        velocity = ballistic.velocity,
+        width = ballistic.width,
+        height = ballistic.height;
+
+    var prevPosition = add(ballistic.ballisticPosition, { x: width / 2, y: height / 2 });
+    if (ballistic.prevPositions) {
+      ballistic.prevPositions.push(prevPosition);
+    }
+
     var _ballistic$initialPos = ballistic.initialPosition,
         x = _ballistic$initialPos.x,
         y = _ballistic$initialPos.y;
@@ -2115,13 +2328,96 @@ var updateBallistics = function updateBallistics(game) {
       x: x + velocity * age * Math.cos(initialTheta),
       y: y + velocity * age * Math.sin(initialTheta) - 0.5 * globalConfig.config.gravity * age * age
     };
+    ballistic.ballisticTheta = vectorTheta(subtract(add(ballistic.ballisticPosition, { x: width / 2, y: height / 2 }), prevPosition));
+
     moveEntity(game, ballistic, round(ballistic.ballisticPosition));
+    if (!entityInsideGrid(game, ballistic)) {
+      queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+    }
   };
 
   for (var id in game.BALLISTIC) {
     var _ret = _loop(id);
 
     if (_ret === 'continue') continue;
+  }
+};
+
+var updateTowers = function updateTowers(game) {
+  for (var id in game.TOWER) {
+    var tower = game.entities[id];
+    var config = Entities[tower.type].config;
+
+    // choose target if possible
+    if (tower.targetID == null) {
+      var possibleTargets = [];
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = game.MISSILE[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var missileID = _step2.value;
+
+          var missile = game.entities[missileID];
+          if (missile.playerID != tower.playerID) {
+            possibleTargets.push(missileID);
+          }
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+
+      tower.targetID = oneOf(possibleTargets);
+    }
+
+    // aim at target
+    var targetTheta = config.minTheta;
+    if (tower.targetID != null) {
+      var target = game.entities[tower.targetID];
+      // clear dead target
+      if (target == null) {
+        tower.targetID = null;
+
+        // else aim at living target
+      } else {
+        var targetPos = game.entities[tower.targetID].position;
+        targetTheta = vectorTheta(subtract(targetPos, tower.position)) % (Math.PI / 2);
+        targetTheta = clamp(targetTheta, config.minTheta, config.maxTheta);
+      }
+    }
+    if (closeTo(tower.theta, targetTheta)) {
+      tower.thetaAccel /= -2;
+    } else if (tower.theta < targetTheta) {
+      tower.thetaAccel = config.thetaAccel;
+    } else if (tower.theta > targetTheta) {
+      tower.thetaAccel = -1 * config.thetaAccel;
+    }
+    tower.thetaSpeed += tower.thetaAccel;
+    tower.thetaSpeed = clamp(tower.thetaSpeed, -config.maxThetaSpeed, config.maxThetaSpeed);
+    tower.theta += tower.thetaSpeed;
+    var clamped = clamp(tower.theta, config.minTheta, config.maxTheta);
+    if (!closeTo(clamped, tower.theta)) {
+      tower.thetaSpeed = 0;
+      tower.thetaAccel = 0;
+    }
+    tower.theta = clamped;
+
+    // shoot at target
+    if (tower.targetID != null && !isActionTypeQueued(tower, 'SHOOT')) {
+      queueAction(game, tower, makeAction(game, tower, 'SHOOT', { theta: tower.theta, projectileType: tower.projectileType }));
+    }
   }
 };
 
@@ -2305,28 +2601,28 @@ var stepAction = function stepAction(game, entity, decisionFunction) {
 //////////////////////////////////////////////////////////////////////////
 
 var updateTiledSprites = function updateTiledSprites(game) {
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator2 = game.staleTiles[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var id = _step2.value;
+    for (var _iterator3 = game.staleTiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var id = _step3.value;
 
       var entity = game.entities[id];
       entity.dictIndexStr = getDictIndexStr(game, entity);
     }
   } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
     } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
+      if (_didIteratorError3) {
+        throw _iteratorError3;
       }
     }
   }
@@ -2341,7 +2637,7 @@ var updateRain = function updateRain(game) {
 };
 
 module.exports = { tickReducer: tickReducer };
-},{"../config":1,"../render/render":23,"../selectors/collisions":28,"../selectors/misc":29,"../selectors/neighbors":30,"../selectors/pheromones":31,"../selectors/sprites":32,"../simulation/actionOperations":33,"../simulation/actionQueue.js":34,"../simulation/agentOperations":35,"../simulation/entityOperations":36,"../simulation/miscOperations":38,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],23:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../render/render":27,"../selectors/collisions":32,"../selectors/misc":33,"../selectors/neighbors":34,"../selectors/pheromones":35,"../selectors/sprites":36,"../simulation/actionOperations":37,"../simulation/actionQueue.js":38,"../simulation/agentOperations":39,"../simulation/entityOperations":40,"../simulation/miscOperations":42,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/stochastic":79,"../utils/vectors":80}],27:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2534,7 +2830,7 @@ var renderView = function renderView(canvas, ctx2d, game, dims, isMini) {
 
         var entity = game.entities[_id];
         if (!entity) {
-          console.log("tried to render a null entity from grid", entityType, pos, entityID);
+          console.log("tried to render a null entity from grid", entityType, _id);
           continue;
         }
         if (entity.notAnimated) break;
@@ -2592,13 +2888,13 @@ var renderView = function renderView(canvas, ctx2d, game, dims, isMini) {
 
   try {
     for (var _iterator2 = game.dirtPutdownPositions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var _pos = _step2.value;
+      var pos = _step2.value;
 
-      if (!onScreen(game, { position: _pos, width: 1, height: 1 })) continue;
+      if (!onScreen(game, { position: pos, width: 1, height: 1 })) continue;
       ctx.fillStyle = 'rgba(139,0,0, 0.1)';
       ctx.strokeStyle = 'red';
-      ctx.fillRect(_pos.x, _pos.y, 1, 1);
-      ctx.strokeRect(_pos.x, _pos.y, 1, 1);
+      ctx.fillRect(pos.x, pos.y, 1, 1);
+      ctx.strokeRect(pos.x, pos.y, 1, 1);
     }
 
     // marquee
@@ -2684,14 +2980,14 @@ var refreshStaleImage = function refreshStaleImage(game, dims) {
   } else {
     var staleEntities = {};
     for (var posKey in game.viewImage.stalePositions) {
-      var _pos2 = game.viewImage.stalePositions[posKey];
+      var pos = game.viewImage.stalePositions[posKey];
       // background
       ctx.fillStyle = 'rgba(186, 175, 137, 1)';
-      ctx.fillRect(_pos2.x, _pos2.y, 1, 1);
+      ctx.fillRect(pos.x, pos.y, 1, 1);
       var _obj = getTileSprite(game, { type: 'DIRT', dictIndexStr: 'lrtb' });
       if (_obj != null && _obj.img != null) {
         ctx.globalAlpha = 0.2;
-        ctx.drawImage(_obj.img, _obj.x, _obj.y, _obj.width, _obj.height, _pos2.x, _pos2.y, 1, 1);
+        ctx.drawImage(_obj.img, _obj.x, _obj.y, _obj.width, _obj.height, pos.x, pos.y, 1, 1);
         ctx.globalAlpha = 1;
       }
       var _iteratorNormalCompletion3 = true;
@@ -2699,19 +2995,19 @@ var refreshStaleImage = function refreshStaleImage(game, dims) {
       var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator3 = lookupInGrid(game.grid, _pos2)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var _entityID = _step3.value;
+        for (var _iterator3 = lookupInGrid(game.grid, pos)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var entityID = _step3.value;
 
-          var entity = game.entities[_entityID];
+          var entity = game.entities[entityID];
           if (!entity) {
-            console.log("tried to render a null entity from grid", _pos2, _entityID);
+            console.log("tried to render a null entity from grid", pos, entityID);
             continue;
           }
           if (!entity.notAnimated) continue;
           if (staleEntities[entity.type] == null) {
             staleEntities[entity.type] = {};
           }
-          staleEntities[entity.type][_entityID] = entity;
+          staleEntities[entity.type][entityID] = entity;
         }
       } catch (err) {
         _didIteratorError3 = true;
@@ -2729,8 +3025,8 @@ var refreshStaleImage = function refreshStaleImage(game, dims) {
       }
     }
     for (var entityType in Entities) {
-      for (var _entityID2 in staleEntities[entityType]) {
-        renderEntity(ctx, game, game.entities[_entityID2], Entities[entityType].render);
+      for (var _entityID in staleEntities[entityType]) {
+        renderEntity(ctx, game, game.entities[_entityID], Entities[entityType].render);
       }
     }
     game.viewImage.stalePositions = {};
@@ -2778,9 +3074,16 @@ var renderEntity = function renderEntity(ctx, game, entity, alwaysOnScreen) {
 
         var heldEntity = game.entities[entity.holdingIDs[i]];
         var renderFn = Entities[heldEntity.type].render;
+        var position = entity.position;
+        var theta = entity.theta;
+        // NOTE: special case for ballistic entities
+        if (entity.isBallistic) {
+          position = entity.ballisticPosition;
+          theta = entity.ballisticTheta + Math.PI;
+        }
         ctx.save();
-        ctx.translate(entity.position.x + width / 2, entity.position.y + height / 2);
-        ctx.rotate(entity.theta - Math.PI / 2);
+        ctx.translate(position.x + width / 2, position.y + height / 2);
+        ctx.rotate(theta - Math.PI / 2);
         ctx.translate(-entity.width / 2, -entity.height / 2);
         if (entity.holdingIDs.length == 1) {
           ctx.translate(width / 2 - 0.45 / 2, -0.1);
@@ -2804,9 +3107,9 @@ var renderEntity = function renderEntity(ctx, game, entity, alwaysOnScreen) {
 
     try {
       for (var _iterator4 = positionsInFront[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-        var _pos3 = _step4.value;
-        var x = _pos3.x,
-            y = _pos3.y;
+        var pos = _step4.value;
+        var x = pos.x,
+            y = pos.y;
 
         ctx.strokeStyle = 'red';
         ctx.strokeRect(x, y, 1, 1);
@@ -2842,9 +3145,9 @@ var renderEntity = function renderEntity(ctx, game, entity, alwaysOnScreen) {
 
     try {
       for (var _iterator5 = _positionsInFront[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-        var _pos4 = _step5.value;
-        var x = _pos4.x,
-            y = _pos4.y;
+        var _pos = _step5.value;
+        var x = _pos.x,
+            y = _pos.y;
 
         ctx.strokeStyle = 'red';
         ctx.strokeRect(x, y, 1, 1);
@@ -2905,9 +3208,9 @@ var renderEntity = function renderEntity(ctx, game, entity, alwaysOnScreen) {
 
     try {
       for (var _iterator7 = entityPositions[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-        var _pos5 = _step7.value;
-        var _x = _pos5.x,
-            _y = _pos5.y;
+        var _pos2 = _step7.value;
+        var _x = _pos2.x,
+            _y = _pos2.y;
 
         ctx.strokeStyle = 'red';
         ctx.strokeRect(_x, _y, 1, 1);
@@ -2977,7 +3280,7 @@ var renderPheromones = function renderPheromones(ctx, game) {
 };
 
 module.exports = { render: render };
-},{"../config":1,"../entities/registry":10,"../selectors/misc":29,"../selectors/sprites":32,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"./renderMinimap":26}],24:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../selectors/misc":33,"../selectors/sprites":36,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"./renderMinimap":30}],28:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3206,7 +3509,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":29,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"./renderHealthBar":25}],25:[function(require,module,exports){
+},{"../selectors/misc":33,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"./renderHealthBar":29}],29:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3248,7 +3551,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":73,"../utils/vectors":76}],26:[function(require,module,exports){
+},{"../utils/gridHelpers":77,"../utils/vectors":80}],30:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3586,7 +3889,7 @@ var onMinimap = function onMinimap(dims, entity) {
 module.exports = {
   renderMinimap: renderMinimap
 };
-},{"../selectors/misc":29,"../selectors/sprites":32,"../utils/gridHelpers":73,"../utils/vectors":76,"./renderSegmented":27}],27:[function(require,module,exports){
+},{"../selectors/misc":33,"../selectors/sprites":36,"../utils/gridHelpers":77,"../utils/vectors":80,"./renderSegmented":31}],31:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -3734,7 +4037,7 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":29,"../selectors/sprites":32,"../utils/vectors":76,"./renderHealthBar":25}],28:[function(require,module,exports){
+},{"../selectors/misc":33,"../selectors/sprites":36,"../utils/vectors":80,"./renderHealthBar":29}],32:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -3801,7 +4104,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":73}],29:[function(require,module,exports){
+},{"../utils/gridHelpers":77}],33:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3994,7 +4297,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":28,"../selectors/neighbors":30,"../simulation/actionQueue":34,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],30:[function(require,module,exports){
+},{"../selectors/collisions":32,"../selectors/neighbors":34,"../simulation/actionQueue":38,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],34:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -4261,7 +4564,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":28,"../utils/gridHelpers":73,"../utils/vectors":76}],31:[function(require,module,exports){
+},{"../selectors/collisions":32,"../utils/gridHelpers":77,"../utils/vectors":80}],35:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4398,7 +4701,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":30,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],32:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":34,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],36:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4842,7 +5145,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":29,"../selectors/neighbors":30,"../simulation/actionQueue":34,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],33:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":33,"../selectors/neighbors":34,"../simulation/actionQueue":38,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],37:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4944,6 +5247,9 @@ var entityStartCurrentAction = function entityStartCurrentAction(game, entity) {
     case 'DIE':
       entityDie(game, entity);
       break;
+    case 'SHOOT':
+      entityShoot(game, entity, curAction.payload);
+      break;
   }
 };
 
@@ -4995,6 +5301,30 @@ var agentDoMove = function agentDoMove(game, entity, nextPos) {
   return true;
 };
 
+var entityShoot = function entityShoot(game, entity, payload) {
+  var theta = payload.theta,
+      projectileType = payload.projectileType;
+
+  var projectile = null;
+  switch (projectileType) {
+    case 'BULLET':
+      {
+        var position = round(add(makeVector(theta, -2), entity.position));
+        projectile = Entities.BULLET.make(game, position, entity.playerID, theta + Math.PI);
+        break;
+      }
+    case 'MISSILE':
+      {
+        var _position = round(add(makeVector(theta, -4), entity.position));
+        projectile = Entities.MISSILE.make(game, _position, entity.playerID, Entities.DYNAMITE.make(game, _position, entity.playerID), theta + Math.PI);
+        break;
+      }
+  }
+  if (projectile != null) {
+    addEntity(game, projectile);
+  }
+};
+
 var entityDie = function entityDie(game, entity) {
   if (entity.isExplosive) {
     triggerExplosion(game, entity);
@@ -5013,7 +5343,7 @@ var entityDie = function entityDie(game, entity) {
 module.exports = {
   entityStartCurrentAction: entityStartCurrentAction
 };
-},{"../entities/registry":10,"../selectors/misc":29,"../selectors/sprites":32,"../simulation/actionQueue":34,"../simulation/agentOperations":35,"../simulation/entityOperations":36,"../simulation/explosiveOperations":37,"../utils/helpers":74,"../utils/vectors":76}],34:[function(require,module,exports){
+},{"../entities/registry":11,"../selectors/misc":33,"../selectors/sprites":36,"../simulation/actionQueue":38,"../simulation/agentOperations":39,"../simulation/entityOperations":40,"../simulation/explosiveOperations":41,"../utils/helpers":78,"../utils/vectors":80}],38:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5239,7 +5569,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":31,"../utils/helpers":74,"../utils/vectors":76}],35:[function(require,module,exports){
+},{"../selectors/pheromones":35,"../utils/helpers":78,"../utils/vectors":80}],39:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5594,7 +5924,7 @@ module.exports = {
   agentDecideMove: agentDecideMove,
   agentSwitchTask: agentSwitchTask
 };
-},{"../config":1,"../entities/registry":10,"../selectors/collisions":28,"../selectors/misc":29,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/actionQueue":34,"../simulation/entityOperations":36,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/stochastic":75,"../utils/vectors":76}],36:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../selectors/collisions":32,"../selectors/misc":33,"../selectors/neighbors":34,"../selectors/pheromones":35,"../simulation/actionQueue":38,"../simulation/entityOperations":40,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/stochastic":79,"../utils/vectors":80}],40:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5996,9 +6326,12 @@ var addEntity = function addEntity(game, entity) {
   if (entity.isExplosive) {
     game.EXPLOSIVE[entity.id] = true;
   }
-  // special case for missiles
+  if (entity.isTower) {
+    game.TOWER[entity.id] = true;
+  }
+  // NOTE: special case for missiles
   if (entity.warhead) {
-    if (entity.warhead.id == -1) {
+    if (entity.warhead.id == -1 || !game.entities[entity.warhead.id]) {
       addEntity(game, entity.warhead);
     }
     entity.holding = entity.warhead;
@@ -6042,6 +6375,9 @@ var removeEntity = function removeEntity(game, entity) {
   }
   if (game.ACTOR[entity.id]) {
     delete game.ACTOR[entity.id];
+  }
+  if (game.TOWER[entity.id]) {
+    delete game.TOWER[entity.id];
   }
 
   delete game.entities[entity.id];
@@ -6308,7 +6644,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":8,"../entities/registry":10,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/pheromones":39,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],37:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../selectors/neighbors":34,"../selectors/pheromones":35,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],41:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -6377,7 +6713,7 @@ var triggerExplosion = function triggerExplosion(game, explosive) {
           lookupInGrid(game.grid, round(position)).map(function (id) {
             return game.entities[id];
           }).forEach(function (e) {
-            if (damage <= 0) return;
+            if (e == null || damage <= 0) return;
             if (e.hp > damage) {
               dealDamageToEntity(game, e, damage);
               damage = 0;
@@ -6417,7 +6753,7 @@ var triggerExplosion = function triggerExplosion(game, explosive) {
 module.exports = {
   triggerExplosion: triggerExplosion
 };
-},{"../simulation/actionQueue":34,"../simulation/entityOperations":36,"../simulation/miscOperations":38,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],38:[function(require,module,exports){
+},{"../simulation/actionQueue":38,"../simulation/entityOperations":40,"../simulation/miscOperations":42,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],42:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -6444,7 +6780,7 @@ var dealDamageToEntity = function dealDamageToEntity(game, entity, damage) {
 module.exports = {
   dealDamageToEntity: dealDamageToEntity
 };
-},{"../simulation/actionQueue":34,"../simulation/entityOperations":36}],39:[function(require,module,exports){
+},{"../simulation/actionQueue":38,"../simulation/entityOperations":40}],43:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -6804,7 +7140,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":30,"../selectors/pheromones":31,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],40:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":34,"../selectors/pheromones":35,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],44:[function(require,module,exports){
 'use strict';
 
 var _require = require('../entities/makeEntity'),
@@ -6941,7 +7277,8 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
     NOT_ANIMATED: {}, // entities that don't animate every tick
     PHEROMONE_EMITTER: {}, // entities that emit a pheromone
     BALLISTIC: {}, // entities that follow a ballistic trajectory
-    EXPLOSIVE: {} // entities that explode when they die
+    EXPLOSIVE: {}, // entities that explode when they die
+    TOWER: {} // entities that track a target to aim at
   };
 
   // lookup for entityIDs by entityType
@@ -6971,7 +7308,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
 };
 
 module.exports = { initBaseState: initBaseState, initPlayer: initPlayer };
-},{"../config":1,"../entities/makeEntity":8,"../entities/registry":10,"../simulation/entityOperations":36,"../utils/gridHelpers":73,"../utils/stochastic":75,"../utils/vectors":76}],41:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../simulation/entityOperations":40,"../utils/gridHelpers":77,"../utils/stochastic":79,"../utils/vectors":80}],45:[function(require,module,exports){
 'use strict';
 
 var initState = function initState() {
@@ -6986,7 +7323,7 @@ var initState = function initState() {
 };
 
 module.exports = { initState: initState };
-},{}],42:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7135,7 +7472,7 @@ var handleGameWon = function handleGameWon(store, dispatch, state, reason) {
 };
 
 module.exports = { initGameOverSystem: initGameOverSystem };
-},{"../render/render":23,"../ui/components/Button.react":66,"../ui/components/Divider.react":68,"../ui/components/Modal.react":70,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"axios":77,"react":112}],43:[function(require,module,exports){
+},{"../render/render":27,"../ui/components/Button.react":70,"../ui/components/Divider.react":72,"../ui/components/Modal.react":74,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"axios":81,"react":116}],47:[function(require,module,exports){
 'use strict';
 
 var initKeyboardControlsSystem = function initKeyboardControlsSystem(store) {
@@ -7270,7 +7607,7 @@ var getUpDownLeftRight = function getUpDownLeftRight(ev) {
 };
 
 module.exports = { initKeyboardControlsSystem: initKeyboardControlsSystem };
-},{}],44:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 var _require = require('../config'),
@@ -7490,7 +7827,7 @@ var getMousePixel = function getMousePixel(ev, canvas) {
 };
 
 module.exports = { initMouseControlsSystem: initMouseControlsSystem };
-},{"../config":1,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76}],45:[function(require,module,exports){
+},{"../config":1,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],49:[function(require,module,exports){
 'use strict';
 
 var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
@@ -7505,7 +7842,7 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
 };
 
 module.exports = { initPheromoneWorkerSystem: initPheromoneWorkerSystem };
-},{}],46:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -7549,7 +7886,7 @@ var initRainSystem = function initRainSystem(store) {
 };
 
 module.exports = { initRainSystem: initRainSystem };
-},{"../config":1,"../simulation/pheromones":39,"../utils/stochastic":75}],47:[function(require,module,exports){
+},{"../config":1,"../simulation/pheromones":43,"../utils/stochastic":79}],51:[function(require,module,exports){
 'use strict';
 
 var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
@@ -7595,7 +7932,7 @@ var loadSprite = function loadSprite(dispatch, state, name, src) {
 };
 
 module.exports = { initSpriteSheetSystem: initSpriteSheetSystem };
-},{}],48:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 var levels = require('../levels/levels');
@@ -7628,7 +7965,7 @@ function loadLevel(store, levelName, additionalUpgrades) {
 module.exports = {
   loadLevel: loadLevel
 };
-},{"../levels/levels":15}],49:[function(require,module,exports){
+},{"../levels/levels":17}],53:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -7767,7 +8104,7 @@ function withPropsChecker(WrappedComponent) {
 }
 
 module.exports = React.memo(Canvas);
-},{"../config":1,"react":112}],50:[function(require,module,exports){
+},{"../config":1,"react":116}],54:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -7855,7 +8192,7 @@ var AudioWidget = function AudioWidget(props) {
 };
 
 module.exports = AudioWidget;
-},{"./Button.react":51,"react":112}],51:[function(require,module,exports){
+},{"./Button.react":55,"react":116}],55:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -7939,7 +8276,7 @@ function Button(props) {
 }
 
 module.exports = Button;
-},{"react":112}],52:[function(require,module,exports){
+},{"react":116}],56:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7979,7 +8316,7 @@ function Checkbox(props) {
 }
 
 module.exports = Checkbox;
-},{"react":112}],53:[function(require,module,exports){
+},{"react":116}],57:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7995,7 +8332,7 @@ function Divider(props) {
 }
 
 module.exports = Divider;
-},{"react":112}],54:[function(require,module,exports){
+},{"react":116}],58:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8036,7 +8373,7 @@ var Dropdown = function Dropdown(props) {
 };
 
 module.exports = Dropdown;
-},{"react":112}],55:[function(require,module,exports){
+},{"react":116}],59:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8110,7 +8447,7 @@ function Modal(props) {
 }
 
 module.exports = Modal;
-},{"../../utils/helpers":74,"./Button.react":51,"react":112}],56:[function(require,module,exports){
+},{"../../utils/helpers":78,"./Button.react":55,"react":116}],60:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8200,7 +8537,7 @@ var submitValue = function submitValue(onChange, nextVal, onlyInt) {
 };
 
 module.exports = NumberField;
-},{"react":112}],57:[function(require,module,exports){
+},{"react":116}],61:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8289,7 +8626,7 @@ var RadioPicker = function (_React$Component) {
 }(React.Component);
 
 module.exports = RadioPicker;
-},{"react":112}],58:[function(require,module,exports){
+},{"react":116}],62:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8360,7 +8697,7 @@ function Slider(props) {
 }
 
 module.exports = Slider;
-},{"./NumberField.react":56,"react":112}],59:[function(require,module,exports){
+},{"./NumberField.react":60,"react":116}],63:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8539,7 +8876,7 @@ function ExperimentalSidebar(props) {
 }
 
 module.exports = ExperimentalSidebar;
-},{"./Components/Button.react":51,"./Components/Checkbox.react":52,"./Components/Divider.react":53,"./Components/Dropdown.react":54,"./Components/Slider.react":58,"react":112}],60:[function(require,module,exports){
+},{"./Components/Button.react":55,"./Components/Checkbox.react":56,"./Components/Divider.react":57,"./Components/Dropdown.react":58,"./Components/Slider.react":62,"react":116}],64:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8696,7 +9033,7 @@ function registerHotkeys(dispatch) {
 }
 
 module.exports = Game;
-},{"../config":1,"../selectors/misc":29,"../simulation/actionQueue":34,"../systems/gameOverSystem":42,"../systems/keyboardControlsSystem":43,"../systems/mouseControlsSystem":44,"../systems/pheromoneWorkerSystem":45,"../systems/rainSystem":46,"../systems/spriteSheetSystem":47,"../utils/gridHelpers":73,"../utils/helpers":74,"../utils/vectors":76,"./Canvas.react":49,"./Components/Button.react":51,"./Components/Checkbox.react":52,"./Components/RadioPicker.react":57,"./ExperimentalSidebar.react":59,"./TopBar.react":64,"react":112}],61:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":33,"../simulation/actionQueue":38,"../systems/gameOverSystem":46,"../systems/keyboardControlsSystem":47,"../systems/mouseControlsSystem":48,"../systems/pheromoneWorkerSystem":49,"../systems/rainSystem":50,"../systems/spriteSheetSystem":51,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"./Canvas.react":53,"./Components/Button.react":55,"./Components/Checkbox.react":56,"./Components/RadioPicker.react":61,"./ExperimentalSidebar.react":63,"./TopBar.react":68,"react":116}],65:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -8764,7 +9101,7 @@ function LevelEditor(props) {
 
     // entity creation mode
     deleteMode: false,
-    entityType: 'AGENT',
+    entityType: 'MISSILE',
     subdividing: false,
     pheromoneType: 'COLONY',
     background: 'FLOOR_TILE',
@@ -8772,10 +9109,12 @@ function LevelEditor(props) {
     doodad: 'QUESTION',
     stoneSubType: 'STONE',
 
-    // missiles
-    theta: -1,
-    velocity: 10,
+    // missiles and towers
+    theta: -0.6,
+    velocity: 70,
     warheadType: 'DYNAMITE',
+    fireRate: Entities.TURRET.config.SHOOT.duration,
+    projectileType: 'BULLET',
 
     // copy-paste mode
     clipboardMode: 'COPY',
@@ -9472,6 +9811,16 @@ function createEntities(game, dispatch, editor, rect) {
         args = [editor.playerID, warhead, editor.theta, editor.velocity];
         break;
       }
+    case 'BULLET':
+      {
+        args = [editor.playerID, editor.theta, editor.velocity];
+        break;
+      }
+    case 'TURRET':
+      {
+        args = [editor.playerID, editor.projectileType, editor.fireRate];
+        break;
+      }
     case 'WORM':
       // create initial segments:
       var randNeighbor = function randNeighbor(pos) {
@@ -9581,12 +9930,63 @@ function createEntityOptions(game, editor, setEditor) {
         })
       ));
       break;
+    case 'TURRET':
+      {
+        var projectileTypes = [];
+        for (var entityType in Entities) {
+          if (Entities[entityType].config.isBallistic) {
+            projectileTypes.push(entityType);
+          }
+        }
+        options.push(React.createElement(
+          'span',
+          null,
+          'Projectile Type:',
+          React.createElement(Dropdown, {
+            options: projectileTypes,
+            selected: editor.projectileType,
+            onChange: function onChange(projectileType) {
+              return setEditor(_extends({}, editor, { projectileType: projectileType }));
+            }
+          }),
+          'FireRate:',
+          React.createElement(NumberField, {
+            value: editor.fireRate,
+            onChange: function onChange(fireRate) {
+              return setEditor(_extends({}, editor, { fireRate: fireRate }));
+            }
+          })
+        ));
+        break;
+      }
+    case 'BULLET':
+      {
+        options.push(React.createElement(
+          'span',
+          null,
+          'Theta:',
+          React.createElement(NumberField, {
+            value: editor.theta,
+            onChange: function onChange(theta) {
+              return setEditor(_extends({}, editor, { theta: theta }));
+            }
+          }),
+          'Velocity:',
+          React.createElement(NumberField, {
+            value: editor.velocity,
+            onChange: function onChange(velocity) {
+              return setEditor(_extends({}, editor, { velocity: velocity }));
+            }
+          })
+        ));
+        break;
+      }
     case 'MISSILE':
       {
         var warheadTypes = [];
-        for (var entityType in Entities) {
-          if (Entities[entityType].config.isExplosive) {
-            warheadTypes.push(entityType);
+        for (var _entityType in Entities) {
+          if (Entities[_entityType].config.isExplosive) {
+            warheadTypes.push(_entityType);
           }
         }
         options.push(React.createElement(
@@ -9615,6 +10015,7 @@ function createEntityOptions(game, editor, setEditor) {
             }
           })
         ));
+        break;
       }
   }
 
@@ -9626,7 +10027,7 @@ function createEntityOptions(game, editor, setEditor) {
 }
 
 module.exports = LevelEditor;
-},{"../config":1,"../entities/registry":10,"../render/render":23,"../systems/mouseControlsSystem":44,"../utils/vectors":76,"./components/Button.react":66,"./components/Checkbox.react":67,"./components/Divider.react":68,"./components/Dropdown.react":69,"./components/NumberField.react":71,"./components/Slider.react":72,"react":112}],62:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../render/render":27,"../systems/mouseControlsSystem":48,"../utils/vectors":80,"./components/Button.react":70,"./components/Checkbox.react":71,"./components/Divider.react":72,"./components/Dropdown.react":73,"./components/NumberField.react":75,"./components/Slider.react":76,"react":116}],66:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -9872,7 +10273,7 @@ function MadeBy(props) {
 function LevelEditor(props) {
   var dispatch = props.dispatch;
 
-  var _useState11 = useState('testLevel'),
+  var _useState11 = useState('mediumBallisticsLevel'),
       _useState12 = _slicedToArray(_useState11, 2),
       level = _useState12[0],
       setLevel = _useState12[1];
@@ -9977,7 +10378,7 @@ function playLevel(store, levelName, setLoadingProgress, setIsLoaded) {
 }
 
 module.exports = Lobby;
-},{"../config":1,"../levels/levels":15,"../systems/spriteSheetSystem":47,"../thunks/levelThunks":48,"../ui/components/Modal.react":70,"../utils/helpers":74,"./components/AudioWidget.react":65,"./components/Button.react":66,"./components/Checkbox.react":67,"./components/Divider.react":68,"./components/Dropdown.react":69,"axios":77,"react":112}],63:[function(require,module,exports){
+},{"../config":1,"../levels/levels":17,"../systems/spriteSheetSystem":51,"../thunks/levelThunks":52,"../ui/components/Modal.react":74,"../utils/helpers":78,"./components/AudioWidget.react":69,"./components/Button.react":70,"./components/Checkbox.react":71,"./components/Divider.react":72,"./components/Dropdown.react":73,"axios":81,"react":116}],67:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10024,7 +10425,7 @@ function Main(props) {
 }
 
 module.exports = Main;
-},{"./Game.react":60,"./LevelEditor.react":61,"./Lobby.react":62,"react":112}],64:[function(require,module,exports){
+},{"./Game.react":64,"./LevelEditor.react":65,"./Lobby.react":66,"react":116}],68:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10203,23 +10604,23 @@ function dismissModal(dispatch) {
 }
 
 module.exports = memo(TopBar);
-},{"../config":1,"../utils/helpers":74,"./Components/AudioWidget.react":50,"./Components/Button.react":51,"./Components/Modal.react":55,"react":112}],65:[function(require,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"./Button.react":66,"dup":50,"react":112}],66:[function(require,module,exports){
-arguments[4][51][0].apply(exports,arguments)
-},{"dup":51,"react":112}],67:[function(require,module,exports){
-arguments[4][52][0].apply(exports,arguments)
-},{"dup":52,"react":112}],68:[function(require,module,exports){
-arguments[4][53][0].apply(exports,arguments)
-},{"dup":53,"react":112}],69:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":78,"./Components/AudioWidget.react":54,"./Components/Button.react":55,"./Components/Modal.react":59,"react":116}],69:[function(require,module,exports){
 arguments[4][54][0].apply(exports,arguments)
-},{"dup":54,"react":112}],70:[function(require,module,exports){
+},{"./Button.react":70,"dup":54,"react":116}],70:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"../../utils/helpers":74,"./Button.react":66,"dup":55,"react":112}],71:[function(require,module,exports){
+},{"dup":55,"react":116}],71:[function(require,module,exports){
 arguments[4][56][0].apply(exports,arguments)
-},{"dup":56,"react":112}],72:[function(require,module,exports){
+},{"dup":56,"react":116}],72:[function(require,module,exports){
+arguments[4][57][0].apply(exports,arguments)
+},{"dup":57,"react":116}],73:[function(require,module,exports){
 arguments[4][58][0].apply(exports,arguments)
-},{"./NumberField.react":71,"dup":58,"react":112}],73:[function(require,module,exports){
+},{"dup":58,"react":116}],74:[function(require,module,exports){
+arguments[4][59][0].apply(exports,arguments)
+},{"../../utils/helpers":78,"./Button.react":70,"dup":59,"react":116}],75:[function(require,module,exports){
+arguments[4][60][0].apply(exports,arguments)
+},{"dup":60,"react":116}],76:[function(require,module,exports){
+arguments[4][62][0].apply(exports,arguments)
+},{"./NumberField.react":75,"dup":62,"react":116}],77:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -10355,7 +10756,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":74,"../utils/vectors":76}],74:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":78,"../utils/vectors":80}],78:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -10466,7 +10867,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":76}],75:[function(require,module,exports){
+},{"./vectors":80}],79:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -10521,7 +10922,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],76:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -10720,9 +11121,9 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}],77:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":79}],78:[function(require,module,exports){
+},{"./lib/axios":83}],82:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -10903,7 +11304,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":85,"../core/createError":86,"./../core/settle":90,"./../helpers/buildURL":94,"./../helpers/cookies":96,"./../helpers/isURLSameOrigin":99,"./../helpers/parseHeaders":101,"./../utils":103}],79:[function(require,module,exports){
+},{"../core/buildFullPath":89,"../core/createError":90,"./../core/settle":94,"./../helpers/buildURL":98,"./../helpers/cookies":100,"./../helpers/isURLSameOrigin":103,"./../helpers/parseHeaders":105,"./../utils":107}],83:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -10961,7 +11362,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":80,"./cancel/CancelToken":81,"./cancel/isCancel":82,"./core/Axios":83,"./core/mergeConfig":89,"./defaults":92,"./helpers/bind":93,"./helpers/isAxiosError":98,"./helpers/spread":102,"./utils":103}],80:[function(require,module,exports){
+},{"./cancel/Cancel":84,"./cancel/CancelToken":85,"./cancel/isCancel":86,"./core/Axios":87,"./core/mergeConfig":93,"./defaults":96,"./helpers/bind":97,"./helpers/isAxiosError":102,"./helpers/spread":106,"./utils":107}],84:[function(require,module,exports){
 'use strict';
 
 /**
@@ -10982,7 +11383,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],81:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -11041,14 +11442,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":80}],82:[function(require,module,exports){
+},{"./Cancel":84}],86:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],83:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11145,7 +11546,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":94,"./../utils":103,"./InterceptorManager":84,"./dispatchRequest":87,"./mergeConfig":89}],84:[function(require,module,exports){
+},{"../helpers/buildURL":98,"./../utils":107,"./InterceptorManager":88,"./dispatchRequest":91,"./mergeConfig":93}],88:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11199,7 +11600,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":103}],85:[function(require,module,exports){
+},{"./../utils":107}],89:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -11221,7 +11622,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":95,"../helpers/isAbsoluteURL":97}],86:[function(require,module,exports){
+},{"../helpers/combineURLs":99,"../helpers/isAbsoluteURL":101}],90:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -11241,7 +11642,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":88}],87:[function(require,module,exports){
+},{"./enhanceError":92}],91:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11322,7 +11723,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":82,"../defaults":92,"./../utils":103,"./transformData":91}],88:[function(require,module,exports){
+},{"../cancel/isCancel":86,"../defaults":96,"./../utils":107,"./transformData":95}],92:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11366,7 +11767,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],89:[function(require,module,exports){
+},{}],93:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -11455,7 +11856,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":103}],90:[function(require,module,exports){
+},{"../utils":107}],94:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -11482,7 +11883,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":86}],91:[function(require,module,exports){
+},{"./createError":90}],95:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11504,7 +11905,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":103}],92:[function(require,module,exports){
+},{"./../utils":107}],96:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -11606,7 +12007,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":78,"./adapters/xhr":78,"./helpers/normalizeHeaderName":100,"./utils":103,"_process":122}],93:[function(require,module,exports){
+},{"./adapters/http":82,"./adapters/xhr":82,"./helpers/normalizeHeaderName":104,"./utils":107,"_process":126}],97:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -11619,7 +12020,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],94:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11691,7 +12092,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":103}],95:[function(require,module,exports){
+},{"./../utils":107}],99:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11707,7 +12108,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],96:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11762,7 +12163,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":103}],97:[function(require,module,exports){
+},{"./../utils":107}],101:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11778,7 +12179,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],98:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11791,7 +12192,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],99:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11861,7 +12262,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":103}],100:[function(require,module,exports){
+},{"./../utils":107}],104:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -11875,7 +12276,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":103}],101:[function(require,module,exports){
+},{"../utils":107}],105:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11930,7 +12331,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":103}],102:[function(require,module,exports){
+},{"./../utils":107}],106:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11959,7 +12360,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],103:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -12312,7 +12713,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":93}],104:[function(require,module,exports){
+},{"./helpers/bind":97}],108:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -12404,7 +12805,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],105:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 (function (process){(function (){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -12510,7 +12911,7 @@ checkPropTypes.resetWarningCache = function() {
 module.exports = checkPropTypes;
 
 }).call(this)}).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":106,"_process":122}],106:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":110,"_process":126}],110:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -12524,7 +12925,7 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],107:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react-dom.development.js
@@ -37540,7 +37941,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":122,"object-assign":104,"prop-types/checkPropTypes":105,"react":112,"scheduler":118,"scheduler/tracing":119}],108:[function(require,module,exports){
+},{"_process":126,"object-assign":108,"prop-types/checkPropTypes":109,"react":116,"scheduler":122,"scheduler/tracing":123}],112:[function(require,module,exports){
 /** @license React v16.14.0
  * react-dom.production.min.js
  *
@@ -37834,7 +38235,7 @@ exports.flushSync=function(a,b){if((W&(fj|gj))!==V)throw Error(u(187));var c=W;W
 exports.unmountComponentAtNode=function(a){if(!gk(a))throw Error(u(40));return a._reactRootContainer?(Nj(function(){ik(null,null,a,!1,function(){a._reactRootContainer=null;a[Od]=null})}),!0):!1};exports.unstable_batchedUpdates=Mj;exports.unstable_createPortal=function(a,b){return kk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!gk(c))throw Error(u(200));if(null==a||void 0===a._reactInternalFiber)throw Error(u(38));return ik(a,b,c,!1,d)};exports.version="16.14.0";
 
-},{"object-assign":104,"react":112,"scheduler":118}],109:[function(require,module,exports){
+},{"object-assign":108,"react":116,"scheduler":122}],113:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -37876,7 +38277,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":107,"./cjs/react-dom.production.min.js":108,"_process":122}],110:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":111,"./cjs/react-dom.production.min.js":112,"_process":126}],114:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react.development.js
@@ -39792,7 +40193,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":122,"object-assign":104,"prop-types/checkPropTypes":105}],111:[function(require,module,exports){
+},{"_process":126,"object-assign":108,"prop-types/checkPropTypes":109}],115:[function(require,module,exports){
 /** @license React v16.14.0
  * react.production.min.js
  *
@@ -39819,7 +40220,7 @@ key:d,ref:g,props:e,_owner:k}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:A,_ctor:a,_status:-1,_result:null}};exports.memo=function(a,b){return{$$typeof:z,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return Z().useCallback(a,b)};exports.useContext=function(a,b){return Z().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return Z().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return Z().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return Z().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return Z().useMemo(a,b)};exports.useReducer=function(a,b,c){return Z().useReducer(a,b,c)};exports.useRef=function(a){return Z().useRef(a)};exports.useState=function(a){return Z().useState(a)};exports.version="16.14.0";
 
-},{"object-assign":104}],112:[function(require,module,exports){
+},{"object-assign":108}],116:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -39830,7 +40231,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react.development.js":110,"./cjs/react.production.min.js":111,"_process":122}],113:[function(require,module,exports){
+},{"./cjs/react.development.js":114,"./cjs/react.production.min.js":115,"_process":126}],117:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -40508,7 +40909,7 @@ exports.compose = compose;
 exports.createStore = createStore;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":122,"symbol-observable":120}],114:[function(require,module,exports){
+},{"_process":126,"symbol-observable":124}],118:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler-tracing.development.js
@@ -40861,7 +41262,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":122}],115:[function(require,module,exports){
+},{"_process":126}],119:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler-tracing.production.min.js
  *
@@ -40873,7 +41274,7 @@ exports.unstable_wrap = unstable_wrap;
 
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],116:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler.development.js
@@ -41735,7 +42136,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":122}],117:[function(require,module,exports){
+},{"_process":126}],121:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler.production.min.js
  *
@@ -41758,7 +42159,7 @@ exports.unstable_getCurrentPriorityLevel=function(){return R};exports.unstable_g
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();if("object"===typeof c&&null!==c){var e=c.delay;e="number"===typeof e&&0<e?d+e:d;c="number"===typeof c.timeout?c.timeout:Y(a)}else c=Y(a),e=d;c=e+c;a={id:P++,callback:b,priorityLevel:a,startTime:e,expirationTime:c,sortIndex:-1};e>d?(a.sortIndex=e,J(O,a),null===L(N)&&a===L(O)&&(U?h():U=!0,g(W,e-d))):(a.sortIndex=c,J(N,a),T||S||(T=!0,f(X)));return a};
 exports.unstable_shouldYield=function(){var a=exports.unstable_now();V(a);var b=L(N);return b!==Q&&null!==Q&&null!==b&&null!==b.callback&&b.startTime<=a&&b.expirationTime<Q.expirationTime||k()};exports.unstable_wrapCallback=function(a){var b=R;return function(){var c=R;R=b;try{return a.apply(this,arguments)}finally{R=c}}};
 
-},{}],118:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -41769,7 +42170,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":116,"./cjs/scheduler.production.min.js":117,"_process":122}],119:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":120,"./cjs/scheduler.production.min.js":121,"_process":126}],123:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -41780,7 +42181,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":114,"./cjs/scheduler-tracing.production.min.js":115,"_process":122}],120:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":118,"./cjs/scheduler-tracing.production.min.js":119,"_process":126}],124:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -41812,7 +42213,7 @@ if (typeof self !== 'undefined') {
 var result = (0, _ponyfill2['default'])(root);
 exports['default'] = result;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill.js":121}],121:[function(require,module,exports){
+},{"./ponyfill.js":125}],125:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41836,7 +42237,7 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],122:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -42022,4 +42423,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[14]);
+},{}]},{},[16]);

@@ -278,9 +278,12 @@ const addEntity = (game: Game, entity: Entity): Game => {
   if (entity.isExplosive) {
     game.EXPLOSIVE[entity.id] = true;
   }
-  // special case for missiles
+  if (entity.isTower) {
+    game.TOWER[entity.id] = true;
+  }
+  // NOTE: special case for missiles
   if (entity.warhead) {
-    if (entity.warhead.id == -1) {
+    if (entity.warhead.id == -1 || !game.entities[entity.warhead.id]) {
       addEntity(game, entity.warhead);
     }
     entity.holding = entity.warhead;
@@ -321,6 +324,9 @@ const removeEntity = (game: Game, entity: Entity): Game => {
   }
   if (game.ACTOR[entity.id]) {
     delete game.ACTOR[entity.id];
+  }
+  if (game.TOWER[entity.id]) {
+    delete game.TOWER[entity.id];
   }
 
   delete game.entities[entity.id];

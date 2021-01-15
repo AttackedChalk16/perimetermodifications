@@ -18,7 +18,7 @@ const config = {
   height: 1,
   explosionRadius: 5,
   damage: 4,
-  timer: 1500,
+  timer: 15,
   age: 0,
 
   DIE: {

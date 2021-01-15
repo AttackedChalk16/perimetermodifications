@@ -183,7 +183,7 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
         console.log(
           "tried to render a null entity from grid",
           entityType,
-          pos, entityID,
+          id,
         );
         continue;
       }
@@ -391,12 +391,19 @@ const renderEntity = (ctx, game, entity, alwaysOnScreen): void => {
 
         const heldEntity = game.entities[entity.holdingIDs[i]];
         const renderFn = Entities[heldEntity.type].render;
+        let position = entity.position;
+        let theta = entity.theta;
+        // NOTE: special case for ballistic entities
+        if (entity.isBallistic) {
+          position = entity.ballisticPosition;
+          theta = entity.ballisticTheta + Math.PI;
+        }
         ctx.save();
         ctx.translate(
-          entity.position.x + width / 2,
-          entity.position.y + height / 2,
+          position.x + width / 2,
+          position.y + height / 2,
         );
-        ctx.rotate(entity.theta - Math.PI / 2);
+        ctx.rotate(theta - Math.PI / 2);
         ctx.translate(-entity.width / 2, -entity.height / 2);
         if (entity.holdingIDs.length == 1) {
           ctx.translate(width / 2 - 0.45/2, -0.1);

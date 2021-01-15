@@ -50,7 +50,7 @@ function LevelEditor(props: Props): React.Node {
 
     // entity creation mode
     deleteMode: false,
-    entityType: 'AGENT',
+    entityType: 'MISSILE',
     subdividing: false,
     pheromoneType: 'COLONY',
     background: 'FLOOR_TILE',
@@ -58,10 +58,12 @@ function LevelEditor(props: Props): React.Node {
     doodad: 'QUESTION',
     stoneSubType: 'STONE',
 
-    // missiles
-    theta: -1,
-    velocity: 20,
+    // missiles and towers
+    theta: -0.6,
+    velocity: 70,
     warheadType: 'DYNAMITE',
+    fireRate: Entities.TURRET.config.SHOOT.duration,
+    projectileType: 'BULLET',
 
     // copy-paste mode
     clipboardMode: 'COPY',
@@ -681,6 +683,14 @@ function createEntities(game, dispatch, editor, rect): void {
       args = [editor.playerID, warhead, editor.theta, editor.velocity];
       break;
     }
+    case 'BULLET': {
+      args = [editor.playerID, editor.theta, editor.velocity];
+      break;
+    }
+    case 'TURRET': {
+      args = [editor.playerID, editor.projectileType, editor.fireRate];
+      break;
+    }
     case 'WORM':
       // create initial segments:
       const randNeighbor = (pos) => {
@@ -772,6 +782,43 @@ function createEntityOptions(game, editor, setEditor): React.Node {
         />
       </span>);
       break;
+    case 'TURRET': {
+      const projectileTypes = [];
+      for (const entityType in Entities) {
+        if (Entities[entityType].config.isBallistic) {
+          projectileTypes.push(entityType);
+        }
+      }
+      options.push(<span>
+        Projectile Type:
+        <Dropdown
+          options={projectileTypes}
+          selected={editor.projectileType}
+          onChange={(projectileType) => setEditor({...editor, projectileType})}
+        />
+        FireRate:
+        <NumberField
+          value={editor.fireRate}
+          onChange={(fireRate) => setEditor({...editor, fireRate})}
+        />
+      </span>);
+      break;
+    }
+    case 'BULLET': {
+      options.push(<span>
+        Theta:
+        <NumberField
+          value={editor.theta}
+          onChange={(theta) => setEditor({...editor, theta})}
+        />
+        Velocity:
+        <NumberField
+          value={editor.velocity}
+          onChange={(velocity) => setEditor({...editor, velocity})}
+        />
+      </span>);
+      break;
+    }
     case 'MISSILE': {
       const warheadTypes = [];
       for (const entityType in Entities) {
@@ -797,6 +844,7 @@ function createEntityOptions(game, editor, setEditor): React.Node {
           onChange={(velocity) => setEditor({...editor, velocity})}
         />
       </span>);
+      break;
     }
   }
 

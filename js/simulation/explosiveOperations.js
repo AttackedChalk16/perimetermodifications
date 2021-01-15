@@ -40,7 +40,7 @@ const triggerExplosion = (game, explosive): void => {
         lookupInGrid(game.grid, round(position))
           .map(id => game.entities[id])
           .forEach(e => {
-            if (damage <= 0) return;
+            if (e == null || damage <= 0) return;
             if (e.hp > damage) {
               dealDamageToEntity(game, e, damage);
               damage = 0;
