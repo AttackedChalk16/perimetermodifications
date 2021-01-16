@@ -19,7 +19,7 @@ var config = {
   gravity: -100
 };
 
-var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD'];
+var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'];
 
 var pheromones = {
   COLONY: {
@@ -58,15 +58,53 @@ var pheromones = {
     canInhabitBlocker: true
   },
   WATER: {
-    quantity: 12,
-    decayAmount: 12,
+    quantity: 120,
+    decayAmount: 120,
     decayRate: 0.0005,
     color: 'rgb(0, 0, 255)',
     tileIndex: 1,
 
     blockingTypes: [].concat(pheromoneBlockingTypes, ['WORM']),
     isDispersing: true,
+    heatPoint: 100,
+    heatsTo: 'STEAM',
+    heatRate: 0.02,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 0.8
+    },
     isFluid: true
+  },
+  STEAM: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 4,
+
+    blockingTypes: [].concat(pheromoneBlockingTypes),
+    isDispersing: true,
+    coolPoint: 5, // heat level to condense at
+    coolsTo: 'WATER',
+    coolRate: 0.1, // amount of yourself that condenses per step
+    coolConcentration: 24, // amount of yourself needed before condensation starts
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.3,
+      horizontalLeftOver: 0.66
+    },
+    isRising: true
+  },
+  HEAT: {
+    quantity: 120,
+    decayAmount: 4,
+    decayRate: 1, // how much it decays per tick
+    color: 'rgb(255, 0, 0)',
+    tileIndex: 2,
+
+    blockingTypes: pheromoneBlockingTypes
   }
 };
 
@@ -211,7 +249,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":28,"../selectors/sprites":36,"../utils/vectors":80,"./makeEntity":9}],3:[function(require,module,exports){
+},{"../render/renderAgent":29,"../selectors/sprites":37,"../utils/vectors":81,"./makeEntity":9}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -246,7 +284,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":36,"./makeEntity":9}],4:[function(require,module,exports){
+},{"../selectors/sprites":37,"./makeEntity":9}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -278,7 +316,7 @@ var config = {
   width: 1,
   height: 1,
   velocity: 500,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'BULLET', 'TOWER'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE'],
 
   DIE: {
     duration: 1,
@@ -320,6 +358,7 @@ var render = function render(ctx, game, bullet) {
 
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'black';
+  ctx.lineWidth;
   var bulletWidth = 0.2;
   ctx.fillRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
   ctx.strokeRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
@@ -328,7 +367,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":36,"../simulation/actionQueue":38,"../utils/vectors":80,"./makeEntity":9}],5:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":39,"../utils/vectors":81,"./makeEntity":9}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -367,7 +406,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":36,"./makeEntity":9}],6:[function(require,module,exports){
+},{"../selectors/sprites":37,"./makeEntity":9}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -427,7 +466,7 @@ var config = {
   height: 1,
   explosionRadius: 5,
   damage: 4,
-  timer: 1500,
+  timer: 15,
   age: 0,
 
   DIE: {
@@ -470,7 +509,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":36,"../simulation/actionQueue":38,"./makeEntity":9}],8:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":39,"./makeEntity":9}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -511,7 +550,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":36,"./makeEntity":9}],9:[function(require,module,exports){
+},{"../selectors/sprites":37,"./makeEntity":9}],9:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -624,7 +663,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":36,"../simulation/actionQueue":38,"../utils/vectors":80,"./makeEntity":9}],11:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":39,"../utils/vectors":81,"./makeEntity":9}],11:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -693,7 +732,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":36,"./makeEntity":9}],13:[function(require,module,exports){
+},{"../selectors/sprites":37,"./makeEntity":9}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -827,7 +866,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":28,"../utils/vectors":80,"./makeEntity.js":9}],15:[function(require,module,exports){
+},{"../render/renderAgent":29,"../utils/vectors":81,"./makeEntity.js":9}],15:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -940,7 +979,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":28,"../render/renderSegmented":31,"../utils/vectors":80,"./agent.js":2}],16:[function(require,module,exports){
+},{"../render/renderAgent":29,"../render/renderSegmented":32,"../utils/vectors":81,"./agent.js":2}],16:[function(require,module,exports){
 'use strict';
 
 var _require = require('redux'),
@@ -969,22 +1008,25 @@ function renderUI(store) {
     modal: state.modal
   }), document.getElementById('container'));
 }
-},{"./reducers/rootReducer":25,"./ui/Main.react":67,"react":116,"react-dom":113,"redux":117}],17:[function(require,module,exports){
+},{"./reducers/rootReducer":26,"./ui/Main.react":68,"react":117,"react-dom":114,"redux":118}],17:[function(require,module,exports){
 // @flow
 
 module.exports = {
   testLevel: require('./testLevel'),
   smallBallisticsLevel: require('./smallBallisticsLevel'),
   mediumBallisticsLevel: require('./mediumBallisticsLevel'),
+  smallPhaseChangeLevel: require('./smallPhaseChangeTestLevel'),
 }
 
-},{"./mediumBallisticsLevel":18,"./smallBallisticsLevel":19,"./testLevel":20}],18:[function(require,module,exports){
+},{"./mediumBallisticsLevel":18,"./smallBallisticsLevel":19,"./smallPhaseChangeTestLevel":20,"./testLevel":21}],18:[function(require,module,exports){
 module.exports = {"numPlayers":2,"gridWidth":100,"gridHeight":100,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":64},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":64,"y":62},"width":7,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":71,"y":63},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":71,"y":65},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":63},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":73,"y":64},"width":1,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":67,"y":61},"width":3,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":65,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":70,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":62,"y":65},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":74,"y":65},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":51},"width":101,"height":49},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":64},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":66},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":65,"y":65},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":65},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":62,"y":66},"width":3,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":68},"width":5,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":69},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":61,"y":66},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":69},"width":8,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":72},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":69},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":68},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":68},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":51},"width":9,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":51},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":52},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":54},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":56},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":54},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":-2,"y":56},"width":6,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":56},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":57},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":82,"y":50},"width":20,"height":1},"args":[1,1]}]};
 },{}],19:[function(require,module,exports){
 module.exports = {"numPlayers":2,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":26},"width":50,"height":24},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":36},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":37},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":37},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":38},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":45},"width":9,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":47},"width":6,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":49},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":48},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":8,"y":40},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":34},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":33},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":33},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":36},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":24},"width":20,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":22},"width":15,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":23},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":25},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":21},"width":10,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":20},"width":6,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":19},"width":4,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":5,"y":32},"width":46,"height":18},"args":["STONE",1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":40},"width":8,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":44},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":41},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":42},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":43},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":46},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":39},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":38},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":34,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":43},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":39,"y":39},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":36},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":37},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":43},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":37,"y":39},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":22,"y":42},"width":1,"height":1},"args":[1]}]};
 },{}],20:[function(require,module,exports){
-module.exports = {"numPlayers":1,"gridWidth":25,"gridHeight":25,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":5,"y":13},"width":1,"height":1},"args":[1,null]},{"type":"CREATE_ENTITIES","entityType":"WORM","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[[{"x":13,"y":15},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":15,"y":17},{"x":16,"y":17},{"x":16,"y":18}],1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":16},"width":1,"height":9},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":24},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":1,"y":24},"width":19,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":10,"y":22},"width":1,"height":3},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":19},"width":1,"height":5},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":21,"y":24},"width":5,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":4,"y":2},"width":5,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":9,"y":1},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":9},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":6,"y":8},"width":2,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DOODAD","rect":{"position":{"x":18,"y":2},"width":3,"height":4},"args":[3,4,"QUESTION"]},{"type":"CREATE_ENTITIES","entityType":"BACKGROUND","rect":{"position":{"x":14,"y":0},"width":2,"height":2},"args":[1,1,"FLOOR_TILE"]}]};
+module.exports = {"numPlayers":2,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":31},"width":1,"height":19},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":1,"y":42},"width":50,"height":8},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":32},"width":1,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"TOKEN","rect":{"position":{"x":24,"y":37},"width":1,"height":1},"args":[1,"HEAT"]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":33},"width":1,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":22,"y":31},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":22,"y":35},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":30},"width":1,"height":4},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":31},"width":1,"height":4}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":34},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":29},"width":1,"height":5},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":25,"y":23},"width":1,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":26,"y":20},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":20},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":29,"y":18},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":32},"width":1,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":22},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":20},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":18},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":18},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":19},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":21},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":21},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":20},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":29,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":13},"width":1,"height":6},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":12},"width":7,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":13},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":16,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":14,"y":14},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":29},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":48,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":26},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":47,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":45,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":28},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":43,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":43,"y":29},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":42,"y":30},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":41,"y":31},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":31},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":39,"y":33},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":34},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":37,"y":35},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":35},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":18},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":18},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":20},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":12,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":18},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":15},"width":3,"height":3}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":15},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":14},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":15},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":22},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":21},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":21},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":20},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":20},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":20},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":19},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":19},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":19},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":19},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":18},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":18},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":18},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":18},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":18},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":17},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":21,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":16},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":21,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":15},"pheromoneType":"WATER","playerID":1,"quantity":120},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":37},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"TOKEN","rect":{"position":{"x":24,"y":41},"width":1,"height":1},"args":[1,"HEAT"]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":22},"width":1,"height":2}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":37,"y":12},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":13},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":14},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":22},"width":1,"height":2},"args":[1,1]}]};
 },{}],21:[function(require,module,exports){
+module.exports = {"numPlayers":1,"gridWidth":25,"gridHeight":25,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":5,"y":13},"width":1,"height":1},"args":[1,null]},{"type":"CREATE_ENTITIES","entityType":"WORM","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[[{"x":13,"y":15},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":15,"y":17},{"x":16,"y":17},{"x":16,"y":18}],1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":16},"width":1,"height":9},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":24},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":1,"y":24},"width":19,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":10,"y":22},"width":1,"height":3},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":19},"width":1,"height":5},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":21,"y":24},"width":5,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":4,"y":2},"width":5,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":9,"y":1},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":9},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":6,"y":8},"width":2,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DOODAD","rect":{"position":{"x":18,"y":2},"width":3,"height":4},"args":[3,4,"QUESTION"]},{"type":"CREATE_ENTITIES","entityType":"BACKGROUND","rect":{"position":{"x":14,"y":0},"width":2,"height":2},"args":[1,1,"FLOOR_TILE"]}]};
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -1507,7 +1549,7 @@ function createEntitiesReducer(game, action) {
 }
 
 module.exports = { gameReducer: gameReducer };
-},{"../config":1,"../entities/registry":11,"../render/render":27,"../selectors/pheromones":35,"../simulation/actionQueue":38,"../simulation/entityOperations":40,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],22:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../render/render":28,"../selectors/pheromones":36,"../simulation/actionQueue":39,"../simulation/entityOperations":41,"../simulation/pheromones":44,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],23:[function(require,module,exports){
 'use strict';
 
 var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
@@ -1537,7 +1579,7 @@ var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
 };
 
 module.exports = { hotKeysReducer: hotKeysReducer };
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1561,7 +1603,7 @@ var modalReducer = function modalReducer(state, action) {
 };
 
 module.exports = { modalReducer: modalReducer };
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1596,7 +1638,7 @@ var mouseReducer = function mouseReducer(mouse, action) {
 };
 
 module.exports = { mouseReducer: mouseReducer };
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2043,7 +2085,7 @@ function upgradeReducer(state, action) {
 }
 
 module.exports = { rootReducer: rootReducer };
-},{"../levels/levels":17,"../simulation/entityOperations":40,"../state/gameState":44,"../state/state":45,"../utils/helpers":78,"./gameReducer":21,"./hotKeysReducer":22,"./modalReducer":23,"./mouseReducer":24,"./tickReducer":26}],26:[function(require,module,exports){
+},{"../levels/levels":17,"../simulation/entityOperations":41,"../state/gameState":45,"../state/state":46,"../utils/helpers":79,"./gameReducer":22,"./hotKeysReducer":23,"./modalReducer":24,"./mouseReducer":25,"./tickReducer":27}],27:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2637,7 +2679,7 @@ var updateRain = function updateRain(game) {
 };
 
 module.exports = { tickReducer: tickReducer };
-},{"../config":1,"../entities/registry":11,"../render/render":27,"../selectors/collisions":32,"../selectors/misc":33,"../selectors/neighbors":34,"../selectors/pheromones":35,"../selectors/sprites":36,"../simulation/actionOperations":37,"../simulation/actionQueue.js":38,"../simulation/agentOperations":39,"../simulation/entityOperations":40,"../simulation/miscOperations":42,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/stochastic":79,"../utils/vectors":80}],27:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../render/render":28,"../selectors/collisions":33,"../selectors/misc":34,"../selectors/neighbors":35,"../selectors/pheromones":36,"../selectors/sprites":37,"../simulation/actionOperations":38,"../simulation/actionQueue.js":39,"../simulation/agentOperations":40,"../simulation/entityOperations":41,"../simulation/miscOperations":43,"../simulation/pheromones":44,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/stochastic":80,"../utils/vectors":81}],28:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3280,7 +3322,7 @@ var renderPheromones = function renderPheromones(ctx, game) {
 };
 
 module.exports = { render: render };
-},{"../config":1,"../entities/registry":11,"../selectors/misc":33,"../selectors/sprites":36,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"./renderMinimap":30}],28:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../selectors/misc":34,"../selectors/sprites":37,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81,"./renderMinimap":31}],29:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3509,7 +3551,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":33,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"./renderHealthBar":29}],29:[function(require,module,exports){
+},{"../selectors/misc":34,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81,"./renderHealthBar":30}],30:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3551,7 +3593,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":77,"../utils/vectors":80}],30:[function(require,module,exports){
+},{"../utils/gridHelpers":78,"../utils/vectors":81}],31:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3889,7 +3931,7 @@ var onMinimap = function onMinimap(dims, entity) {
 module.exports = {
   renderMinimap: renderMinimap
 };
-},{"../selectors/misc":33,"../selectors/sprites":36,"../utils/gridHelpers":77,"../utils/vectors":80,"./renderSegmented":31}],31:[function(require,module,exports){
+},{"../selectors/misc":34,"../selectors/sprites":37,"../utils/gridHelpers":78,"../utils/vectors":81,"./renderSegmented":32}],32:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -4037,7 +4079,7 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":33,"../selectors/sprites":36,"../utils/vectors":80,"./renderHealthBar":29}],32:[function(require,module,exports){
+},{"../selectors/misc":34,"../selectors/sprites":37,"../utils/vectors":81,"./renderHealthBar":30}],33:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -4104,7 +4146,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":77}],33:[function(require,module,exports){
+},{"../utils/gridHelpers":78}],34:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4297,7 +4339,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":32,"../selectors/neighbors":34,"../simulation/actionQueue":38,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],34:[function(require,module,exports){
+},{"../selectors/collisions":33,"../selectors/neighbors":35,"../simulation/actionQueue":39,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],35:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -4564,7 +4606,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":32,"../utils/gridHelpers":77,"../utils/vectors":80}],35:[function(require,module,exports){
+},{"../selectors/collisions":33,"../utils/gridHelpers":78,"../utils/vectors":81}],36:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4701,7 +4743,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":34,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],36:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":35,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],37:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5145,7 +5187,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":33,"../selectors/neighbors":34,"../simulation/actionQueue":38,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],37:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":34,"../selectors/neighbors":35,"../simulation/actionQueue":39,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],38:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5343,7 +5385,7 @@ var entityDie = function entityDie(game, entity) {
 module.exports = {
   entityStartCurrentAction: entityStartCurrentAction
 };
-},{"../entities/registry":11,"../selectors/misc":33,"../selectors/sprites":36,"../simulation/actionQueue":38,"../simulation/agentOperations":39,"../simulation/entityOperations":40,"../simulation/explosiveOperations":41,"../utils/helpers":78,"../utils/vectors":80}],38:[function(require,module,exports){
+},{"../entities/registry":11,"../selectors/misc":34,"../selectors/sprites":37,"../simulation/actionQueue":39,"../simulation/agentOperations":40,"../simulation/entityOperations":41,"../simulation/explosiveOperations":42,"../utils/helpers":79,"../utils/vectors":81}],39:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5569,7 +5611,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":35,"../utils/helpers":78,"../utils/vectors":80}],39:[function(require,module,exports){
+},{"../selectors/pheromones":36,"../utils/helpers":79,"../utils/vectors":81}],40:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5924,7 +5966,7 @@ module.exports = {
   agentDecideMove: agentDecideMove,
   agentSwitchTask: agentSwitchTask
 };
-},{"../config":1,"../entities/registry":11,"../selectors/collisions":32,"../selectors/misc":33,"../selectors/neighbors":34,"../selectors/pheromones":35,"../simulation/actionQueue":38,"../simulation/entityOperations":40,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/stochastic":79,"../utils/vectors":80}],40:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../selectors/collisions":33,"../selectors/misc":34,"../selectors/neighbors":35,"../selectors/pheromones":36,"../simulation/actionQueue":39,"../simulation/entityOperations":41,"../simulation/pheromones":44,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/stochastic":80,"../utils/vectors":81}],41:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -6644,7 +6686,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../selectors/neighbors":34,"../selectors/pheromones":35,"../simulation/pheromones":43,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],41:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../selectors/neighbors":35,"../selectors/pheromones":36,"../simulation/pheromones":44,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],42:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -6753,7 +6795,7 @@ var triggerExplosion = function triggerExplosion(game, explosive) {
 module.exports = {
   triggerExplosion: triggerExplosion
 };
-},{"../simulation/actionQueue":38,"../simulation/entityOperations":40,"../simulation/miscOperations":42,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],42:[function(require,module,exports){
+},{"../simulation/actionQueue":39,"../simulation/entityOperations":41,"../simulation/miscOperations":43,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],43:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -6780,7 +6822,7 @@ var dealDamageToEntity = function dealDamageToEntity(game, entity, damage) {
 module.exports = {
   dealDamageToEntity: dealDamageToEntity
 };
-},{"../simulation/actionQueue":38,"../simulation/entityOperations":40}],43:[function(require,module,exports){
+},{"../simulation/actionQueue":39,"../simulation/entityOperations":41}],44:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -7140,7 +7182,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":34,"../selectors/pheromones":35,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],44:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":35,"../selectors/pheromones":36,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],45:[function(require,module,exports){
 'use strict';
 
 var _require = require('../entities/makeEntity'),
@@ -7213,7 +7255,11 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
       ALERT: false,
       DIRT_DROP: false,
       MARKED_DIRT_PHER: false,
-      WATER: true
+      WATER: true,
+      STEAM: true,
+      HEAT: true,
+      MOLTEN_IRON: true,
+      MOLTEN_STEEL: true
     },
     maxMinimap: false,
 
@@ -7308,7 +7354,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
 };
 
 module.exports = { initBaseState: initBaseState, initPlayer: initPlayer };
-},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../simulation/entityOperations":40,"../utils/gridHelpers":77,"../utils/stochastic":79,"../utils/vectors":80}],45:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../simulation/entityOperations":41,"../utils/gridHelpers":78,"../utils/stochastic":80,"../utils/vectors":81}],46:[function(require,module,exports){
 'use strict';
 
 var initState = function initState() {
@@ -7323,7 +7369,7 @@ var initState = function initState() {
 };
 
 module.exports = { initState: initState };
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -7472,7 +7518,7 @@ var handleGameWon = function handleGameWon(store, dispatch, state, reason) {
 };
 
 module.exports = { initGameOverSystem: initGameOverSystem };
-},{"../render/render":27,"../ui/components/Button.react":70,"../ui/components/Divider.react":72,"../ui/components/Modal.react":74,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"axios":81,"react":116}],47:[function(require,module,exports){
+},{"../render/render":28,"../ui/components/Button.react":71,"../ui/components/Divider.react":73,"../ui/components/Modal.react":75,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81,"axios":82,"react":117}],48:[function(require,module,exports){
 'use strict';
 
 var initKeyboardControlsSystem = function initKeyboardControlsSystem(store) {
@@ -7607,7 +7653,7 @@ var getUpDownLeftRight = function getUpDownLeftRight(ev) {
 };
 
 module.exports = { initKeyboardControlsSystem: initKeyboardControlsSystem };
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 var _require = require('../config'),
@@ -7827,7 +7873,7 @@ var getMousePixel = function getMousePixel(ev, canvas) {
 };
 
 module.exports = { initMouseControlsSystem: initMouseControlsSystem };
-},{"../config":1,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80}],49:[function(require,module,exports){
+},{"../config":1,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81}],50:[function(require,module,exports){
 'use strict';
 
 var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
@@ -7842,7 +7888,7 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
 };
 
 module.exports = { initPheromoneWorkerSystem: initPheromoneWorkerSystem };
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -7886,7 +7932,7 @@ var initRainSystem = function initRainSystem(store) {
 };
 
 module.exports = { initRainSystem: initRainSystem };
-},{"../config":1,"../simulation/pheromones":43,"../utils/stochastic":79}],51:[function(require,module,exports){
+},{"../config":1,"../simulation/pheromones":44,"../utils/stochastic":80}],52:[function(require,module,exports){
 'use strict';
 
 var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
@@ -7932,7 +7978,7 @@ var loadSprite = function loadSprite(dispatch, state, name, src) {
 };
 
 module.exports = { initSpriteSheetSystem: initSpriteSheetSystem };
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 
 var levels = require('../levels/levels');
@@ -7965,7 +8011,7 @@ function loadLevel(store, levelName, additionalUpgrades) {
 module.exports = {
   loadLevel: loadLevel
 };
-},{"../levels/levels":17}],53:[function(require,module,exports){
+},{"../levels/levels":17}],54:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8104,7 +8150,7 @@ function withPropsChecker(WrappedComponent) {
 }
 
 module.exports = React.memo(Canvas);
-},{"../config":1,"react":116}],54:[function(require,module,exports){
+},{"../config":1,"react":117}],55:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8192,7 +8238,7 @@ var AudioWidget = function AudioWidget(props) {
 };
 
 module.exports = AudioWidget;
-},{"./Button.react":55,"react":116}],55:[function(require,module,exports){
+},{"./Button.react":56,"react":117}],56:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -8276,7 +8322,7 @@ function Button(props) {
 }
 
 module.exports = Button;
-},{"react":116}],56:[function(require,module,exports){
+},{"react":117}],57:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8316,7 +8362,7 @@ function Checkbox(props) {
 }
 
 module.exports = Checkbox;
-},{"react":116}],57:[function(require,module,exports){
+},{"react":117}],58:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8332,7 +8378,7 @@ function Divider(props) {
 }
 
 module.exports = Divider;
-},{"react":116}],58:[function(require,module,exports){
+},{"react":117}],59:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8373,7 +8419,7 @@ var Dropdown = function Dropdown(props) {
 };
 
 module.exports = Dropdown;
-},{"react":116}],59:[function(require,module,exports){
+},{"react":117}],60:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8447,7 +8493,7 @@ function Modal(props) {
 }
 
 module.exports = Modal;
-},{"../../utils/helpers":78,"./Button.react":55,"react":116}],60:[function(require,module,exports){
+},{"../../utils/helpers":79,"./Button.react":56,"react":117}],61:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8537,7 +8583,7 @@ var submitValue = function submitValue(onChange, nextVal, onlyInt) {
 };
 
 module.exports = NumberField;
-},{"react":116}],61:[function(require,module,exports){
+},{"react":117}],62:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8626,7 +8672,7 @@ var RadioPicker = function (_React$Component) {
 }(React.Component);
 
 module.exports = RadioPicker;
-},{"react":116}],62:[function(require,module,exports){
+},{"react":117}],63:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8697,7 +8743,7 @@ function Slider(props) {
 }
 
 module.exports = Slider;
-},{"./NumberField.react":60,"react":116}],63:[function(require,module,exports){
+},{"./NumberField.react":61,"react":117}],64:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8876,7 +8922,7 @@ function ExperimentalSidebar(props) {
 }
 
 module.exports = ExperimentalSidebar;
-},{"./Components/Button.react":55,"./Components/Checkbox.react":56,"./Components/Divider.react":57,"./Components/Dropdown.react":58,"./Components/Slider.react":62,"react":116}],64:[function(require,module,exports){
+},{"./Components/Button.react":56,"./Components/Checkbox.react":57,"./Components/Divider.react":58,"./Components/Dropdown.react":59,"./Components/Slider.react":63,"react":117}],65:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9033,7 +9079,7 @@ function registerHotkeys(dispatch) {
 }
 
 module.exports = Game;
-},{"../config":1,"../selectors/misc":33,"../simulation/actionQueue":38,"../systems/gameOverSystem":46,"../systems/keyboardControlsSystem":47,"../systems/mouseControlsSystem":48,"../systems/pheromoneWorkerSystem":49,"../systems/rainSystem":50,"../systems/spriteSheetSystem":51,"../utils/gridHelpers":77,"../utils/helpers":78,"../utils/vectors":80,"./Canvas.react":53,"./Components/Button.react":55,"./Components/Checkbox.react":56,"./Components/RadioPicker.react":61,"./ExperimentalSidebar.react":63,"./TopBar.react":68,"react":116}],65:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":34,"../simulation/actionQueue":39,"../systems/gameOverSystem":47,"../systems/keyboardControlsSystem":48,"../systems/mouseControlsSystem":49,"../systems/pheromoneWorkerSystem":50,"../systems/rainSystem":51,"../systems/spriteSheetSystem":52,"../utils/gridHelpers":78,"../utils/helpers":79,"../utils/vectors":81,"./Canvas.react":54,"./Components/Button.react":56,"./Components/Checkbox.react":57,"./Components/RadioPicker.react":62,"./ExperimentalSidebar.react":64,"./TopBar.react":69,"react":117}],66:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -10027,7 +10073,7 @@ function createEntityOptions(game, editor, setEditor) {
 }
 
 module.exports = LevelEditor;
-},{"../config":1,"../entities/registry":11,"../render/render":27,"../systems/mouseControlsSystem":48,"../utils/vectors":80,"./components/Button.react":70,"./components/Checkbox.react":71,"./components/Divider.react":72,"./components/Dropdown.react":73,"./components/NumberField.react":75,"./components/Slider.react":76,"react":116}],66:[function(require,module,exports){
+},{"../config":1,"../entities/registry":11,"../render/render":28,"../systems/mouseControlsSystem":49,"../utils/vectors":81,"./components/Button.react":71,"./components/Checkbox.react":72,"./components/Divider.react":73,"./components/Dropdown.react":74,"./components/NumberField.react":76,"./components/Slider.react":77,"react":117}],67:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -10273,7 +10319,7 @@ function MadeBy(props) {
 function LevelEditor(props) {
   var dispatch = props.dispatch;
 
-  var _useState11 = useState('mediumBallisticsLevel'),
+  var _useState11 = useState('smallPhaseChangeLevel'),
       _useState12 = _slicedToArray(_useState11, 2),
       level = _useState12[0],
       setLevel = _useState12[1];
@@ -10378,7 +10424,7 @@ function playLevel(store, levelName, setLoadingProgress, setIsLoaded) {
 }
 
 module.exports = Lobby;
-},{"../config":1,"../levels/levels":17,"../systems/spriteSheetSystem":51,"../thunks/levelThunks":52,"../ui/components/Modal.react":74,"../utils/helpers":78,"./components/AudioWidget.react":69,"./components/Button.react":70,"./components/Checkbox.react":71,"./components/Divider.react":72,"./components/Dropdown.react":73,"axios":81,"react":116}],67:[function(require,module,exports){
+},{"../config":1,"../levels/levels":17,"../systems/spriteSheetSystem":52,"../thunks/levelThunks":53,"../ui/components/Modal.react":75,"../utils/helpers":79,"./components/AudioWidget.react":70,"./components/Button.react":71,"./components/Checkbox.react":72,"./components/Divider.react":73,"./components/Dropdown.react":74,"axios":82,"react":117}],68:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10425,7 +10471,7 @@ function Main(props) {
 }
 
 module.exports = Main;
-},{"./Game.react":64,"./LevelEditor.react":65,"./Lobby.react":66,"react":116}],68:[function(require,module,exports){
+},{"./Game.react":65,"./LevelEditor.react":66,"./Lobby.react":67,"react":117}],69:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10604,23 +10650,23 @@ function dismissModal(dispatch) {
 }
 
 module.exports = memo(TopBar);
-},{"../config":1,"../utils/helpers":78,"./Components/AudioWidget.react":54,"./Components/Button.react":55,"./Components/Modal.react":59,"react":116}],69:[function(require,module,exports){
-arguments[4][54][0].apply(exports,arguments)
-},{"./Button.react":70,"dup":54,"react":116}],70:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":79,"./Components/AudioWidget.react":55,"./Components/Button.react":56,"./Components/Modal.react":60,"react":117}],70:[function(require,module,exports){
 arguments[4][55][0].apply(exports,arguments)
-},{"dup":55,"react":116}],71:[function(require,module,exports){
+},{"./Button.react":71,"dup":55,"react":117}],71:[function(require,module,exports){
 arguments[4][56][0].apply(exports,arguments)
-},{"dup":56,"react":116}],72:[function(require,module,exports){
+},{"dup":56,"react":117}],72:[function(require,module,exports){
 arguments[4][57][0].apply(exports,arguments)
-},{"dup":57,"react":116}],73:[function(require,module,exports){
+},{"dup":57,"react":117}],73:[function(require,module,exports){
 arguments[4][58][0].apply(exports,arguments)
-},{"dup":58,"react":116}],74:[function(require,module,exports){
+},{"dup":58,"react":117}],74:[function(require,module,exports){
 arguments[4][59][0].apply(exports,arguments)
-},{"../../utils/helpers":78,"./Button.react":70,"dup":59,"react":116}],75:[function(require,module,exports){
+},{"dup":59,"react":117}],75:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"dup":60,"react":116}],76:[function(require,module,exports){
-arguments[4][62][0].apply(exports,arguments)
-},{"./NumberField.react":75,"dup":62,"react":116}],77:[function(require,module,exports){
+},{"../../utils/helpers":79,"./Button.react":71,"dup":60,"react":117}],76:[function(require,module,exports){
+arguments[4][61][0].apply(exports,arguments)
+},{"dup":61,"react":117}],77:[function(require,module,exports){
+arguments[4][63][0].apply(exports,arguments)
+},{"./NumberField.react":76,"dup":63,"react":117}],78:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -10756,7 +10802,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":78,"../utils/vectors":80}],78:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":79,"../utils/vectors":81}],79:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -10867,7 +10913,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":80}],79:[function(require,module,exports){
+},{"./vectors":81}],80:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -10922,7 +10968,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],80:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -11121,9 +11167,9 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}],81:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":83}],82:[function(require,module,exports){
+},{"./lib/axios":84}],83:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11304,7 +11350,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":89,"../core/createError":90,"./../core/settle":94,"./../helpers/buildURL":98,"./../helpers/cookies":100,"./../helpers/isURLSameOrigin":103,"./../helpers/parseHeaders":105,"./../utils":107}],83:[function(require,module,exports){
+},{"../core/buildFullPath":90,"../core/createError":91,"./../core/settle":95,"./../helpers/buildURL":99,"./../helpers/cookies":101,"./../helpers/isURLSameOrigin":104,"./../helpers/parseHeaders":106,"./../utils":108}],84:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -11362,7 +11408,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":84,"./cancel/CancelToken":85,"./cancel/isCancel":86,"./core/Axios":87,"./core/mergeConfig":93,"./defaults":96,"./helpers/bind":97,"./helpers/isAxiosError":102,"./helpers/spread":106,"./utils":107}],84:[function(require,module,exports){
+},{"./cancel/Cancel":85,"./cancel/CancelToken":86,"./cancel/isCancel":87,"./core/Axios":88,"./core/mergeConfig":94,"./defaults":97,"./helpers/bind":98,"./helpers/isAxiosError":103,"./helpers/spread":107,"./utils":108}],85:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11383,7 +11429,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -11442,14 +11488,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":84}],86:[function(require,module,exports){
+},{"./Cancel":85}],87:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],87:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11546,7 +11592,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":98,"./../utils":107,"./InterceptorManager":88,"./dispatchRequest":91,"./mergeConfig":93}],88:[function(require,module,exports){
+},{"../helpers/buildURL":99,"./../utils":108,"./InterceptorManager":89,"./dispatchRequest":92,"./mergeConfig":94}],89:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11600,7 +11646,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":107}],89:[function(require,module,exports){
+},{"./../utils":108}],90:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -11622,7 +11668,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":99,"../helpers/isAbsoluteURL":101}],90:[function(require,module,exports){
+},{"../helpers/combineURLs":100,"../helpers/isAbsoluteURL":102}],91:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -11642,7 +11688,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":92}],91:[function(require,module,exports){
+},{"./enhanceError":93}],92:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11723,7 +11769,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":86,"../defaults":96,"./../utils":107,"./transformData":95}],92:[function(require,module,exports){
+},{"../cancel/isCancel":87,"../defaults":97,"./../utils":108,"./transformData":96}],93:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11767,7 +11813,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],93:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -11856,7 +11902,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":107}],94:[function(require,module,exports){
+},{"../utils":108}],95:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -11883,7 +11929,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":90}],95:[function(require,module,exports){
+},{"./createError":91}],96:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11905,7 +11951,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":107}],96:[function(require,module,exports){
+},{"./../utils":108}],97:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -12007,7 +12053,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":82,"./adapters/xhr":82,"./helpers/normalizeHeaderName":104,"./utils":107,"_process":126}],97:[function(require,module,exports){
+},{"./adapters/http":83,"./adapters/xhr":83,"./helpers/normalizeHeaderName":105,"./utils":108,"_process":127}],98:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -12020,7 +12066,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],98:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12092,7 +12138,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":107}],99:[function(require,module,exports){
+},{"./../utils":108}],100:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12108,7 +12154,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],100:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12163,7 +12209,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":107}],101:[function(require,module,exports){
+},{"./../utils":108}],102:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12179,7 +12225,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],102:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12192,7 +12238,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],103:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12262,7 +12308,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":107}],104:[function(require,module,exports){
+},{"./../utils":108}],105:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -12276,7 +12322,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":107}],105:[function(require,module,exports){
+},{"../utils":108}],106:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12331,7 +12377,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":107}],106:[function(require,module,exports){
+},{"./../utils":108}],107:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12360,7 +12406,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],107:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -12713,7 +12759,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":97}],108:[function(require,module,exports){
+},{"./helpers/bind":98}],109:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -12805,7 +12851,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],109:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 (function (process){(function (){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -12911,7 +12957,7 @@ checkPropTypes.resetWarningCache = function() {
 module.exports = checkPropTypes;
 
 }).call(this)}).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":110,"_process":126}],110:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":111,"_process":127}],111:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -12925,7 +12971,7 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react-dom.development.js
@@ -37941,7 +37987,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":126,"object-assign":108,"prop-types/checkPropTypes":109,"react":116,"scheduler":122,"scheduler/tracing":123}],112:[function(require,module,exports){
+},{"_process":127,"object-assign":109,"prop-types/checkPropTypes":110,"react":117,"scheduler":123,"scheduler/tracing":124}],113:[function(require,module,exports){
 /** @license React v16.14.0
  * react-dom.production.min.js
  *
@@ -38235,7 +38281,7 @@ exports.flushSync=function(a,b){if((W&(fj|gj))!==V)throw Error(u(187));var c=W;W
 exports.unmountComponentAtNode=function(a){if(!gk(a))throw Error(u(40));return a._reactRootContainer?(Nj(function(){ik(null,null,a,!1,function(){a._reactRootContainer=null;a[Od]=null})}),!0):!1};exports.unstable_batchedUpdates=Mj;exports.unstable_createPortal=function(a,b){return kk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!gk(c))throw Error(u(200));if(null==a||void 0===a._reactInternalFiber)throw Error(u(38));return ik(a,b,c,!1,d)};exports.version="16.14.0";
 
-},{"object-assign":108,"react":116,"scheduler":122}],113:[function(require,module,exports){
+},{"object-assign":109,"react":117,"scheduler":123}],114:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -38277,7 +38323,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":111,"./cjs/react-dom.production.min.js":112,"_process":126}],114:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":112,"./cjs/react-dom.production.min.js":113,"_process":127}],115:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react.development.js
@@ -40193,7 +40239,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":126,"object-assign":108,"prop-types/checkPropTypes":109}],115:[function(require,module,exports){
+},{"_process":127,"object-assign":109,"prop-types/checkPropTypes":110}],116:[function(require,module,exports){
 /** @license React v16.14.0
  * react.production.min.js
  *
@@ -40220,7 +40266,7 @@ key:d,ref:g,props:e,_owner:k}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:A,_ctor:a,_status:-1,_result:null}};exports.memo=function(a,b){return{$$typeof:z,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return Z().useCallback(a,b)};exports.useContext=function(a,b){return Z().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return Z().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return Z().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return Z().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return Z().useMemo(a,b)};exports.useReducer=function(a,b,c){return Z().useReducer(a,b,c)};exports.useRef=function(a){return Z().useRef(a)};exports.useState=function(a){return Z().useState(a)};exports.version="16.14.0";
 
-},{"object-assign":108}],116:[function(require,module,exports){
+},{"object-assign":109}],117:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -40231,7 +40277,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react.development.js":114,"./cjs/react.production.min.js":115,"_process":126}],117:[function(require,module,exports){
+},{"./cjs/react.development.js":115,"./cjs/react.production.min.js":116,"_process":127}],118:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -40909,7 +40955,7 @@ exports.compose = compose;
 exports.createStore = createStore;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":126,"symbol-observable":124}],118:[function(require,module,exports){
+},{"_process":127,"symbol-observable":125}],119:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler-tracing.development.js
@@ -41262,7 +41308,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":126}],119:[function(require,module,exports){
+},{"_process":127}],120:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler-tracing.production.min.js
  *
@@ -41274,7 +41320,7 @@ exports.unstable_wrap = unstable_wrap;
 
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler.development.js
@@ -42136,7 +42182,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":126}],121:[function(require,module,exports){
+},{"_process":127}],122:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler.production.min.js
  *
@@ -42159,7 +42205,7 @@ exports.unstable_getCurrentPriorityLevel=function(){return R};exports.unstable_g
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();if("object"===typeof c&&null!==c){var e=c.delay;e="number"===typeof e&&0<e?d+e:d;c="number"===typeof c.timeout?c.timeout:Y(a)}else c=Y(a),e=d;c=e+c;a={id:P++,callback:b,priorityLevel:a,startTime:e,expirationTime:c,sortIndex:-1};e>d?(a.sortIndex=e,J(O,a),null===L(N)&&a===L(O)&&(U?h():U=!0,g(W,e-d))):(a.sortIndex=c,J(N,a),T||S||(T=!0,f(X)));return a};
 exports.unstable_shouldYield=function(){var a=exports.unstable_now();V(a);var b=L(N);return b!==Q&&null!==Q&&null!==b&&null!==b.callback&&b.startTime<=a&&b.expirationTime<Q.expirationTime||k()};exports.unstable_wrapCallback=function(a){var b=R;return function(){var c=R;R=b;try{return a.apply(this,arguments)}finally{R=c}}};
 
-},{}],122:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -42170,7 +42216,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":120,"./cjs/scheduler.production.min.js":121,"_process":126}],123:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":121,"./cjs/scheduler.production.min.js":122,"_process":127}],124:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -42181,7 +42227,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":118,"./cjs/scheduler-tracing.production.min.js":119,"_process":126}],124:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":119,"./cjs/scheduler-tracing.production.min.js":120,"_process":127}],125:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -42213,7 +42259,7 @@ if (typeof self !== 'undefined') {
 var result = (0, _ponyfill2['default'])(root);
 exports['default'] = result;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill.js":125}],125:[function(require,module,exports){
+},{"./ponyfill.js":126}],126:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -42237,7 +42283,7 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],126:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 

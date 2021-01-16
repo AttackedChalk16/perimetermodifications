@@ -21,7 +21,7 @@ const config = {
 };
 
 const pheromoneBlockingTypes = [
-  'DIRT', 'FOOD', 'STONE', 'DOODAD',
+  'DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'
 ];
 
 const pheromones = {
@@ -61,15 +61,53 @@ const pheromones = {
     canInhabitBlocker: true,
   },
   WATER: {
-    quantity: 12,
-    decayAmount: 12,
+    quantity: 120,
+    decayAmount: 120,
     decayRate: 0.0005,
     color: 'rgb(0, 0, 255)',
     tileIndex: 1,
 
     blockingTypes: [...pheromoneBlockingTypes, 'WORM'],
     isDispersing: true,
+    heatPoint: 100,
+    heatsTo: 'STEAM',
+    heatRate: 0.02,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 0.8,
+    },
     isFluid: true,
+  },
+  STEAM: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 4,
+
+    blockingTypes: [...pheromoneBlockingTypes],
+    isDispersing: true,
+    coolPoint: 5, // heat level to condense at
+    coolsTo: 'WATER',
+    coolRate: 0.1, // amount of yourself that condenses per step
+    coolConcentration: 24, // amount of yourself needed before condensation starts
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.3,
+      horizontalLeftOver: 0.66,
+    },
+    isRising: true,
+  },
+  HEAT: {
+    quantity: 120,
+    decayAmount: 4,
+    decayRate: 1, // how much it decays per tick
+    color: 'rgb(255, 0, 0)',
+    tileIndex: 2,
+
+    blockingTypes: pheromoneBlockingTypes,
   },
 };
 

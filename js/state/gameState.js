@@ -61,6 +61,10 @@ const initBaseState = (
       DIRT_DROP: false,
       MARKED_DIRT_PHER: false,
       WATER: true,
+      STEAM: true,
+      HEAT: true,
+      MOLTEN_IRON: true,
+      MOLTEN_STEEL: true,
     },
     maxMinimap: false,
 

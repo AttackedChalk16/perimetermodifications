@@ -312,9 +312,55 @@ const updateDispersingPheromones = (game) => {
                         // the same source position multiple times, so don't let it
     for (const encodedPosition in game.dispersingPheromonePositions[pherType]) {
       const source = game.dispersingPheromonePositions[pherType][encodedPosition];
-      const {position, playerID, pheromoneType} = source;
+      let {position, playerID, pheromoneType} = source;
       const config = globalConfig.pheromones[pheromoneType];
+
       let pheromoneQuantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
+      // check for heat
+      // NOTE: this can make the loop variable pherType and the source property
+      // pheromoneType have different values so it's super important to be
+      // precise with which one you use!!
+      const heat = getPheromoneAtPosition(game, position, 'HEAT', playerID);
+      let sendToOtherPhase = 0;
+      let phaseChangeTo = null;
+      let changedPhase = false;
+      const originalPosition = {...source.position};
+      if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
+        // source.pheromoneType = config.heatsTo;
+        // pheromoneType = config.heatsTo;
+        phaseChangeTo = config.heatsTo;
+        if (pheromoneQuantity < 1) {
+          sendToOtherPhase = pheromoneQuantity;
+        } else {
+          sendToOtherPhase = config.heatRate * pheromoneQuantity;
+        }
+        changedPhase = true;
+      } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
+        if (config.coolConcentration <= pheromoneQuantity) {
+          // console.log("cooling phase change at position", {...source.position});
+          // source.pheromoneType = config.coolsTo;
+          // pheromoneType = config.coolsTo;
+          phaseChangeTo = config.coolsTo;
+          if (pheromoneQuantity < 1) {
+            sendToOtherPhase = pheromoneQuantity;
+          } else {
+            sendToOtherPhase = config.coolRate * pheromoneQuantity;
+          }
+          changedPhase = true;
+        }
+      }
+      // set the value of this square to the amount sent to the other phase
+      if (changedPhase) {
+        setPheromone(
+          game, source.position, phaseChangeTo,
+          sendToOtherPhase, playerID,
+        );
+        nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] =
+          {...source, pheromoneType: phaseChangeTo,  quantity: sendToOtherPhase};
+        // then subtract the amount sent to the other phase from the amount we deal
+        // with from now on
+        pheromoneQuantity -= sendToOtherPhase;
+      }
 
       // need to track if it became 0 on the last update and remove it now
       // (Can't remove it as soon as it becomes 0 or else we won't tell the client
@@ -332,21 +378,27 @@ const updateDispersingPheromones = (game) => {
 
       //////////////////////////////////////////////////////////////////////////////
       // Update fluids
-      if (config.isFluid) {
-        let positionBelow = add(position, {x: 0, y: 1});
+      if (config.isFluid && (pheromoneQuantity > 0 || !changedPhase)) {
+        let y = 1;
+        if (config.isRising) {
+          y = -1;
+        }
+        let positionBelow = add(position, {x: 0, y});
         let occupied = lookupInGrid(game.grid, positionBelow)
           .map(id => game.entities[id])
           .filter(e => config.blockingTypes.includes(e.type))
           .length > 0;
         let diagonal = false;
         let leftOrRight = false;
+        let pherBotLeft = 0;
+        let pherBotRight = 0;
         if (
           occupied ||
           getPheromoneAtPosition(game, positionBelow, pheromoneType, playerID) >
           config.quantity - 1
         ) {
-          const botLeft = add(position, {x: -1, y: 1});
-          const botRight = add(position, {x: 1, y: 1});
+          const botLeft = add(position, {x: -1, y});
+          const botRight = add(position, {x: 1, y});
           const botLeftOccupied = lookupInGrid(game.grid, botLeft)
             .map(id => game.entities[id])
             .filter(e => config.blockingTypes.includes(e.type))
@@ -367,15 +419,24 @@ const updateDispersingPheromones = (game) => {
             positionBelow = botRight;
             occupied = false;
             diagonal = true;
-          } else {
+          }
+          // else check the pheromone values at the diagonal
+          pherBotLeft =
+            getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
+          pherBotRight =
+            getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
+          if (pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1) {
             occupied = true;
-            diagonal = true;
           }
         }
         const pheromoneDiag = getPheromoneAtPosition(
           game, positionBelow, pheromoneType, playerID,
         );
-        if (diagonal || pheromoneDiag > 10) {
+        if (
+          occupied && (
+            !diagonal || pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1
+          )
+        ) {
           const left = add(position, {x: -1, y: 0});
           const right = add(position, {x: 1, y: 0});
           const leftOccupied = lookupInGrid(game.grid, left)
@@ -419,12 +480,12 @@ const updateDispersingPheromones = (game) => {
           );
           const maxQuantity = config.quantity;
 
-          let targetPercentLeft = 0;
+          let targetPercentLeft = config.viscosity.verticalLeftOver;
           if (diagonal) {
-            targetPercentLeft = 0.5;
+            targetPercentLeft = config.viscosity.diagonalLeftOver;
           }
           if (leftOrRight) {
-            targetPercentLeft = 0.8;
+            targetPercentLeft = config.viscosity.horizontalLeftOver;
           }
           let pherToGive = pheromoneQuantity * (1 - targetPercentLeft);
           if (pheromoneBelow + pherToGive > maxQuantity) {
@@ -446,7 +507,7 @@ const updateDispersingPheromones = (game) => {
           if (!nextFluid[encodePosition(position)]) {
             const nextQuantity = Math.max(0, leftOverPheromone - decayRate);
             if (nextQuantity != 0 || (source.quantity != 0)) {
-              nextDispersingPheromones[pherType][encodePosition(position)] = {
+              nextDispersingPheromones[pheromoneType][encodePosition(position)] = {
                 ...source,
                 position: {...position},
                 quantity: nextQuantity,
@@ -462,31 +523,31 @@ const updateDispersingPheromones = (game) => {
       //////////////////////////////////////////////////////////////////////////////
 
       // fluids only decay in very small concentrations
-      if (config.isFluid && pheromoneQuantity > 1) {
+      if (config.isFluid && pheromoneQuantity > 0.5) {
         decayRate = 0;
       }
 
+      // remove if you've changed phase
+      let finalPherQuantity = Math.max(0, pheromoneQuantity - decayRate);
       setPheromone(
         game, source.position, pheromoneType,
-        Math.max(0, pheromoneQuantity - decayRate),
+        finalPherQuantity,
         playerID,
       );
-      if (pheromoneType == 'WATER') {
-        if (pheromoneQuantity - decayRate > 0) {
-          if (nextFluid[encodePosition(source.position)]) {
-            continue; // we've already done something with this water
-          } else {
-            nextFluid[encodePosition(source.position)] = true;
-          }
-          nextDispersingPheromones[pherType][encodePosition(source.position)] =
-            {...source, quantity: Math.max(0, pheromoneQuantity - decayRate)};
+
+      if (config.isFluid && !changedPhase) {
+        if (finalPherQuantity - decayRate > 0) {
+          nextFluid[encodePosition(source.position)] = true;
+          nextDispersingPheromones[pheromoneType][encodePosition(source.position)] =
+            {...source, quantity: finalPherQuantity};
         }
       } else {
-        nextDispersingPheromones[pherType][encodePosition(source.position)] =
-          {...source, quantity: Math.max(0, pheromoneQuantity - decayRate)};
+        nextDispersingPheromones[pheromoneType][encodePosition(source.position)] =
+          {...source, quantity: finalPherQuantity};
       }
     }
   }
+  // console.log(nextDispersingPheromones);
   game.dispersingPheromonePositions = nextDispersingPheromones;
   return nextDispersingPheromones;
 }

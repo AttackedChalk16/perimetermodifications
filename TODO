@@ -19,6 +19,27 @@
 
 
 - - - - - - BARE BONES - - - - - -
+  - coal entity
+    - onFire property
+    - when on fire, gives off heat, loses hp, and glows
+    - can catch on fire when near heat
+  - iron entity/pheromone
+    - turns to iron pheromone at temperature
+    - viscosity property so it flows differently than water
+  - steel entity/pheromone
+    - higher melting point?
+    - more hp than iron
+  - turbine entity
+    - spun in the presence of moving fluid
+      - spins faster the higher the concentration is
+      - increases fluid viscosity leftOvers underneath it
+    - powerProducer property
+    - power tracking at base level
+    - power need from towers
+      - powerConsumer property
+
+
+- - - - - - LATER - - - - - - - -
   - system for creating missiles
     - pick launch location that's far away with actual ballistics trajectory
     - could have multiple "launch platforms" tuned to target the screen
@@ -27,10 +48,26 @@
 - - - - - - - TO DRAW - - - - - -
   - add cracked stone tilesheet for hp counting
   - steel tilesheet
+  - coal tilesheet
+  - iron tilesheet
+  - turbine
 
 - - - - - - - TO THINK ABOUT - - - - - - -
-  - how to convey crafting recipes
-    - e.g. tower comes from steel (and?), where does steel come from
+  - temperature
+    - water -> steam -> water (-> ice)
+    - solid iron -> molten iron
+    - coal + molten iron -> molten steel
+    - fire
+  - crafting
+    - towers
+    - turbines
+    - how to convey crafting recipes
+      - e.g. tower comes from steel (and?), where does steel come from
+  - agent roles
+    - drill
+    - train
+    - digger/shoveller
+    - engineer?
 
 
 - - - - - - - BUGS - - - - - - -

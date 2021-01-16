@@ -19,7 +19,7 @@ var config = {
   gravity: -100
 };
 
-var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD'];
+var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'];
 
 var pheromones = {
   COLONY: {
@@ -58,15 +58,53 @@ var pheromones = {
     canInhabitBlocker: true
   },
   WATER: {
-    quantity: 12,
-    decayAmount: 12,
+    quantity: 120,
+    decayAmount: 120,
     decayRate: 0.0005,
     color: 'rgb(0, 0, 255)',
     tileIndex: 1,
 
     blockingTypes: [].concat(pheromoneBlockingTypes, ['WORM']),
     isDispersing: true,
+    heatPoint: 100,
+    heatsTo: 'STEAM',
+    heatRate: 0.02,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 0.8
+    },
     isFluid: true
+  },
+  STEAM: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 4,
+
+    blockingTypes: [].concat(pheromoneBlockingTypes),
+    isDispersing: true,
+    coolPoint: 5, // heat level to condense at
+    coolsTo: 'WATER',
+    coolRate: 0.1, // amount of yourself that condenses per step
+    coolConcentration: 24, // amount of yourself needed before condensation starts
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.3,
+      horizontalLeftOver: 0.66
+    },
+    isRising: true
+  },
+  HEAT: {
+    quantity: 120,
+    decayAmount: 4,
+    decayRate: 1, // how much it decays per tick
+    color: 'rgb(255, 0, 0)',
+    tileIndex: 2,
+
+    blockingTypes: pheromoneBlockingTypes
   }
 };
 
@@ -278,7 +316,7 @@ var config = {
   width: 1,
   height: 1,
   velocity: 500,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'BULLET', 'TOWER'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE'],
 
   DIE: {
     duration: 1,
@@ -320,6 +358,7 @@ var render = function render(ctx, game, bullet) {
 
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'black';
+  ctx.lineWidth;
   var bulletWidth = 0.2;
   ctx.fillRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
   ctx.strokeRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
@@ -427,7 +466,7 @@ var config = {
   height: 1,
   explosionRadius: 5,
   damage: 4,
-  timer: 1500,
+  timer: 15,
   age: 0,
 
   DIE: {
@@ -1404,7 +1443,49 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           pheromoneType = source.pheromoneType;
 
       var config = globalConfig.pheromones[pheromoneType];
+
       var pheromoneQuantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
+      // check for heat
+      // NOTE: this can make the loop variable pherType and the source property
+      // pheromoneType have different values so it's super important to be
+      // precise with which one you use!!
+      var heat = getPheromoneAtPosition(game, position, 'HEAT', playerID);
+      var sendToOtherPhase = 0;
+      var phaseChangeTo = null;
+      var changedPhase = false;
+      var originalPosition = _extends({}, source.position);
+      if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
+        // source.pheromoneType = config.heatsTo;
+        // pheromoneType = config.heatsTo;
+        phaseChangeTo = config.heatsTo;
+        if (pheromoneQuantity < 1) {
+          sendToOtherPhase = pheromoneQuantity;
+        } else {
+          sendToOtherPhase = config.heatRate * pheromoneQuantity;
+        }
+        changedPhase = true;
+      } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
+        if (config.coolConcentration <= pheromoneQuantity) {
+          // console.log("cooling phase change at position", {...source.position});
+          // source.pheromoneType = config.coolsTo;
+          // pheromoneType = config.coolsTo;
+          phaseChangeTo = config.coolsTo;
+          if (pheromoneQuantity < 1) {
+            sendToOtherPhase = pheromoneQuantity;
+          } else {
+            sendToOtherPhase = config.coolRate * pheromoneQuantity;
+          }
+          changedPhase = true;
+        }
+      }
+      // set the value of this square to the amount sent to the other phase
+      if (changedPhase) {
+        setPheromone(game, source.position, phaseChangeTo, sendToOtherPhase, playerID);
+        nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] = _extends({}, source, { pheromoneType: phaseChangeTo, quantity: sendToOtherPhase });
+        // then subtract the amount sent to the other phase from the amount we deal
+        // with from now on
+        pheromoneQuantity -= sendToOtherPhase;
+      }
 
       // need to track if it became 0 on the last update and remove it now
       // (Can't remove it as soon as it becomes 0 or else we won't tell the client
@@ -1422,8 +1503,12 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
 
       //////////////////////////////////////////////////////////////////////////////
       // Update fluids
-      if (config.isFluid) {
-        var positionBelow = add(position, { x: 0, y: 1 });
+      if (config.isFluid && (pheromoneQuantity > 0 || !changedPhase)) {
+        var y = 1;
+        if (config.isRising) {
+          y = -1;
+        }
+        var positionBelow = add(position, { x: 0, y: y });
         var occupied = lookupInGrid(game.grid, positionBelow).map(function (id) {
           return game.entities[id];
         }).filter(function (e) {
@@ -1431,9 +1516,11 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         }).length > 0;
         var diagonal = false;
         var leftOrRight = false;
+        var pherBotLeft = 0;
+        var pherBotRight = 0;
         if (occupied || getPheromoneAtPosition(game, positionBelow, pheromoneType, playerID) > config.quantity - 1) {
-          var botLeft = add(position, { x: -1, y: 1 });
-          var botRight = add(position, { x: 1, y: 1 });
+          var botLeft = add(position, { x: -1, y: y });
+          var botRight = add(position, { x: 1, y: y });
           var botLeftOccupied = lookupInGrid(game.grid, botLeft).map(function (id) {
             return game.entities[id];
           }).filter(function (e) {
@@ -1456,13 +1543,16 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
             positionBelow = botRight;
             occupied = false;
             diagonal = true;
-          } else {
+          }
+          // else check the pheromone values at the diagonal
+          pherBotLeft = getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
+          pherBotRight = getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
+          if (pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1) {
             occupied = true;
-            diagonal = true;
           }
         }
         var pheromoneDiag = getPheromoneAtPosition(game, positionBelow, pheromoneType, playerID);
-        if (diagonal || pheromoneDiag > 10) {
+        if (occupied && (!diagonal || pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1)) {
           var left = add(position, { x: -1, y: 0 });
           var right = add(position, { x: 1, y: 0 });
           var leftOccupied = lookupInGrid(game.grid, left).map(function (id) {
@@ -1506,12 +1596,12 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           var pheromoneBelow = getPheromoneAtPosition(game, positionBelow, pheromoneType, playerID);
           var maxQuantity = config.quantity;
 
-          var targetPercentLeft = 0;
+          var targetPercentLeft = config.viscosity.verticalLeftOver;
           if (diagonal) {
-            targetPercentLeft = 0.5;
+            targetPercentLeft = config.viscosity.diagonalLeftOver;
           }
           if (leftOrRight) {
-            targetPercentLeft = 0.8;
+            targetPercentLeft = config.viscosity.horizontalLeftOver;
           }
           var pherToGive = pheromoneQuantity * (1 - targetPercentLeft);
           if (pheromoneBelow + pherToGive > maxQuantity) {
@@ -1529,7 +1619,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           if (!nextFluid[encodePosition(position)]) {
             var nextQuantity = Math.max(0, leftOverPheromone - decayRate);
             if (nextQuantity != 0 || source.quantity != 0) {
-              nextDispersingPheromones[_pherType][encodePosition(position)] = _extends({}, source, {
+              nextDispersingPheromones[pheromoneType][encodePosition(position)] = _extends({}, source, {
                 position: _extends({}, position),
                 quantity: nextQuantity
               });
@@ -1544,22 +1634,21 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
       //////////////////////////////////////////////////////////////////////////////
 
       // fluids only decay in very small concentrations
-      if (config.isFluid && pheromoneQuantity > 1) {
+      if (config.isFluid && pheromoneQuantity > 0.5) {
         decayRate = 0;
       }
 
-      setPheromone(game, source.position, pheromoneType, Math.max(0, pheromoneQuantity - decayRate), playerID);
-      if (pheromoneType == 'WATER') {
-        if (pheromoneQuantity - decayRate > 0) {
-          if (nextFluid[encodePosition(source.position)]) {
-            return 'continue'; // we've already done something with this water
-          } else {
-            nextFluid[encodePosition(source.position)] = true;
-          }
-          nextDispersingPheromones[_pherType][encodePosition(source.position)] = _extends({}, source, { quantity: Math.max(0, pheromoneQuantity - decayRate) });
+      // remove if you've changed phase
+      var finalPherQuantity = Math.max(0, pheromoneQuantity - decayRate);
+      setPheromone(game, source.position, pheromoneType, finalPherQuantity, playerID);
+
+      if (config.isFluid && !changedPhase) {
+        if (finalPherQuantity - decayRate > 0) {
+          nextFluid[encodePosition(source.position)] = true;
+          nextDispersingPheromones[pheromoneType][encodePosition(source.position)] = _extends({}, source, { quantity: finalPherQuantity });
         }
       } else {
-        nextDispersingPheromones[_pherType][encodePosition(source.position)] = _extends({}, source, { quantity: Math.max(0, pheromoneQuantity - decayRate) });
+        nextDispersingPheromones[pheromoneType][encodePosition(source.position)] = _extends({}, source, { quantity: finalPherQuantity });
       }
     };
 
@@ -1569,6 +1658,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
       if (_ret === 'continue') continue;
     }
   }
+  // console.log(nextDispersingPheromones);
   game.dispersingPheromonePositions = nextDispersingPheromones;
   return nextDispersingPheromones;
 };
