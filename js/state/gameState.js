@@ -131,6 +131,10 @@ const initBaseState = (
     BALLISTIC: {}, // entities that follow a ballistic trajectory
     EXPLOSIVE: {}, // entities that explode when they die
     TOWER: {}, // entities that track a target to aim at
+    FLAMMABLE: {}, // entities that can catch on fire and burn
+    GENERATOR: {}, // entities that produce power
+    CONSUMER: {}, // entities that consume power
+    MELTABLE: {}, // entities that can melt into a pheromone fluid
   };
 
   // lookup for entityIDs by entityType

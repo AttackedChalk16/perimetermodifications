@@ -16,7 +16,7 @@ const initGrid = (gridWidth: number, gridHeight: number, numPlayers: number): Gr
       const cell = {
         entities: [],
       };
-      for (let i = 0; i < numPlayers + 1; i++) {
+      for (let i = 0; i < numPlayers; i++) {
         cell[i] = {};
         for (const pheromoneType in globalConfig.pheromones) {
           cell[i][pheromoneType] = 0;

@@ -42,10 +42,10 @@ function LevelEditor(props: Props): React.Node {
     started: false,
     importedLevel: {},
 
-    numPlayers: 1,
+    numPlayers: 3,
     gridWidth: game.gridHeight,
     gridHeight: game.gridWidth,
-    playerID: 1,
+    playerID: 0,
     paletteMode: 'CREATE ENTITIES',
 
     // entity creation mode
@@ -656,6 +656,9 @@ function createEntities(game, dispatch, editor, rect): void {
   switch (editor.entityType) {
     case 'DIRT':
     case 'FOOD':
+    case 'IRON':
+    case 'STEEL':
+    case 'COAL':
       if (editor.subdividing) {
         args = [rect.width, rect.height];
       } else {
@@ -671,6 +674,7 @@ function createEntities(game, dispatch, editor, rect): void {
     case 'BACKGROUND':
       args = [1, 1, editor.background]; // width and height
       break;
+    case 'TURBINE':
     case 'DYNAMITE':
     case 'AGENT':
       args = [editor.playerID];

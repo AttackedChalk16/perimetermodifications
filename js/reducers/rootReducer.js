@@ -204,6 +204,8 @@ const rootReducer = (state: State, action: Action): State => {
     case 'DELETE_ENTITY':
     case 'SHOW_DEBUG':
     case 'SET_VIEW_POS':
+    case 'SET_ON_FIRE':
+    case 'UPDATE_TURBINE':
     case 'INCREMENT_ZOOM':
     case 'SET_PHEROMONE_VISIBILITY':
     case 'SET_FOCUSED':

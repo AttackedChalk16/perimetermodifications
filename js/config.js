@@ -20,8 +20,12 @@ const config = {
   gravity: -100,
 };
 
+const nonMoltenPheromoneBlockingTypes = [
+  'DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET',
+];
 const pheromoneBlockingTypes = [
-  'DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'
+  ...nonMoltenPheromoneBlockingTypes,
+  'STEEL', 'IRON',
 ];
 
 const pheromones = {
@@ -91,7 +95,7 @@ const pheromones = {
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
-    coolConcentration: 24, // amount of yourself needed before condensation starts
+    coolConcentration: 80, // amount of yourself needed before condensation starts
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -100,14 +104,59 @@ const pheromones = {
     },
     isRising: true,
   },
+  MOLTEN_IRON: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(100, 100, 100)',
+    tileIndex: 5,
+
+    blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+    isDispersing: true,
+    coolPoint: 80, // heat level to freeze at
+    coolsTo: 'IRON',
+    coolsToEntity: true,
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.9,
+      horizontalLeftOver: 1,
+    },
+    combinesTo: [{
+      substance: 'PHEROMONE',
+      type: 'MOLTEN_STEEL',
+      ingredients: [
+        {substance: 'ENTITY', type: 'COAL'},
+      ],
+    }],
+  },
+  MOLTEN_STEEL: {
+    quantity: 240,
+    decayAmount: 240,
+    decayRate: 0.0005,
+    color: 'rgb(100, 100, 100)',
+    tileIndex: 5,
+
+    blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+    isDispersing: true,
+    coolPoint: 90, // heat level to freeze at
+    coolsTo: 'STEEL',
+    coolsToEntity: true,
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.9,
+      horizontalLeftOver: 1,
+    },
+  },
   HEAT: {
     quantity: 120,
-    decayAmount: 4,
+    decayAmount: 12,
     decayRate: 1, // how much it decays per tick
     color: 'rgb(255, 0, 0)',
     tileIndex: 2,
 
-    blockingTypes: pheromoneBlockingTypes,
+    blockingTypes: [...nonMoltenPheromoneBlockingTypes],
   },
 };
 

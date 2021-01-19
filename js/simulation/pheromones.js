@@ -147,13 +147,13 @@ const computeAllPheromoneSteadyState = (game: Game): void => {
           if (entity.pheromoneEmitter) {
             posQueue.push({
               position: entity.position,
-              quantity: config.quantity,
+              quantity: entity.quantity,
             });
           }
           getEntityPositions(game, entity).forEach(position => {
             posQueue.push({
               position,
-              quantity: config.quantity,
+              quantity: entity.quantity,
             });
         });
       });

@@ -104,8 +104,11 @@ function Game(props: Props): React.Node {
         isExperimental={props.isInLevelEditor}
         tickInterval={state.game.tickInterval}
         modal={state.modal}
-        innerWidth={window.innerWidth}
+        canvasWidth={dims.width}
         isMuted={state.isMuted}
+        powerMargin={game.bases[game.playerID].powerMargin}
+        totalPowerNeeded={game.bases[game.playerID].totalPowerNeeded}
+        totalPowerGenerated={game.bases[game.playerID].totalPowerGenerated}
       />
     </div>
   );

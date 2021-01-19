@@ -75,14 +75,29 @@ const gameReducer = (game: Game, action: Action): Game => {
     case 'CREATE_ENTITIES': {
       return createEntitiesReducer(game, action);
     }
+    case 'SET_ON_FIRE': {
+      const {entityID} = action;
+      game.entities[entityID].onFire = true;
+      return game;
+    }
+    case 'UPDATE_TURBINE': {
+      const {entityID, thetaSpeed} = action;
+      const turbine = game.entities[entityID];
+      turbine.thetaSpeed = clamp(
+        thetaSpeed,
+        -1 * Entities[turbine.type].config.maxThetaSpeed,
+        Entities[turbine.type].config.maxThetaSpeed,
+      );
+      return game;
+    }
     case 'SET_FOCUSED': {
-      const {entity} = action;
-      game.focusedEntity = entity;
+      const {entityID} = action;
+      game.focusedEntity = game.entities[entityID];
       return game;
     }
     case 'SET_CONTROLLED': {
-      const {entity} = action;
-      game.controlledEntity = entity;
+      const {entityID} = action;
+      game.controlledEntity = game.entities[entityID];
       return game;
     }
     case 'COPY_ENTITIES': {

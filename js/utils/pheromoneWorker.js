@@ -5,13 +5,14 @@
 // any other module and so does not go through the normal babel/browserify transforms.
 // See the make file for how it works
 const {
-  add, multiply, subtract, equals, floor, containsVector
+  add, multiply, subtract, equals, floor, containsVector,
+  vectorTheta,
 } = require('./utils/vectors');
 const {isDiagonalMove} = require('./utils/helpers');
 const {oneOf} = require('./utils/stochastic');
 const {getNeighborPositions} = require('./selectors/neighbors');
 const {
-  lookupInGrid
+  lookupInGrid, getEntityPositions,
 } = require('./utils/gridHelpers');
 const {
   getPheromoneAtPosition, getQuantityForStalePos,
@@ -52,6 +53,7 @@ onmessage = function(ev) {
         grid: action.grid,
         entities: action.entities,
         PHEROMONE_EMITTER: {...action.PHEROMONE_EMITTER},
+        TURBINE: [...action.TURBINE],
 
         floodFillQueue: [],
         reverseFloodFillQueue: [],
@@ -111,6 +113,9 @@ onmessage = function(ev) {
       if (entity.pheromoneEmitter) {
         game.PHEROMONE_EMITTER[entity.id] = true;
       }
+      if (entity.type == 'TURBINE') {
+        game.TURBINE.push(entity.id);
+      }
       break;
     }
     case 'REMOVE_ENTITY': {
@@ -120,12 +125,15 @@ onmessage = function(ev) {
       if (entity.pheromoneEmitter) {
         delete game.PHEROMONE_EMITTER[entity.id];
       }
+      if (entity.type == 'TURBINE') {
+        game.TURBINE = game.TURBINE.filter(id => id != entity.id);
+      }
       break;
     }
-    case 'SET_TOKEN_RADIUS': {
-      const {token} = action;
+    case 'SET_EMITTER_QUANTITY': {
+      const {entityID, quantity} = action;
       if (!game) break;
-      game.entities[token.id] = token;
+      game.entities[entityID].quantity = quantity;
       break;
     }
   }
@@ -145,7 +153,7 @@ const startFloodFill = () => {
     }
   }
   game.floodFillQueue = [];
-  postMessage(result);
+  postMessage({type: 'PHEROMONES', result});
 }
 
 const startReverseFloodFill = () => {
@@ -159,7 +167,7 @@ const startReverseFloodFill = () => {
     }
   }
   game.reverseFloodFillQueue = [];
-  postMessage(result);
+  postMessage({type: 'PHEROMONES', result});
 }
 
 const startDispersePheromones = () => {
@@ -172,7 +180,7 @@ const startDispersePheromones = () => {
   }
   // console.log(result);
   if (result.length > 0) {
-    postMessage(result);
+    postMessage({type: 'PHEROMONES', result});
   }
 }
 
@@ -307,6 +315,8 @@ const updateDispersingPheromones = (game) => {
   }
 
   const rate = globalConfig.config.dispersingPheromoneUpdateRate;
+  const nextTurbines = {}; // as fluid pheromones move, update turbines here
+                           // map of entityID --> thetaSpeed
   for (const pherType in game.dispersingPheromonePositions) {
     let nextFluid = {}; // the algorithm for gravity with fluids will try to push
                         // the same source position multiple times, so don't let it
@@ -316,18 +326,15 @@ const updateDispersingPheromones = (game) => {
       const config = globalConfig.pheromones[pheromoneType];
 
       let pheromoneQuantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
-      // check for heat
-      // NOTE: this can make the loop variable pherType and the source property
-      // pheromoneType have different values so it's super important to be
-      // precise with which one you use!!
+
+      //////////////////////////////////////////////////////////////////////////////
+      // check for phase change
       const heat = getPheromoneAtPosition(game, position, 'HEAT', playerID);
       let sendToOtherPhase = 0;
       let phaseChangeTo = null;
       let changedPhase = false;
       const originalPosition = {...source.position};
       if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
-        // source.pheromoneType = config.heatsTo;
-        // pheromoneType = config.heatsTo;
         phaseChangeTo = config.heatsTo;
         if (pheromoneQuantity < 1) {
           sendToOtherPhase = pheromoneQuantity;
@@ -338,8 +345,6 @@ const updateDispersingPheromones = (game) => {
       } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
         if (config.coolConcentration <= pheromoneQuantity) {
           // console.log("cooling phase change at position", {...source.position});
-          // source.pheromoneType = config.coolsTo;
-          // pheromoneType = config.coolsTo;
           phaseChangeTo = config.coolsTo;
           if (pheromoneQuantity < 1) {
             sendToOtherPhase = pheromoneQuantity;
@@ -361,6 +366,8 @@ const updateDispersingPheromones = (game) => {
         // with from now on
         pheromoneQuantity -= sendToOtherPhase;
       }
+      //////////////////////////////////////////////////////////////////////////////
+
 
       // need to track if it became 0 on the last update and remove it now
       // (Can't remove it as soon as it becomes 0 or else we won't tell the client
@@ -487,10 +494,37 @@ const updateDispersingPheromones = (game) => {
           if (leftOrRight) {
             targetPercentLeft = config.viscosity.horizontalLeftOver;
           }
+
           let pherToGive = pheromoneQuantity * (1 - targetPercentLeft);
           if (pheromoneBelow + pherToGive > maxQuantity) {
             pherToGive = maxQuantity - pheromoneBelow;
           }
+
+          // check for turbines that should be spun
+          if (!diagonal) {
+            for (const turbineID of game.TURBINE) {
+              const turbine = game.entities[turbineID];
+              // if source.position and positionBelow are both inside the turbine
+              // then set its speed to be pherToGive / maxQuantity * maxThetaSpeed
+              const turbinePositions = getEntityPositions(game, turbine);
+              let positionBelowInside = false;
+              let positionInside = false;
+              for (const pos of turbinePositions) {
+                if (equals(pos, positionBelow)) positionBelowInside = true;
+                if (equals(pos, source.position)) positionInside = true;
+              }
+              if (!positionBelowInside || !positionInside) continue;
+
+              if (!nextTurbines[turbineID]) nextTurbines[turbineID] = 0;
+              const dirTheta = vectorTheta(subtract(source.position, positionBelow));
+              const dir = dirTheta > 0 ? 1 : -1;
+
+              // decrease amount of pheromone travelling in this direction
+              pherToGive = pherToGive - (pherToGive * 0.2);
+              nextTurbines[turbineID] += dir * pherToGive / maxQuantity * turbine.maxThetaSpeed;
+            }
+          }
+
           let leftOverPheromone = pheromoneQuantity - pherToGive;
           // fluids only decay in very small concentrations
           if (leftOverPheromone > 1) {
@@ -515,19 +549,20 @@ const updateDispersingPheromones = (game) => {
               nextFluid[encodePosition(position)] = true;
             }
           }
-          // update the source to be the next position
+
           pheromoneQuantity = (pheromoneQuantity - leftOverPheromone) + pheromoneBelow;
+          // update the source to be the next position
           source.position = positionBelow;
         }
       }
       //////////////////////////////////////////////////////////////////////////////
+
 
       // fluids only decay in very small concentrations
       if (config.isFluid && pheromoneQuantity > 0.5) {
         decayRate = 0;
       }
 
-      // remove if you've changed phase
       let finalPherQuantity = Math.max(0, pheromoneQuantity - decayRate);
       setPheromone(
         game, source.position, pheromoneType,
@@ -549,5 +584,17 @@ const updateDispersingPheromones = (game) => {
   }
   // console.log(nextDispersingPheromones);
   game.dispersingPheromonePositions = nextDispersingPheromones;
+
+  // send turbines messages
+  for (const turbineID of game.TURBINE) {
+    if (nextTurbines[turbineID] != null) {
+      postMessage({
+        type: 'TURBINES',
+        entityID: turbineID,
+        thetaSpeed: nextTurbines[turbineID],
+      });
+    }
+  }
+
   return nextDispersingPheromones;
 }

@@ -22,6 +22,7 @@ const config = {
   blockingTypes: [
     'DIRT', 'STONE', 'FOOD', 'AGENT',
     'DOODAD', 'WORM', 'MISSILE',
+    'TURBINE', 'IRON', 'STEEL', 'COAL',
   ],
 
   DIE: {

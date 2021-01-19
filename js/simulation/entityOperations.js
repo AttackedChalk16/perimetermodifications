@@ -281,6 +281,19 @@ const addEntity = (game: Game, entity: Entity): Game => {
   if (entity.isTower) {
     game.TOWER[entity.id] = true;
   }
+  if (entity.isFlammable) {
+    game.FLAMMABLE[entity.id] = true;
+  }
+  if (entity.isGenerator) {
+    game.GENERATOR[entity.id] = true;
+  }
+  if (entity.isPowerConsumer) {
+    game.CONSUMER[entity.id] = true;
+  }
+  if (entity.isMeltable) {
+    game.MELTABLE[entity.id] = true;
+  }
+
   // NOTE: special case for missiles
   if (entity.warhead) {
     if (entity.warhead.id == -1 || !game.entities[entity.warhead.id]) {
@@ -288,6 +301,10 @@ const addEntity = (game: Game, entity: Entity): Game => {
     }
     entity.holding = entity.warhead;
     entity.holdingIDs.push(entity.warhead.id);
+    entity.warhead.position = null;
+    entity.warhead.timer = Entities[entity.warhead.type].config.timer;
+    entity.warhead.age = 0;
+    entity.warhead.actions = [];
   }
 
   // update the pheromone worker that this entity exists
@@ -327,6 +344,18 @@ const removeEntity = (game: Game, entity: Entity): Game => {
   }
   if (game.TOWER[entity.id]) {
     delete game.TOWER[entity.id];
+  }
+  if (game.FLAMMABLE[entity.id]) {
+    delete game.FLAMMABLE[entity.id];
+  }
+  if (game.GENERATOR[entity.id]) {
+    delete game.GENERATOR[entity.id];
+  }
+  if (game.CONSUMER[entity.id]) {
+    delete game.CONSUMER[entity.id];
+  }
+  if (game.MELTABLE[entity.id]) {
+    delete game.MELTABLE[entity.id];
   }
 
   delete game.entities[entity.id];
@@ -393,6 +422,20 @@ const changeEntityType = (
   game[oldType] = game[oldType].filter(id => id != entity.id);
   game[nextType].push(entity.id);
   entity.type = nextType;
+  insertEntityInGrid(game, entity);
+};
+
+const changePheromoneEmitterQuantity = (
+  game, entity, nextQuantity,
+): void => {
+  entity.quantity = nextQuantity;
+  game.pheromoneWorker.postMessage({
+    type: 'SET_EMITTER_QUANTITY',
+    entityID: entity.id,
+    quantity: nextQuantity,
+  });
+  // NOTE: remove then re-add to grid in order to get pheromones working right
+  removeEntityFromGrid(game, entity);
   insertEntityInGrid(game, entity);
 };
 
@@ -558,6 +601,7 @@ module.exports = {
   changeEntitySize,
   markEntityAsStale,
   addSegmentToEntity,
+  changePheromoneEmitterQuantity,
 
   // NOTE: only used by the worker!
   insertEntityInGrid,

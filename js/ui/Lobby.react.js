@@ -188,7 +188,7 @@ function MadeBy(props) {
 
 function LevelEditor(props) {
   const {dispatch} = props;
-  const [level, setLevel] = useState('smallPhaseChangeLevel');
+  const [level, setLevel] = useState('mediumBallisticsLevel');
   const [useLevel, setUseLevel] = useState(true);
   const [rerender, setRerender] = useState(0);
 

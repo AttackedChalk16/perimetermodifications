@@ -13,8 +13,11 @@ function TopBar(props) {
     isExperimental,
     modal,
     tickInterval,
-    innerWidth,
+    canvasWidth,
     isMuted,
+    totalPowerGenerated,
+    powerMargin,
+    totalPowerNeeded,
   } = props;
 
   if (isExperimental && tickInterval == null) {
@@ -23,8 +26,16 @@ function TopBar(props) {
 
   const height = 100;
   const topPadding = 8;
-  const leftPadding = innerWidth / 2 - 100;
-  let centralStuff = '';
+  const leftPadding = canvasWidth / 2 - 100;
+  let centralStuff = (
+    <div>
+      <div><b>Power Generated: </b>{totalPowerGenerated}</div>
+      <div><b>Power Consumed: </b>{totalPowerNeeded}</div>
+      <div><b>Power Available: </b>
+        <span style={{color: powerMargin > 0 ? 'green' : 'red'}}>{powerMargin}</span>
+      </div>
+    </div>
+  );
 
   return (
     <div

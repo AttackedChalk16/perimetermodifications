@@ -35,7 +35,7 @@ const getQuantityForStalePos = (
     if (equals(entity.position, position)) {
       return {
         position,
-        quantity: globalConfig.pheromones[pheromoneType].quantity,
+        quantity: entity.quantity,
       };
     }
   }
@@ -101,6 +101,8 @@ const getSourcesOfPheromoneType = (
   for (const entityID in game.PHEROMONE_EMITTER) {
     const entity = game.entities[entityID];
     if (entity.pheromoneType != pheromoneType) continue;
+    if (entity.playerID != playerID) continue;
+    if (entity.quantity <= 0) continue;
     sources.push(entity);
   }
   return sources;

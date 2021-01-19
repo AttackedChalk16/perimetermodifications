@@ -6,6 +6,8 @@ const {renderAgent} = require('../render/renderAgent');
 
 const config = {
   isTower: true,
+  isPowerConsumer: true,
+  powerConsumed: 1,
   hp: 3,
   width: 1,
   height: 1,
@@ -45,6 +47,9 @@ const make = (
     ...makeEntity('TURRET', position, config.width, config.height),
     ...configCopy,
     playerID,
+
+    // power:
+    isPowered: false,
 
     // angle of the turret
     theta: theta != null ? theta : config.minTheta,

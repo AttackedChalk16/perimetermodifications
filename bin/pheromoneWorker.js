@@ -1,6 +1,8 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 var config = {
   msPerTick: 16,
 
@@ -19,7 +21,8 @@ var config = {
   gravity: -100
 };
 
-var pheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'];
+var nonMoltenPheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'];
+var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['STEEL', 'IRON']);
 
 var pheromones = {
   COLONY: {
@@ -64,7 +67,7 @@ var pheromones = {
     color: 'rgb(0, 0, 255)',
     tileIndex: 1,
 
-    blockingTypes: [].concat(pheromoneBlockingTypes, ['WORM']),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['WORM']),
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'STEAM',
@@ -83,7 +86,7 @@ var pheromones = {
     color: 'rgb(255, 255, 255)',
     tileIndex: 4,
 
-    blockingTypes: [].concat(pheromoneBlockingTypes),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
@@ -97,14 +100,57 @@ var pheromones = {
     },
     isRising: true
   },
+  MOLTEN_IRON: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(100, 100, 100)',
+    tileIndex: 5,
+
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    isDispersing: true,
+    coolPoint: 80, // heat level to freeze at
+    coolsTo: 'IRON',
+    coolsToEntity: true,
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.9,
+      horizontalLeftOver: 1
+    },
+    combinesTo: [{
+      substance: 'PHEROMONE',
+      type: 'MOLTEN_STEEL',
+      ingredients: [{ substance: 'ENTITY', type: 'COAL' }]
+    }]
+  },
+  MOLTEN_STEEL: {
+    quantity: 240,
+    decayAmount: 240,
+    decayRate: 0.0005,
+    color: 'rgb(100, 100, 100)',
+    tileIndex: 5,
+
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    isDispersing: true,
+    coolPoint: 90, // heat level to freeze at
+    coolsTo: 'STEEL',
+    coolsToEntity: true,
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.9,
+      horizontalLeftOver: 1
+    }
+  },
   HEAT: {
     quantity: 120,
-    decayAmount: 4,
+    decayAmount: 12,
     decayRate: 1, // how much it decays per tick
     color: 'rgb(255, 0, 0)',
     tileIndex: 2,
 
-    blockingTypes: pheromoneBlockingTypes
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
   }
 };
 
@@ -142,8 +188,8 @@ var config = {
 
   // agent properties
   isAgent: true,
-  pickupTypes: ['FOOD', 'DIRT', 'TOKEN', 'DYNAMITE'],
-  blockingTypes: ['FOOD', 'DIRT', 'AGENT', 'STONE', 'DOODAD', 'WORM', 'TOKEN', 'DYNAMITE'],
+  pickupTypes: ['FOOD', 'DIRT', 'TOKEN', 'DYNAMITE', 'COAL', 'IRON', 'STEEL'],
+  blockingTypes: ['FOOD', 'DIRT', 'AGENT', 'STONE', 'DOODAD', 'WORM', 'TOKEN', 'DYNAMITE', 'TURBINE', 'COAL', 'IRON', 'STEEL'],
 
   // action params
   MOVE: {
@@ -249,7 +295,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":17,"../selectors/sprites":24,"../utils/vectors":31,"./makeEntity":9}],3:[function(require,module,exports){
+},{"../render/renderAgent":21,"../selectors/sprites":28,"../utils/vectors":35,"./makeEntity":11}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -262,7 +308,7 @@ var _require2 = require('./makeEntity'),
 
 var config = {
   notOccupying: true, // when creating entities w/marquee, they can go on top of this
-  notBlockingPutdown: true, // when putting down entities, they can go on top of this
+  // notBlockingPutdown: true, // when putting down entities, they can go on top of this
   notAnimated: true
 };
 
@@ -284,7 +330,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":24,"./makeEntity":9}],4:[function(require,module,exports){
+},{"../selectors/sprites":28,"./makeEntity":11}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -316,7 +362,7 @@ var config = {
   width: 1,
   height: 1,
   velocity: 500,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
 
   DIE: {
     duration: 1,
@@ -367,7 +413,59 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":24,"../simulation/actionQueue":25,"../utils/vectors":31,"./makeEntity":9}],5:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":28,"../simulation/actionQueue":29,"../utils/vectors":35,"./makeEntity":11}],5:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isFlammable: true,
+  pheromoneEmitter: true,
+  pheromoneType: 'HEAT',
+  hp: 1,
+  combustionTemp: 100, // temperature at which you catch on fire
+  fuel: 3 * 60 * 1000, // ms of burn time
+  heatQuantity: 120 // amount of heat produced when on fire
+};
+
+var make = function make(game, position, width, height) {
+  return _extends({}, makeEntity('COAL', position, width || 1, height || 1), config, {
+    dictIndexStr: '',
+    onFire: false,
+    playerID: 0, // gaia
+    quantity: 0 // amount of pheromone emitted
+  });
+};
+
+var render = function render(ctx, game, coal) {
+  // const obj = getTileSprite(game, coal);
+  // if (obj == null || obj.img == null) return;
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   coal.position.x, coal.position.y, coal.width, coal.height,
+  // );
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(coal.position.x, coal.position.y, coal.width, coal.height);
+
+  if (coal.onFire) {
+    ctx.fillStyle = '#FFA500';
+    ctx.fillRect(coal.position.x, coal.position.y, coal.width, coal.height);
+  }
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":28,"./makeEntity":11}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -406,7 +504,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":24,"./makeEntity":9}],6:[function(require,module,exports){
+},{"../selectors/sprites":28,"./makeEntity":11}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -437,7 +535,7 @@ var render = function render(ctx, game, doodad) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"./makeEntity":9}],7:[function(require,module,exports){
+},{"./makeEntity":11}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -509,7 +607,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":24,"../simulation/actionQueue":25,"./makeEntity":9}],8:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":28,"../simulation/actionQueue":29,"./makeEntity":11}],9:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -550,7 +648,52 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":24,"./makeEntity":9}],9:[function(require,module,exports){
+},{"../selectors/sprites":28,"./makeEntity":11}],10:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isMeltable: true,
+  pheromoneEmitter: true,
+  pheromoneType: 'MOLTEN_IRON',
+  hp: 12,
+  meltTemp: 100, // temperature at which you melt
+  heatQuantity: 120 // amount of iron produced when melted
+};
+
+var make = function make(game, position, width, height) {
+  return _extends({}, makeEntity('IRON', position, width || 1, height || 1), config, {
+    dictIndexStr: '',
+    playerID: 0, // gaia
+    quantity: 0 // amount of pheromone emitted
+  });
+};
+
+var render = function render(ctx, game, iron) {
+  // const obj = getTileSprite(game, iron);
+  // if (obj == null || obj.img == null) return;
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   iron.position.x, iron.position.y, iron.width, iron.height,
+  // );
+
+  ctx.fillStyle = "darkgray";
+  ctx.fillRect(iron.position.x, iron.position.y, iron.width, iron.height);
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":28,"./makeEntity":11}],11:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -569,7 +712,7 @@ var makeEntity = function makeEntity(type, position, width, height) {
 module.exports = {
 	makeEntity: makeEntity
 };
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -601,7 +744,7 @@ var config = {
   width: 1,
   height: 2,
   velocity: 50,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURRET'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
 
   DIE: {
     duration: 1,
@@ -663,7 +806,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":24,"../simulation/actionQueue":25,"../utils/vectors":31,"./makeEntity":9}],11:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":28,"../simulation/actionQueue":29,"../utils/vectors":35,"./makeEntity":11}],13:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -684,11 +827,15 @@ var Entities = {
 
   STONE: require('./stone.js'),
   DIRT: require('./dirt.js'),
+  IRON: require('./iron.js'),
+  STEEL: require('./steel.js'),
 
+  COAL: require('./coal.js'),
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
+  TURBINE: require('./turbine.js'),
   TURRET: require('./turret.js'),
 
   DYNAMITE: require('./dynamite.js'),
@@ -699,7 +846,52 @@ var Entities = {
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./bullet.js":4,"./dirt.js":5,"./doodad.js":6,"./dynamite.js":7,"./food.js":8,"./missile.js":10,"./stone.js":12,"./token.js":13,"./turret.js":14,"./worm.js":15}],12:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./bullet.js":4,"./coal.js":5,"./dirt.js":6,"./doodad.js":7,"./dynamite.js":8,"./food.js":9,"./iron.js":10,"./missile.js":12,"./steel.js":14,"./stone.js":15,"./token.js":16,"./turbine.js":17,"./turret.js":18,"./worm.js":19}],14:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isMeltable: true,
+  pheromoneEmitter: true,
+  pheromoneType: 'MOLTEN_STEEL',
+  hp: 24,
+  meltTemp: 100, // temperature at which you catch on fire
+  heatQuantity: 240 // amount of steel  produced when melted
+};
+
+var make = function make(game, position, width, height) {
+  return _extends({}, makeEntity('STEEL', position, width || 1, height || 1), config, {
+    dictIndexStr: '',
+    playerID: 0, // gaia
+    quantity: 0 // amount of pheromone emitted
+  });
+};
+
+var render = function render(ctx, game, steel) {
+  // const obj = getTileSprite(game, steel);
+  // if (obj == null || obj.img == null) return;
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   steel.position.x, steel.position.y, steel.width, steel.height,
+  // );
+
+  ctx.fillStyle = "lightgray";
+  ctx.fillRect(steel.position.x, steel.position.y, steel.width, steel.height);
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":28,"./makeEntity":11}],15:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -732,7 +924,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":24,"./makeEntity":9}],13:[function(require,module,exports){
+},{"../selectors/sprites":28,"./makeEntity":11}],16:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -769,7 +961,81 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":9}],14:[function(require,module,exports){
+},{"../config":1,"./makeEntity":11}],17:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity.js'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../utils/vectors'),
+    add = _require2.add,
+    subtract = _require2.subtract,
+    equals = _require2.equals,
+    makeVector = _require2.makeVector,
+    vectorTheta = _require2.vectorTheta;
+
+var _require3 = require('../render/renderAgent'),
+    renderAgent = _require3.renderAgent;
+
+var config = {
+  isGenerator: true,
+  powerGenerated: 10,
+  hp: 3,
+  width: 2,
+  height: 2,
+  maxThetaSpeed: 0.4
+};
+
+var make = function make(game, position, playerID) {
+  return _extends({}, makeEntity('TURBINE', position, config.width, config.height), config, {
+    playerID: playerID,
+
+    // angle of the turbine
+    theta: 0,
+    thetaSpeed: 0
+
+  });
+};
+
+var render = function render(ctx, game, turret) {
+  var position = turret.position,
+      width = turret.width,
+      height = turret.height,
+      theta = turret.theta;
+
+  ctx.save();
+  ctx.translate(position.x, position.y);
+
+  // base of turbine
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.globalAlpha = 0.1;
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+  ctx.globalAlpha = 1;
+
+  // blades of the turbine
+  for (var i = 0; i < 4; i++) {
+    ctx.save();
+    ctx.fillStyle = "#8B0000";
+    var turbineWidth = 1.5;
+    var turbineHeight = 0.3;
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate(theta + i * Math.PI / 2);
+    ctx.translate(-1 * turbineWidth * 0.75, -turbineHeight / 2);
+    ctx.fillRect(0, 0, turbineWidth, turbineHeight);
+    ctx.restore();
+  }
+
+  ctx.restore();
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../render/renderAgent":21,"../utils/vectors":35,"./makeEntity.js":11}],18:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -789,6 +1055,8 @@ var _require3 = require('../render/renderAgent'),
 
 var config = {
   isTower: true,
+  isPowerConsumer: true,
+  powerConsumed: 1,
   hp: 3,
   width: 1,
   height: 1,
@@ -818,6 +1086,9 @@ var make = function make(game, position, playerID, projectileType, fireRate, the
   }
   return _extends({}, makeEntity('TURRET', position, config.width, config.height), configCopy, {
     playerID: playerID,
+
+    // power:
+    isPowered: false,
 
     // angle of the turret
     theta: theta != null ? theta : config.minTheta,
@@ -866,7 +1137,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":17,"../utils/vectors":31,"./makeEntity.js":9}],15:[function(require,module,exports){
+},{"../render/renderAgent":21,"../utils/vectors":35,"./makeEntity.js":11}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -979,7 +1250,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":17,"../render/renderSegmented":19,"../utils/vectors":31,"./agent.js":2}],16:[function(require,module,exports){
+},{"../render/renderAgent":21,"../render/renderSegmented":23,"../utils/vectors":35,"./agent.js":2}],20:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -996,7 +1267,8 @@ var _require = require('./utils/vectors'),
     subtract = _require.subtract,
     equals = _require.equals,
     floor = _require.floor,
-    containsVector = _require.containsVector;
+    containsVector = _require.containsVector,
+    vectorTheta = _require.vectorTheta;
 
 var _require2 = require('./utils/helpers'),
     isDiagonalMove = _require2.isDiagonalMove;
@@ -1008,7 +1280,8 @@ var _require4 = require('./selectors/neighbors'),
     getNeighborPositions = _require4.getNeighborPositions;
 
 var _require5 = require('./utils/gridHelpers'),
-    lookupInGrid = _require5.lookupInGrid;
+    lookupInGrid = _require5.lookupInGrid,
+    getEntityPositions = _require5.getEntityPositions;
 
 var _require6 = require('./selectors/pheromones'),
     getPheromoneAtPosition = _require6.getPheromoneAtPosition,
@@ -1059,6 +1332,7 @@ onmessage = function onmessage(ev) {
           grid: action.grid,
           entities: action.entities,
           PHEROMONE_EMITTER: _extends({}, action.PHEROMONE_EMITTER),
+          TURBINE: [].concat(_toConsumableArray(action.TURBINE)),
 
           floodFillQueue: [],
           reverseFloodFillQueue: [],
@@ -1136,6 +1410,9 @@ onmessage = function onmessage(ev) {
         if (_entity2.pheromoneEmitter) {
           game.PHEROMONE_EMITTER[_entity2.id] = true;
         }
+        if (_entity2.type == 'TURBINE') {
+          game.TURBINE.push(_entity2.id);
+        }
         break;
       }
     case 'REMOVE_ENTITY':
@@ -1147,14 +1424,20 @@ onmessage = function onmessage(ev) {
         if (_entity3.pheromoneEmitter) {
           delete game.PHEROMONE_EMITTER[_entity3.id];
         }
+        if (_entity3.type == 'TURBINE') {
+          game.TURBINE = game.TURBINE.filter(function (id) {
+            return id != _entity3.id;
+          });
+        }
         break;
       }
-    case 'SET_TOKEN_RADIUS':
+    case 'SET_EMITTER_QUANTITY':
       {
-        var token = action.token;
+        var entityID = action.entityID,
+            _quantity = action.quantity;
 
         if (!game) break;
-        game.entities[token.id] = token;
+        game.entities[entityID].quantity = _quantity;
         break;
       }
   }
@@ -1194,7 +1477,7 @@ var startFloodFill = function startFloodFill() {
   }
 
   game.floodFillQueue = [];
-  postMessage(result);
+  postMessage({ type: 'PHEROMONES', result: result });
 };
 
 var startReverseFloodFill = function startReverseFloodFill() {
@@ -1228,7 +1511,7 @@ var startReverseFloodFill = function startReverseFloodFill() {
   }
 
   game.reverseFloodFillQueue = [];
-  postMessage(result);
+  postMessage({ type: 'PHEROMONES', result: result });
 };
 
 var startDispersePheromones = function startDispersePheromones() {
@@ -1241,7 +1524,7 @@ var startDispersePheromones = function startDispersePheromones() {
   }
   // console.log(result);
   if (result.length > 0) {
-    postMessage(result);
+    postMessage({ type: 'PHEROMONES', result: result });
   }
 };
 
@@ -1309,10 +1592,10 @@ var floodFillPheromone = function floodFillPheromone(game, pheromoneType, player
     // dispersing pheromones decay separately
     if (config.isDispersing) {
       var encodedPos = encodePosition(position);
-      var _quantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
-      if (_quantity > 0 && game.dispersingPheromonePositions[pheromoneType][encodedPos] == null) {
+      var _quantity2 = getPheromoneAtPosition(game, position, pheromoneType, playerID);
+      if (_quantity2 > 0 && game.dispersingPheromonePositions[pheromoneType][encodedPos] == null) {
         game.dispersingPheromonePositions[pheromoneType][encodedPos] = {
-          position: position, playerID: playerID, pheromoneType: pheromoneType, quantity: _quantity
+          position: position, playerID: playerID, pheromoneType: pheromoneType, quantity: _quantity2
         };
       }
     }
@@ -1432,6 +1715,8 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   }
 
   var rate = globalConfig.config.dispersingPheromoneUpdateRate;
+  var nextTurbines = {}; // as fluid pheromones move, update turbines here
+  // map of entityID --> thetaSpeed
   for (var _pherType in game.dispersingPheromonePositions) {
     var nextFluid = {}; // the algorithm for gravity with fluids will try to push
     // the same source position multiple times, so don't let it
@@ -1445,18 +1730,15 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
       var config = globalConfig.pheromones[pheromoneType];
 
       var pheromoneQuantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
-      // check for heat
-      // NOTE: this can make the loop variable pherType and the source property
-      // pheromoneType have different values so it's super important to be
-      // precise with which one you use!!
+
+      //////////////////////////////////////////////////////////////////////////////
+      // check for phase change
       var heat = getPheromoneAtPosition(game, position, 'HEAT', playerID);
       var sendToOtherPhase = 0;
       var phaseChangeTo = null;
       var changedPhase = false;
       var originalPosition = _extends({}, source.position);
       if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
-        // source.pheromoneType = config.heatsTo;
-        // pheromoneType = config.heatsTo;
         phaseChangeTo = config.heatsTo;
         if (pheromoneQuantity < 1) {
           sendToOtherPhase = pheromoneQuantity;
@@ -1467,8 +1749,6 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
       } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
         if (config.coolConcentration <= pheromoneQuantity) {
           // console.log("cooling phase change at position", {...source.position});
-          // source.pheromoneType = config.coolsTo;
-          // pheromoneType = config.coolsTo;
           phaseChangeTo = config.coolsTo;
           if (pheromoneQuantity < 1) {
             sendToOtherPhase = pheromoneQuantity;
@@ -1486,6 +1766,8 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         // with from now on
         pheromoneQuantity -= sendToOtherPhase;
       }
+      //////////////////////////////////////////////////////////////////////////////
+
 
       // need to track if it became 0 on the last update and remove it now
       // (Can't remove it as soon as it becomes 0 or else we won't tell the client
@@ -1603,10 +1885,80 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           if (leftOrRight) {
             targetPercentLeft = config.viscosity.horizontalLeftOver;
           }
+
           var pherToGive = pheromoneQuantity * (1 - targetPercentLeft);
           if (pheromoneBelow + pherToGive > maxQuantity) {
             pherToGive = maxQuantity - pheromoneBelow;
           }
+
+          // check for turbines that should be spun
+          if (!diagonal) {
+            var _iteratorNormalCompletion6 = true;
+            var _didIteratorError6 = false;
+            var _iteratorError6 = undefined;
+
+            try {
+              for (var _iterator6 = game.TURBINE[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                var turbineID = _step6.value;
+
+                var turbine = game.entities[turbineID];
+                // if source.position and positionBelow are both inside the turbine
+                // then set its speed to be pherToGive / maxQuantity * maxThetaSpeed
+                var turbinePositions = getEntityPositions(game, turbine);
+                var positionBelowInside = false;
+                var positionInside = false;
+                var _iteratorNormalCompletion7 = true;
+                var _didIteratorError7 = false;
+                var _iteratorError7 = undefined;
+
+                try {
+                  for (var _iterator7 = turbinePositions[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                    var pos = _step7.value;
+
+                    if (equals(pos, positionBelow)) positionBelowInside = true;
+                    if (equals(pos, source.position)) positionInside = true;
+                  }
+                } catch (err) {
+                  _didIteratorError7 = true;
+                  _iteratorError7 = err;
+                } finally {
+                  try {
+                    if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                      _iterator7.return();
+                    }
+                  } finally {
+                    if (_didIteratorError7) {
+                      throw _iteratorError7;
+                    }
+                  }
+                }
+
+                if (!positionBelowInside || !positionInside) continue;
+
+                if (!nextTurbines[turbineID]) nextTurbines[turbineID] = 0;
+                var dirTheta = vectorTheta(subtract(source.position, positionBelow));
+                var dir = dirTheta > 0 ? 1 : -1;
+
+                // decrease amount of pheromone travelling in this direction
+                pherToGive = pherToGive - pherToGive * 0.2;
+                nextTurbines[turbineID] += dir * pherToGive / maxQuantity * turbine.maxThetaSpeed;
+              }
+            } catch (err) {
+              _didIteratorError6 = true;
+              _iteratorError6 = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                  _iterator6.return();
+                }
+              } finally {
+                if (_didIteratorError6) {
+                  throw _iteratorError6;
+                }
+              }
+            }
+          }
+
           var leftOverPheromone = pheromoneQuantity - pherToGive;
           // fluids only decay in very small concentrations
           if (leftOverPheromone > 1) {
@@ -1626,19 +1978,20 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
               nextFluid[encodePosition(position)] = true;
             }
           }
-          // update the source to be the next position
+
           pheromoneQuantity = pheromoneQuantity - leftOverPheromone + pheromoneBelow;
+          // update the source to be the next position
           source.position = positionBelow;
         }
       }
       //////////////////////////////////////////////////////////////////////////////
+
 
       // fluids only decay in very small concentrations
       if (config.isFluid && pheromoneQuantity > 0.5) {
         decayRate = 0;
       }
 
-      // remove if you've changed phase
       var finalPherQuantity = Math.max(0, pheromoneQuantity - decayRate);
       setPheromone(game, source.position, pheromoneType, finalPherQuantity, playerID);
 
@@ -1660,10 +2013,43 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   }
   // console.log(nextDispersingPheromones);
   game.dispersingPheromonePositions = nextDispersingPheromones;
+
+  // send turbines messages
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
+
+  try {
+    for (var _iterator8 = game.TURBINE[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var turbineID = _step8.value;
+
+      if (nextTurbines[turbineID] != null) {
+        postMessage({
+          type: 'TURBINES',
+          entityID: turbineID,
+          thetaSpeed: nextTurbines[turbineID]
+        });
+      }
+    }
+  } catch (err) {
+    _didIteratorError8 = true;
+    _iteratorError8 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion8 && _iterator8.return) {
+        _iterator8.return();
+      }
+    } finally {
+      if (_didIteratorError8) {
+        throw _iteratorError8;
+      }
+    }
+  }
+
   return nextDispersingPheromones;
 };
 
-},{"./config":1,"./selectors/neighbors":22,"./selectors/pheromones":23,"./simulation/entityOperations":26,"./simulation/pheromones":27,"./utils/gridHelpers":28,"./utils/helpers":29,"./utils/stochastic":30,"./utils/vectors":31}],17:[function(require,module,exports){
+},{"./config":1,"./selectors/neighbors":26,"./selectors/pheromones":27,"./simulation/entityOperations":30,"./simulation/pheromones":31,"./utils/gridHelpers":32,"./utils/helpers":33,"./utils/stochastic":34,"./utils/vectors":35}],21:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -1892,7 +2278,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":21,"../utils/gridHelpers":28,"../utils/helpers":29,"../utils/vectors":31,"./renderHealthBar":18}],18:[function(require,module,exports){
+},{"../selectors/misc":25,"../utils/gridHelpers":32,"../utils/helpers":33,"../utils/vectors":35,"./renderHealthBar":22}],22:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -1934,7 +2320,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":28,"../utils/vectors":31}],19:[function(require,module,exports){
+},{"../utils/gridHelpers":32,"../utils/vectors":35}],23:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -2082,7 +2468,7 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":21,"../selectors/sprites":24,"../utils/vectors":31,"./renderHealthBar":18}],20:[function(require,module,exports){
+},{"../selectors/misc":25,"../selectors/sprites":28,"../utils/vectors":35,"./renderHealthBar":22}],24:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -2149,7 +2535,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":28}],21:[function(require,module,exports){
+},{"../utils/gridHelpers":32}],25:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2342,7 +2728,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":20,"../selectors/neighbors":22,"../simulation/actionQueue":25,"../utils/gridHelpers":28,"../utils/helpers":29,"../utils/vectors":31}],22:[function(require,module,exports){
+},{"../selectors/collisions":24,"../selectors/neighbors":26,"../simulation/actionQueue":29,"../utils/gridHelpers":32,"../utils/helpers":33,"../utils/vectors":35}],26:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -2609,7 +2995,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":20,"../utils/gridHelpers":28,"../utils/vectors":31}],23:[function(require,module,exports){
+},{"../selectors/collisions":24,"../utils/gridHelpers":32,"../utils/vectors":35}],27:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2656,7 +3042,7 @@ var getQuantityForStalePos = function getQuantityForStalePos(game, position, phe
     if (equals(entity.position, position)) {
       return {
         position: position,
-        quantity: globalConfig.pheromones[pheromoneType].quantity
+        quantity: entity.quantity
       };
     }
   }
@@ -2735,6 +3121,8 @@ var getSourcesOfPheromoneType = function getSourcesOfPheromoneType(game, pheromo
   for (var entityID in game.PHEROMONE_EMITTER) {
     var entity = game.entities[entityID];
     if (entity.pheromoneType != pheromoneType) continue;
+    if (entity.playerID != playerID) continue;
+    if (entity.quantity <= 0) continue;
     sources.push(entity);
   }
   return sources;
@@ -2746,7 +3134,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":22,"../utils/gridHelpers":28,"../utils/helpers":29,"../utils/vectors":31}],24:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":26,"../utils/gridHelpers":32,"../utils/helpers":33,"../utils/vectors":35}],28:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3190,7 +3578,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":21,"../selectors/neighbors":22,"../simulation/actionQueue":25,"../utils/gridHelpers":28,"../utils/helpers":29,"../utils/vectors":31}],25:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":25,"../selectors/neighbors":26,"../simulation/actionQueue":29,"../utils/gridHelpers":32,"../utils/helpers":33,"../utils/vectors":35}],29:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3361,6 +3749,7 @@ var getDuration = function getDuration(game, entity, actionType) {
   actionType == 'MOVE' && isDiagonalTheta(entity.theta)) {
     duration = Math.round(duration * 1.4); // sqrt(2)
   }
+  if (!entity || !entity.position) return duration;
 
   // slowed down by water
   var inWater = getPheromoneAtPosition(game, floor(entity.position), 'WATER', game.playerID) > 0 || getPheromoneAtPosition(game, floor(entity.prevPosition), 'WATER', game.playerID) > 0;
@@ -3416,7 +3805,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":23,"../utils/helpers":29,"../utils/vectors":31}],26:[function(require,module,exports){
+},{"../selectors/pheromones":27,"../utils/helpers":33,"../utils/vectors":35}],30:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3821,6 +4210,19 @@ var addEntity = function addEntity(game, entity) {
   if (entity.isTower) {
     game.TOWER[entity.id] = true;
   }
+  if (entity.isFlammable) {
+    game.FLAMMABLE[entity.id] = true;
+  }
+  if (entity.isGenerator) {
+    game.GENERATOR[entity.id] = true;
+  }
+  if (entity.isPowerConsumer) {
+    game.CONSUMER[entity.id] = true;
+  }
+  if (entity.isMeltable) {
+    game.MELTABLE[entity.id] = true;
+  }
+
   // NOTE: special case for missiles
   if (entity.warhead) {
     if (entity.warhead.id == -1 || !game.entities[entity.warhead.id]) {
@@ -3828,6 +4230,10 @@ var addEntity = function addEntity(game, entity) {
     }
     entity.holding = entity.warhead;
     entity.holdingIDs.push(entity.warhead.id);
+    entity.warhead.position = null;
+    entity.warhead.timer = Entities[entity.warhead.type].config.timer;
+    entity.warhead.age = 0;
+    entity.warhead.actions = [];
   }
 
   // update the pheromone worker that this entity exists
@@ -3870,6 +4276,18 @@ var removeEntity = function removeEntity(game, entity) {
   }
   if (game.TOWER[entity.id]) {
     delete game.TOWER[entity.id];
+  }
+  if (game.FLAMMABLE[entity.id]) {
+    delete game.FLAMMABLE[entity.id];
+  }
+  if (game.GENERATOR[entity.id]) {
+    delete game.GENERATOR[entity.id];
+  }
+  if (game.CONSUMER[entity.id]) {
+    delete game.CONSUMER[entity.id];
+  }
+  if (game.MELTABLE[entity.id]) {
+    delete game.MELTABLE[entity.id];
   }
 
   delete game.entities[entity.id];
@@ -3951,6 +4369,18 @@ var changeEntityType = function changeEntityType(game, entity, oldType, nextType
   });
   game[nextType].push(entity.id);
   entity.type = nextType;
+  insertEntityInGrid(game, entity);
+};
+
+var changePheromoneEmitterQuantity = function changePheromoneEmitterQuantity(game, entity, nextQuantity) {
+  entity.quantity = nextQuantity;
+  game.pheromoneWorker.postMessage({
+    type: 'SET_EMITTER_QUANTITY',
+    entityID: entity.id,
+    quantity: nextQuantity
+  });
+  // NOTE: remove then re-add to grid in order to get pheromones working right
+  removeEntityFromGrid(game, entity);
   insertEntityInGrid(game, entity);
 };
 
@@ -4131,12 +4561,13 @@ module.exports = {
   changeEntitySize: changeEntitySize,
   markEntityAsStale: markEntityAsStale,
   addSegmentToEntity: addSegmentToEntity,
+  changePheromoneEmitterQuantity: changePheromoneEmitterQuantity,
 
   // NOTE: only used by the worker!
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":9,"../entities/registry":11,"../selectors/neighbors":22,"../selectors/pheromones":23,"../simulation/pheromones":27,"../utils/gridHelpers":28,"../utils/helpers":29,"../utils/vectors":31}],27:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":11,"../entities/registry":13,"../selectors/neighbors":26,"../selectors/pheromones":27,"../simulation/pheromones":31,"../utils/gridHelpers":32,"../utils/helpers":33,"../utils/vectors":35}],31:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4355,13 +4786,13 @@ var computeAllPheromoneSteadyState = function computeAllPheromoneSteadyState(gam
         if (entity.pheromoneEmitter) {
           posQueue.push({
             position: entity.position,
-            quantity: config.quantity
+            quantity: entity.quantity
           });
         }
         getEntityPositions(game, entity).forEach(function (position) {
           posQueue.push({
             position: position,
-            quantity: config.quantity
+            quantity: entity.quantity
           });
         });
       });
@@ -4496,7 +4927,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":22,"../selectors/pheromones":23,"../utils/gridHelpers":28,"../utils/helpers":29,"../utils/vectors":31}],28:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":26,"../selectors/pheromones":27,"../utils/gridHelpers":32,"../utils/helpers":33,"../utils/vectors":35}],32:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -4522,7 +4953,7 @@ var initGrid = function initGrid(gridWidth, gridHeight, numPlayers) {
       var cell = {
         entities: []
       };
-      for (var i = 0; i < numPlayers + 1; i++) {
+      for (var i = 0; i < numPlayers; i++) {
         cell[i] = {};
         for (var pheromoneType in globalConfig.pheromones) {
           cell[i][pheromoneType] = 0;
@@ -4632,7 +5063,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":29,"../utils/vectors":31}],29:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":33,"../utils/vectors":35}],33:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -4743,7 +5174,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":31}],30:[function(require,module,exports){
+},{"./vectors":35}],34:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -4798,7 +5229,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],31:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4997,4 +5428,4 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}]},{},[16]);
+},{}]},{},[20]);

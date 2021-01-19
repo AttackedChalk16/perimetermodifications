@@ -19,11 +19,15 @@ const config = {
 
   // agent properties
   isAgent: true,
-  pickupTypes: ['FOOD', 'DIRT', 'TOKEN', 'DYNAMITE'],
+  pickupTypes: [
+    'FOOD', 'DIRT', 'TOKEN',
+    'DYNAMITE', 'COAL', 'IRON', 'STEEL',
+  ],
   blockingTypes: [
     'FOOD', 'DIRT', 'AGENT',
     'STONE', 'DOODAD', 'WORM',
-    'TOKEN', 'DYNAMITE',
+    'TOKEN', 'DYNAMITE', 'TURBINE',
+    'COAL', 'IRON', 'STEEL',
   ],
 
   // action params

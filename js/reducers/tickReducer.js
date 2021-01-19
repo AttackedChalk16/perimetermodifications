@@ -15,7 +15,7 @@ const {
 } = require('../simulation/actionQueue.js');
 const {
   removeEntity, addEntity, changeEntityType, moveEntity,
-  addSegmentToEntity,
+  addSegmentToEntity, changePheromoneEmitterQuantity,
 } = require('../simulation/entityOperations');
 const {render} = require('../render/render');
 const {
@@ -97,6 +97,7 @@ const doTick = (game: Game): Game => {
       grid: game.grid,
       entities: game.entities,
       PHEROMONE_EMITTER: game.PHEROMONE_EMITTER || {},
+      TURBINE: game.TURBINE || [],
     });
   }
 
@@ -107,13 +108,17 @@ const doTick = (game: Game): Game => {
   keepControlledMoving(game);
   updateActors(game);
   updateAgents(game);
-  updatePheromones(game);
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
   updateTowers(game);
   updateBallistics(game);
+  updateFlammables(game);
+  updateMeltables(game);
   updateExplosives(game);
+  updateGenerators(game);
+
+  updatePheromones(game);
   render(game);
 
   // update timing frames
@@ -175,6 +180,10 @@ const updateAgents = (game): void => {
     }
 	}
 }
+
+//////////////////////////////////////////////////////////////////////////
+// Explosives, ballistics
+//////////////////////////////////////////////////////////////////////////
 
 const updateExplosives = (game): void => {
   for (const id in game.EXPLOSIVE) {
@@ -239,10 +248,57 @@ const updateBallistics = (game): void => {
   }
 };
 
+//////////////////////////////////////////////////////////////////////////
+// Fire, meltables
+//////////////////////////////////////////////////////////////////////////
+
+const updateFlammables = (game): void => {
+  for (const id in game.FLAMMABLE) {
+    const flammable = game.entities[id];
+    // if on fire, burn
+    if (flammable.onFire) {
+      // check if you just caught on fire, and set quantity
+      if (flammable.quantity == 0) {
+        changePheromoneEmitterQuantity(game, flammable, flammable.heatQuantity);
+      }
+      flammable.fuel -= game.timeSinceLastTick;
+      if (flammable.fuel <= 0) {
+        queueAction(game, flammable, makeAction(game, flammable, 'DIE'));
+      }
+    // if not on fire, check if it should catch on fire
+    } else {
+      const temp = getPheromoneAtPosition(game, flammable.position, 'HEAT', 0);
+      if (temp >= flammable.combustionTemp) {
+        flammable.onFire = true;
+      }
+    }
+  }
+}
+
+const updateMeltables = (game): void => {
+  for (const id in game.MELTABLE) {
+    const meltable = game.entities[id];
+    const temp = getPheromoneAtPosition(game, meltable.position, 'HEAT', 0);
+    if (temp >= meltable.meltTemp) {
+      const config = Entities[meltable.type].config;
+      changePheromoneEmitterQuantity(
+        game, meltable, meltable.heatQuantity * (meltable.hp / config.hp),
+      );
+      queueAction(game, meltable, makeAction(game, meltable, 'DIE'));
+    }
+  }
+};
+
+//////////////////////////////////////////////////////////////////////////
+// Towers
+//////////////////////////////////////////////////////////////////////////
+
 const updateTowers = (game): void => {
   for (const id in game.TOWER) {
     const tower = game.entities[id];
     const config = Entities[tower.type].config;
+    // don't do anything if unpowered
+    if (!tower.isPowered) continue;
 
     // choose target if possible
     if (tower.targetID == null) {
@@ -300,6 +356,45 @@ const updateTowers = (game): void => {
     }
 
   }
+};
+
+//////////////////////////////////////////////////////////////////////////
+// Generators
+//////////////////////////////////////////////////////////////////////////
+
+const updateGenerators = (game: Game): void => {
+  // tally up available power
+  let totalPowerGenerated = 0;
+  for (const id in game.GENERATOR) {
+    const generator = game.entities[id];
+
+    let powerGenerated = Entities[generator.type].config.powerGenerated;
+
+    // Handle turbines
+    if (generator.type == 'TURBINE') {
+      generator.theta = (generator.theta + generator.thetaSpeed) % (2 * Math.PI);
+      powerGenerated *= generator.thetaSpeed / generator.maxThetaSpeed;
+    }
+    totalPowerGenerated += Math.ceil(powerGenerated);
+
+  }
+
+  game.bases[game.playerID].totalPowerGenerated = totalPowerGenerated;
+  game.bases[game.playerID].totalPowerNeeded = 0;
+
+  // distribute consumed power
+  for (const id in game.CONSUMER) {
+    const consumer = game.entities[id];
+    game.bases[game.playerID].totalPowerNeeded += consumer.powerConsumed;
+    if (totalPowerGenerated >= consumer.powerConsumed) {
+      consumer.isPowered = true;
+      totalPowerGenerated -= consumer.powerConsumed;
+    }
+  }
+
+  game.bases[game.playerID].powerMargin =
+    game.bases[game.playerID].totalPowerGenerated
+    - game.bases[game.playerID].totalPowerNeeded;
 };
 
 //////////////////////////////////////////////////////////////////////////

@@ -6,37 +6,40 @@
 
 - - - - - - TODO - - - - - -
   - get a good average fps algorithm going
+  - steam
+    - if steam cool rate is less than water heat rate then clouds might form
+    - set higher threshold for steam before it condenses back to water
   - issues:
-    - resetting after a missile is exploded causes its payload to stay behind
-    - not able to edit player 2
+    - allow wasd/arrowkeys to move screen when game is playing
+    - indicate whether individual turrets are powered or not
+    - turbines:
+      - spin direction depends on left/right-hand side of turbine
+      - acceleration may work better than speed for e.g. contradictory flows
+      - reducing pherToGive doesn't actually slow down an array of turbines
     - dirt should probably be marked as stale when it dies?
-    - turret is too good at shooting down missiles
 
   - pheromones
     - marked dirt should be a pheromoneSource
+      - by changing quantity from 0
     - allow pheromoneEmitters to emit dispersing pheromones
   - minimap rendering functions too
 
 
 - - - - - - BARE BONES - - - - - -
-  - coal entity
-    - onFire property
-    - when on fire, gives off heat, loses hp, and glows
-    - can catch on fire when near heat
   - iron entity/pheromone
+    - properties:
+      - meltable
+        - have heatQuantity be divided by hp
+      - coolsToEntity pheromone property
+        - worker needs to tell client there's a new entity
+      - combinesTo pheromone property
+        - check for presence of other ingredients
     - turns to iron pheromone at temperature
     - viscosity property so it flows differently than water
+    - molten iron pheromone that turns back into iron entity
   - steel entity/pheromone
     - higher melting point?
     - more hp than iron
-  - turbine entity
-    - spun in the presence of moving fluid
-      - spins faster the higher the concentration is
-      - increases fluid viscosity leftOvers underneath it
-    - powerProducer property
-    - power tracking at base level
-    - power need from towers
-      - powerConsumer property
 
 
 - - - - - - LATER - - - - - - - -
@@ -50,9 +53,19 @@
   - steel tilesheet
   - coal tilesheet
   - iron tilesheet
+  - fire
   - turbine
+  - missile
+  - warheads
+  - bullets
+  - later
+    - drill
+    - train engine + cars
 
 - - - - - - - TO THINK ABOUT - - - - - - -
+  - ways to have additional interaction with terrain/environment
+    - water wears away dirt over time
+    - explosives as a base building mechanic
   - temperature
     - water -> steam -> water (-> ice)
     - solid iron -> molten iron
@@ -66,11 +79,15 @@
   - agent roles
     - drill
     - train
-    - digger/shoveller
-    - engineer?
+    - miner/digger/furnace shoveller
+    - engineer
+    - demolitions expert
+
 
 
 - - - - - - - BUGS - - - - - - -
+  - resetting the world after firing a bunch of missiles can cause error
+    in collisionsAtSpace when the missiles blow up on each other
   - worm
     - worm sprite indexing off-by-one when controlled?
     - worm should be able to double back on itself when stuck

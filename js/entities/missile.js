@@ -21,8 +21,9 @@ const config = {
   velocity: 50,
   blockingTypes: [
     'DIRT', 'STONE', 'FOOD', 'AGENT',
-    'DOODAD', 'WORM', 'MISSILE',
-    'TURRET',
+    'DOODAD', 'WORM',
+    'TURRET', 'TURBINE',
+    'IRON', 'STEEL', 'COAL',
   ],
 
   DIE: {

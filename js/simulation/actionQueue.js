@@ -146,6 +146,7 @@ const getDuration = (game: Game, entity: Entity, actionType: string): boolean =>
   ) {
     duration = Math.round(duration * 1.4); // sqrt(2)
   }
+  if (!entity || !entity.position) return duration;
 
   // slowed down by water
   const inWater =
