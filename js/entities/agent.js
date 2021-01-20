@@ -11,7 +11,7 @@ const {renderAgent} = require('../render/renderAgent');
 
 const config = {
   hp: 60,
-  damage: 2,
+  damage: 20,
   width: 2,
   height: 2,
   maxHold: 1,

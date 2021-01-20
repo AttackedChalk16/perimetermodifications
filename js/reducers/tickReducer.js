@@ -203,6 +203,7 @@ const updateExplosives = (game): void => {
 const updateBallistics = (game): void => {
   for (const id in game.BALLISTIC) {
     const ballistic = game.entities[id];
+    if (ballistic == null || ballistic.position == null) continue;
     ballistic.age += game.timeSinceLastTick;
     // if it has collided with something, deal damage to it and die
     const collisions = collidesWith(game, ballistic, ballistic.blockingTypes);

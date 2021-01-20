@@ -317,6 +317,8 @@ const updateDispersingPheromones = (game) => {
   const rate = globalConfig.config.dispersingPheromoneUpdateRate;
   const nextTurbines = {}; // as fluid pheromones move, update turbines here
                            // map of entityID --> thetaSpeed
+  const nextEntities = {}; // if fluids freeze into entities, record them here
+                           // map of encoded position --> {type, quantity}
   for (const pherType in game.dispersingPheromonePositions) {
     let nextFluid = {}; // the algorithm for gravity with fluids will try to push
                         // the same source position multiple times, so don't let it
@@ -343,7 +345,7 @@ const updateDispersingPheromones = (game) => {
         }
         changedPhase = true;
       } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
-        if (config.coolConcentration <= pheromoneQuantity) {
+        if (config.coolConcentration == null || pheromoneQuantity >= config.coolConcentration) {
           // console.log("cooling phase change at position", {...source.position});
           phaseChangeTo = config.coolsTo;
           if (pheromoneQuantity < 1) {
@@ -355,13 +357,23 @@ const updateDispersingPheromones = (game) => {
         }
       }
       // set the value of this square to the amount sent to the other phase
+      // OR if it's an entity, create it
       if (changedPhase) {
-        setPheromone(
-          game, source.position, phaseChangeTo,
-          sendToOtherPhase, playerID,
-        );
-        nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] =
-          {...source, pheromoneType: phaseChangeTo,  quantity: sendToOtherPhase};
+        if (config.coolsToEntity) {
+          if (sendToOtherPhase > 0) {
+            nextEntities[encodePosition(source.position)] = {
+              type: phaseChangeTo,
+              quantity: Math.round(sendToOtherPhase),
+            };
+          }
+        } else {
+          setPheromone(
+            game, source.position, phaseChangeTo,
+            sendToOtherPhase, playerID,
+          );
+          nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] =
+            {...source, pheromoneType: phaseChangeTo,  quantity: sendToOtherPhase};
+        }
         // then subtract the amount sent to the other phase from the amount we deal
         // with from now on
         pheromoneQuantity -= sendToOtherPhase;
@@ -538,7 +550,7 @@ const updateDispersingPheromones = (game) => {
             playerID,
           );
 
-          if (!nextFluid[encodePosition(position)]) {
+          // if (!nextFluid[encodePosition(position)]) {
             const nextQuantity = Math.max(0, leftOverPheromone - decayRate);
             if (nextQuantity != 0 || (source.quantity != 0)) {
               nextDispersingPheromones[pheromoneType][encodePosition(position)] = {
@@ -548,7 +560,7 @@ const updateDispersingPheromones = (game) => {
               };
               nextFluid[encodePosition(position)] = true;
             }
-          }
+          // }
 
           pheromoneQuantity = (pheromoneQuantity - leftOverPheromone) + pheromoneBelow;
           // update the source to be the next position
@@ -594,6 +606,14 @@ const updateDispersingPheromones = (game) => {
         thetaSpeed: nextTurbines[turbineID],
       });
     }
+  }
+
+  // send entity messages
+  if (Object.keys(nextEntities).length > 0) {
+    postMessage({
+      type: 'ENTITIES',
+      entities: nextEntities,
+    });
   }
 
   return nextDispersingPheromones;

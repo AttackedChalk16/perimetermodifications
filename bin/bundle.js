@@ -91,7 +91,7 @@ var pheromones = {
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
-    coolConcentration: 24, // amount of yourself needed before condensation starts
+    coolConcentration: 80, // amount of yourself needed before condensation starts
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -107,15 +107,16 @@ var pheromones = {
     color: 'rgb(100, 100, 100)',
     tileIndex: 5,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
     coolPoint: 80, // heat level to freeze at
     coolsTo: 'IRON',
+    coolRate: 1,
     coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.9,
+      diagonalLeftOver: 0,
       horizontalLeftOver: 1
     },
     combinesTo: [{
@@ -131,15 +132,16 @@ var pheromones = {
     color: 'rgb(100, 100, 100)',
     tileIndex: 5,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
     coolPoint: 90, // heat level to freeze at
     coolsTo: 'STEEL',
+    coolRate: 1,
     coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.9,
+      diagonalLeftOver: 0,
       horizontalLeftOver: 1
     }
   },
@@ -180,7 +182,7 @@ var _require4 = require('../render/renderAgent'),
 
 var config = {
   hp: 60,
-  damage: 2,
+  damage: 20,
   width: 2,
   height: 2,
   maxHold: 1,
@@ -357,7 +359,7 @@ var globalConfig = require('../config');
 
 var config = {
   isBallistic: true,
-  damage: 1,
+  damage: 10,
   hp: 1,
   width: 1,
   height: 1,
@@ -479,7 +481,7 @@ var _require2 = require('./makeEntity'),
 var config = {
   notAnimated: true,
   isTiled: true,
-  hp: 1
+  hp: 10
 };
 
 var make = function make(game, position, width, height) {
@@ -559,12 +561,12 @@ var globalConfig = require('../config');
 
 var config = {
   isExplosive: true,
-  hp: 1,
+  hp: 10,
   width: 1,
   height: 1,
   explosionRadius: 5,
-  damage: 4,
-  timer: 15,
+  damage: 40,
+  timer: 1,
   age: 0,
 
   DIE: {
@@ -664,13 +666,14 @@ var config = {
   isMeltable: true,
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_IRON',
-  hp: 12,
+  hp: 120,
   meltTemp: 100, // temperature at which you melt
   heatQuantity: 120 // amount of iron produced when melted
 };
 
-var make = function make(game, position, width, height) {
+var make = function make(game, position, width, height, hp) {
   return _extends({}, makeEntity('IRON', position, width || 1, height || 1), config, {
+    hp: hp || config.hp,
     dictIndexStr: '',
     playerID: 0, // gaia
     quantity: 0 // amount of pheromone emitted
@@ -739,8 +742,8 @@ var globalConfig = require('../config');
 
 var config = {
   isBallistic: true,
-  damage: 1,
-  hp: 1,
+  damage: 10,
+  hp: 10,
   width: 1,
   height: 2,
   velocity: 50,
@@ -862,14 +865,15 @@ var config = {
   isMeltable: true,
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_STEEL',
-  hp: 24,
+  hp: 240,
   meltTemp: 100, // temperature at which you catch on fire
   heatQuantity: 240 // amount of steel  produced when melted
 };
 
-var make = function make(game, position, width, height) {
+var make = function make(game, position, width, height, hp) {
   return _extends({}, makeEntity('STEEL', position, width || 1, height || 1), config, {
     dictIndexStr: '',
+    hp: hp || config.hp,
     playerID: 0, // gaia
     quantity: 0 // amount of pheromone emitted
   });
@@ -905,7 +909,7 @@ var _require2 = require('./makeEntity'),
 var config = {
   isTiled: true,
   notAnimated: true,
-  hp: 2
+  hp: 20
 };
 
 var make = function make(game, position, subType, width, height) {
@@ -2635,6 +2639,7 @@ var updateExplosives = function updateExplosives(game) {
 var updateBallistics = function updateBallistics(game) {
   var _loop = function _loop(id) {
     var ballistic = game.entities[id];
+    if (ballistic == null || ballistic.position == null) return 'continue';
     ballistic.age += game.timeSinceLastTick;
     // if it has collided with something, deal damage to it and die
     var collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
@@ -3154,10 +3159,13 @@ var renderFrame = function renderFrame(game) {
     };
     // HACK: only pxWidth/pxHeight can really actually be set in main view
     renderView(canvas, ctx, game, bigDims);
-    ctx.save();
-    ctx.translate(globalConfig.config.canvasWidth - pxWidth - 8, 8);
-    renderMinimap(ctx, game, miniDims);
-    ctx.restore();
+    // ctx.save();
+    // ctx.translate(
+    //   globalConfig.config.canvasWidth - pxWidth - 8,
+    //   8,
+    // );
+    // renderMinimap(ctx, game, miniDims);
+    // ctx.restore();
   } else {
     var nextViewPos = {
       x: game.viewPos.x - game.viewWidth / 2,
@@ -7191,7 +7199,7 @@ var triggerExplosion = function triggerExplosion(game, explosive) {
           });
           // if you didn't hit anything, still reduce damage as the radius increases
           if (!dealtDamage) {
-            damage -= 1;
+            damage -= 10;
           }
         }
       };
@@ -7681,7 +7689,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
       MARKED_DIRT_PHER: false,
       WATER: true,
       STEAM: true,
-      HEAT: true,
+      HEAT: false,
       MOLTEN_IRON: true,
       MOLTEN_STEEL: true
     },
@@ -8304,6 +8312,16 @@ module.exports = { initMouseControlsSystem: initMouseControlsSystem };
 },{"../config":1,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],54:[function(require,module,exports){
 'use strict';
 
+var _require = require('../utils/vectors'),
+    equals = _require.equals;
+
+var _require2 = require('../entities/registry'),
+    Entities = _require2.Entities;
+
+var _require3 = require('../utils/helpers'),
+    decodePosition = _require3.decodePosition,
+    encodePosition = _require3.encodePosition;
+
 var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
   var dispatch = store.dispatch;
 
@@ -8324,12 +8342,64 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
           dispatch({ type: 'UPDATE_TURBINE', thetaSpeed: thetaSpeed, entityID: entityID });
           break;
         }
+      case 'ENTITIES':
+        {
+          game = store.getState().game;
+          var entities = message.entities;
+
+          for (var encodedPosition in entities) {
+            var pos = decodePosition(encodedPosition);
+            var _entities$encodedPosi = entities[encodedPosition],
+                type = _entities$encodedPosi.type,
+                quantity = _entities$encodedPosi.quantity;
+
+            var config = Entities[type].config;
+            var leftoverQuantity = quantity;
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+              for (var _iterator = game[type][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var id = _step.value;
+
+                var e = game.entities[id];
+                if (encodePosition(e.position) == encodedPosition) {
+                  if (e.hp < config.hp) {
+                    var prevHP = e.hp;
+                    e.hp = Math.min(config.hp, e.hp + quantity);
+                    leftoverQuantity -= e.hp - prevHP;
+                  }
+                }
+              }
+            } catch (err) {
+              _didIteratorError = true;
+              _iteratorError = err;
+            } finally {
+              try {
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                  _iterator.return();
+                }
+              } finally {
+                if (_didIteratorError) {
+                  throw _iteratorError;
+                }
+              }
+            }
+
+            if (leftoverQuantity > 0) {
+              var entity = Entities[type].make(game, pos, 1, 1, leftoverQuantity);
+              dispatch({ type: 'CREATE_ENTITY', entity: entity });
+            }
+          }
+          break;
+        }
     }
   };
 };
 
 module.exports = { initPheromoneWorkerSystem: initPheromoneWorkerSystem };
-},{}],55:[function(require,module,exports){
+},{"../entities/registry":13,"../utils/helpers":83,"../utils/vectors":85}],55:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -9641,7 +9711,7 @@ function LevelEditor(props) {
           type: 'FILL_PHEROMONE',
           gridPos: gridPos,
           pheromoneType: editor.selectedPheromone,
-          playerID: state.game.playerID,
+          playerID: editor.playerID,
           quantity: editor.pheromoneQuantity
         });
       };
@@ -11357,7 +11427,7 @@ var decodePosition = function decodePosition(pos) {
       x = _pos$split2[0],
       y = _pos$split2[1];
 
-  return { x: x, y: y };
+  return { x: parseInt(x), y: parseInt(y) };
 };
 
 var getDisplayTime = function getDisplayTime(millis) {

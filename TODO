@@ -10,6 +10,14 @@
     - if steam cool rate is less than water heat rate then clouds might form
     - set higher threshold for steam before it condenses back to water
   - issues:
+    - bullets can shoot through 1-thick walls
+    - molten stuff:
+      - if molten iron is blocked by iron, then it can't be created
+        but if it doesn't block itself then it stacks on itself
+        creating additional iron in one position
+      - molten iron isn't preserving its quantity when condensing
+        - it ends up creating an additional entity underneath
+          (when viscosity > 0)
     - allow wasd/arrowkeys to move screen when game is playing
     - indicate whether individual turrets are powered or not
     - turbines:
@@ -40,6 +48,25 @@
   - steel entity/pheromone
     - higher melting point?
     - more hp than iron
+  - ice entity
+    - getTemp helper function for heat calculations
+  - HUDs
+    - HUD that shows what is under the mouse
+      - entity(s?) w/hp, etc.
+      - pheromone(s?)
+      - position in the world
+    - HUD for selecting marquee type
+      - palette type in level editor for letting this take over
+      - mark for drilling
+      - mark for pickup/putdown
+  - drilling agent
+    - attacks marked entities
+    - marked entities should switch to pheromone emitters dynamically?
+      or can they always be pheromone emitters?
+  - engineer agent(s)
+    - marking pickup/putdown
+    - marking blueprints to construction things
+      - and marking building materials?
 
 
 - - - - - - LATER - - - - - - - -

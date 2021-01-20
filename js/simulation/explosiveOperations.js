@@ -52,7 +52,7 @@ const triggerExplosion = (game, explosive): void => {
           });
         // if you didn't hit anything, still reduce damage as the radius increases
         if (!dealtDamage) {
-          damage -= 1;
+          damage -= 10;
         }
       }
     }

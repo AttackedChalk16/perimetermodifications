@@ -97,7 +97,7 @@ function LevelEditor(props: Props): React.Node {
           type: 'FILL_PHEROMONE',
           gridPos,
           pheromoneType: editor.selectedPheromone,
-          playerID: state.game.playerID,
+          playerID: editor.playerID,
           quantity: editor.pheromoneQuantity,
         });
       };

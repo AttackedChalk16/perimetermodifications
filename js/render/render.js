@@ -74,13 +74,13 @@ const renderFrame = (game: Game): void => {
     };
     // HACK: only pxWidth/pxHeight can really actually be set in main view
     renderView(canvas, ctx, game, bigDims);
-    ctx.save();
-    ctx.translate(
-      globalConfig.config.canvasWidth - pxWidth - 8,
-      8,
-    );
-    renderMinimap(ctx, game, miniDims);
-    ctx.restore();
+    // ctx.save();
+    // ctx.translate(
+    //   globalConfig.config.canvasWidth - pxWidth - 8,
+    //   8,
+    // );
+    // renderMinimap(ctx, game, miniDims);
+    // ctx.restore();
   } else {
     const nextViewPos = {
       x: game.viewPos.x - game.viewWidth / 2,

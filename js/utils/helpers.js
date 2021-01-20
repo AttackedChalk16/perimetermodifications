@@ -62,7 +62,7 @@ const encodePosition = (pos: Vector): string => {
 
 const decodePosition = (pos: string): Vector => {
   const [x, y] = pos.split(',');
-  return {x, y};
+  return {x: parseInt(x), y: parseInt(y)};
 }
 
 const getDisplayTime = (millis) => {

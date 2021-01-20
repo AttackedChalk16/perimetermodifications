@@ -91,7 +91,7 @@ var pheromones = {
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
-    coolConcentration: 24, // amount of yourself needed before condensation starts
+    coolConcentration: 80, // amount of yourself needed before condensation starts
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -107,15 +107,16 @@ var pheromones = {
     color: 'rgb(100, 100, 100)',
     tileIndex: 5,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
     coolPoint: 80, // heat level to freeze at
     coolsTo: 'IRON',
+    coolRate: 1,
     coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.9,
+      diagonalLeftOver: 0,
       horizontalLeftOver: 1
     },
     combinesTo: [{
@@ -131,15 +132,16 @@ var pheromones = {
     color: 'rgb(100, 100, 100)',
     tileIndex: 5,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
     coolPoint: 90, // heat level to freeze at
     coolsTo: 'STEEL',
+    coolRate: 1,
     coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.9,
+      diagonalLeftOver: 0,
       horizontalLeftOver: 1
     }
   },
@@ -180,7 +182,7 @@ var _require4 = require('../render/renderAgent'),
 
 var config = {
   hp: 60,
-  damage: 2,
+  damage: 20,
   width: 2,
   height: 2,
   maxHold: 1,
@@ -357,7 +359,7 @@ var globalConfig = require('../config');
 
 var config = {
   isBallistic: true,
-  damage: 1,
+  damage: 10,
   hp: 1,
   width: 1,
   height: 1,
@@ -479,7 +481,7 @@ var _require2 = require('./makeEntity'),
 var config = {
   notAnimated: true,
   isTiled: true,
-  hp: 1
+  hp: 10
 };
 
 var make = function make(game, position, width, height) {
@@ -559,12 +561,12 @@ var globalConfig = require('../config');
 
 var config = {
   isExplosive: true,
-  hp: 1,
+  hp: 10,
   width: 1,
   height: 1,
   explosionRadius: 5,
-  damage: 4,
-  timer: 15,
+  damage: 40,
+  timer: 1,
   age: 0,
 
   DIE: {
@@ -664,13 +666,14 @@ var config = {
   isMeltable: true,
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_IRON',
-  hp: 12,
+  hp: 120,
   meltTemp: 100, // temperature at which you melt
   heatQuantity: 120 // amount of iron produced when melted
 };
 
-var make = function make(game, position, width, height) {
+var make = function make(game, position, width, height, hp) {
   return _extends({}, makeEntity('IRON', position, width || 1, height || 1), config, {
+    hp: hp || config.hp,
     dictIndexStr: '',
     playerID: 0, // gaia
     quantity: 0 // amount of pheromone emitted
@@ -739,8 +742,8 @@ var globalConfig = require('../config');
 
 var config = {
   isBallistic: true,
-  damage: 1,
-  hp: 1,
+  damage: 10,
+  hp: 10,
   width: 1,
   height: 2,
   velocity: 50,
@@ -862,14 +865,15 @@ var config = {
   isMeltable: true,
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_STEEL',
-  hp: 24,
+  hp: 240,
   meltTemp: 100, // temperature at which you catch on fire
   heatQuantity: 240 // amount of steel  produced when melted
 };
 
-var make = function make(game, position, width, height) {
+var make = function make(game, position, width, height, hp) {
   return _extends({}, makeEntity('STEEL', position, width || 1, height || 1), config, {
     dictIndexStr: '',
+    hp: hp || config.hp,
     playerID: 0, // gaia
     quantity: 0 // amount of pheromone emitted
   });
@@ -905,7 +909,7 @@ var _require2 = require('./makeEntity'),
 var config = {
   isTiled: true,
   notAnimated: true,
-  hp: 2
+  hp: 20
 };
 
 var make = function make(game, position, subType, width, height) {
@@ -1717,6 +1721,8 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   var rate = globalConfig.config.dispersingPheromoneUpdateRate;
   var nextTurbines = {}; // as fluid pheromones move, update turbines here
   // map of entityID --> thetaSpeed
+  var nextEntities = {}; // if fluids freeze into entities, record them here
+  // map of encoded position --> {type, quantity}
   for (var _pherType in game.dispersingPheromonePositions) {
     var nextFluid = {}; // the algorithm for gravity with fluids will try to push
     // the same source position multiple times, so don't let it
@@ -1747,7 +1753,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         }
         changedPhase = true;
       } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
-        if (config.coolConcentration <= pheromoneQuantity) {
+        if (config.coolConcentration == null || pheromoneQuantity >= config.coolConcentration) {
           // console.log("cooling phase change at position", {...source.position});
           phaseChangeTo = config.coolsTo;
           if (pheromoneQuantity < 1) {
@@ -1759,9 +1765,19 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         }
       }
       // set the value of this square to the amount sent to the other phase
+      // OR if it's an entity, create it
       if (changedPhase) {
-        setPheromone(game, source.position, phaseChangeTo, sendToOtherPhase, playerID);
-        nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] = _extends({}, source, { pheromoneType: phaseChangeTo, quantity: sendToOtherPhase });
+        if (config.coolsToEntity) {
+          if (sendToOtherPhase > 0) {
+            nextEntities[encodePosition(source.position)] = {
+              type: phaseChangeTo,
+              quantity: Math.round(sendToOtherPhase)
+            };
+          }
+        } else {
+          setPheromone(game, source.position, phaseChangeTo, sendToOtherPhase, playerID);
+          nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] = _extends({}, source, { pheromoneType: phaseChangeTo, quantity: sendToOtherPhase });
+        }
         // then subtract the amount sent to the other phase from the amount we deal
         // with from now on
         pheromoneQuantity -= sendToOtherPhase;
@@ -1968,16 +1984,16 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           // set pheromone at this position to the left over that couldn't fall down
           setPheromone(game, position, pheromoneType, leftOverPheromone - decayRate, playerID);
 
-          if (!nextFluid[encodePosition(position)]) {
-            var nextQuantity = Math.max(0, leftOverPheromone - decayRate);
-            if (nextQuantity != 0 || source.quantity != 0) {
-              nextDispersingPheromones[pheromoneType][encodePosition(position)] = _extends({}, source, {
-                position: _extends({}, position),
-                quantity: nextQuantity
-              });
-              nextFluid[encodePosition(position)] = true;
-            }
+          // if (!nextFluid[encodePosition(position)]) {
+          var nextQuantity = Math.max(0, leftOverPheromone - decayRate);
+          if (nextQuantity != 0 || source.quantity != 0) {
+            nextDispersingPheromones[pheromoneType][encodePosition(position)] = _extends({}, source, {
+              position: _extends({}, position),
+              quantity: nextQuantity
+            });
+            nextFluid[encodePosition(position)] = true;
           }
+          // }
 
           pheromoneQuantity = pheromoneQuantity - leftOverPheromone + pheromoneBelow;
           // update the source to be the next position
@@ -2031,6 +2047,8 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         });
       }
     }
+
+    // send entity messages
   } catch (err) {
     _didIteratorError8 = true;
     _iteratorError8 = err;
@@ -2044,6 +2062,13 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         throw _iteratorError8;
       }
     }
+  }
+
+  if (Object.keys(nextEntities).length > 0) {
+    postMessage({
+      type: 'ENTITIES',
+      entities: nextEntities
+    });
   }
 
   return nextDispersingPheromones;
@@ -5130,7 +5155,7 @@ var decodePosition = function decodePosition(pos) {
       x = _pos$split2[0],
       y = _pos$split2[1];
 
-  return { x: x, y: y };
+  return { x: parseInt(x), y: parseInt(y) };
 };
 
 var getDisplayTime = function getDisplayTime(millis) {

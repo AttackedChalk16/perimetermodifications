@@ -13,12 +13,12 @@ const globalConfig = require('../config');
 
 const config = {
   isExplosive: true,
-  hp: 1,
+  hp: 10,
   width: 1,
   height: 1,
   explosionRadius: 5,
-  damage: 4,
-  timer: 15,
+  damage: 40,
+  timer: 1,
   age: 0,
 
   DIE: {

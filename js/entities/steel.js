@@ -10,7 +10,7 @@ const config = {
   isMeltable: true,
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_STEEL',
-  hp: 24,
+  hp: 240,
   meltTemp: 100, // temperature at which you catch on fire
   heatQuantity: 240, // amount of steel  produced when melted
 };
@@ -20,11 +20,13 @@ const make = (
   position: Vector,
 	width: ?number,
 	height: ?number,
-): Coal => {
+  hp: ?number,
+): Steel => {
 	return {
     ...makeEntity('STEEL', position, width || 1, height || 1),
     ...config,
     dictIndexStr: '',
+    hp: hp || config.hp,
     playerID: 0, // gaia
     quantity: 0, // amount of pheromone emitted
   };

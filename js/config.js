@@ -111,15 +111,16 @@ const pheromones = {
     color: 'rgb(100, 100, 100)',
     tileIndex: 5,
 
-    blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+    blockingTypes: [...pheromoneBlockingTypes],
     isDispersing: true,
     coolPoint: 80, // heat level to freeze at
     coolsTo: 'IRON',
+    coolRate: 1,
     coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.9,
+      diagonalLeftOver: 0,
       horizontalLeftOver: 1,
     },
     combinesTo: [{
@@ -137,15 +138,16 @@ const pheromones = {
     color: 'rgb(100, 100, 100)',
     tileIndex: 5,
 
-    blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+    blockingTypes: [...pheromoneBlockingTypes],
     isDispersing: true,
     coolPoint: 90, // heat level to freeze at
     coolsTo: 'STEEL',
+    coolRate: 1,
     coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.9,
+      diagonalLeftOver: 0,
       horizontalLeftOver: 1,
     },
   },

@@ -14,8 +14,8 @@ const globalConfig = require('../config');
 
 const config = {
   isBallistic: true,
-  damage: 1,
-  hp: 1,
+  damage: 10,
+  hp: 10,
   width: 1,
   height: 2,
   velocity: 50,
