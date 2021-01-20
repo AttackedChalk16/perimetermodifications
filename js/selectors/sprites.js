@@ -265,7 +265,7 @@ const getTileSprite = (game: Game, entity: Entity): Object => {
 const hasNeighbor = (game, pos, type): boolean => {
   return lookupInGrid(game.grid, pos)
     .map(id => game.entities[id])
-    .filter(e => e.type == type)
+    .filter(e => e != null && e.type == type)
     .length > 0;
 }
 

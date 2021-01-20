@@ -114,6 +114,7 @@ const doTick = (game: Game): Game => {
   updateTowers(game);
   updateBallistics(game);
   updateFlammables(game);
+  updateCoal(game);
   updateMeltables(game);
   updateExplosives(game);
   updateGenerators(game);
@@ -276,6 +277,20 @@ const updateFlammables = (game): void => {
   }
 }
 
+const updateCoal = (game): void => {
+  for (const id of game.COAL) {
+    const coal = game.entities[id];
+    const moltenIron = getPheromoneAtPosition(game, coal.position, 'MOLTEN_IRON', 0);
+    if (moltenIron > 0) {
+      const position = {...coal.position};
+      removeEntity(game, coal);
+      // setPheromone(game, position, 'MOLTEN_STEEL', moltenIron * 2, 0);
+      fillPheromone(game, position, 'MOLTEN_STEEL', game.gaiaID, moltenIron * 2);
+      setPheromone(game, position, 'MOLTEN_IRON', 0, game.gaiaID);
+    }
+  }
+};
+
 const updateMeltables = (game): void => {
   for (const id in game.MELTABLE) {
     const meltable = game.entities[id];
@@ -285,6 +300,7 @@ const updateMeltables = (game): void => {
       changePheromoneEmitterQuantity(
         game, meltable, meltable.heatQuantity * (meltable.hp / config.hp),
       );
+      changeEntityType(game, meltable, meltable.type, 'FOOD');
       queueAction(game, meltable, makeAction(game, meltable, 'DIE'));
     }
   }
@@ -375,6 +391,7 @@ const updateGenerators = (game: Game): void => {
     if (generator.type == 'TURBINE') {
       generator.theta = (generator.theta + generator.thetaSpeed) % (2 * Math.PI);
       powerGenerated *= generator.thetaSpeed / generator.maxThetaSpeed;
+      generator.powerGenerated = powerGenerated;
     }
     totalPowerGenerated += Math.ceil(powerGenerated);
 

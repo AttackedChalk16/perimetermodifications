@@ -158,6 +158,9 @@ function LevelEditor(props: Props): React.Node {
     case 'COPY-PASTE':
       palette = copyPastePalette(dispatch, state, editor, setEditor);
       break;
+    case 'MARQUEE':
+      palette = marqueePalette(dispatch, state, editor, setEditor);
+      break;
   }
 
   return (
@@ -216,14 +219,14 @@ function LevelEditor(props: Props): React.Node {
     <Divider />
     <div>
       <Dropdown
-        options={['CREATE ENTITIES', 'PHEROMONES', 'COPY-PASTE']}
+        options={['CREATE ENTITIES', 'PHEROMONES', 'COPY-PASTE', 'MARQUEE']}
         selected={editor.paletteMode}
         onChange={(paletteMode) => {
           setEditor({...editor, paletteMode});
           if (paletteMode == 'COPY-PASTE') {
-            dispatch({type: 'SET_MARQUEE_MODE', keepMarquee: true});
+            dispatch({type: 'SET_KEEP_MARQUEE', keepMarquee: true});
           } else {
-            dispatch({type: 'SET_MARQUEE_MODE', keepMarquee: false});
+            dispatch({type: 'SET_KEEP_MARQUEE', keepMarquee: false});
           }
         }}
       />
@@ -528,6 +531,14 @@ function copyPastePalette(dispatch, state, editor, setEditor) {
   );
 }
 
+function marqueePalette(dispatch, state, editor, setEditor) {
+  return (
+    <div>
+
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------
 // Hotkeys
 // ---------------------------------------------------------------
@@ -539,12 +550,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: (s) => {
       const game = s.getState().game;
       let moveAmount = Math.round(Math.max(1, game.gridHeight / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: 0, y: moveAmount}),
-        });
-        setEditor({...editor, version: editor.version + 1});
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: 0, y: moveAmount}),
+      });
+      setEditor({...editor, version: editor.version + 1});
     }
   });
   dispatch({
@@ -553,12 +562,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: (s) => {
       const game = s.getState().game;
       let moveAmount = Math.round(Math.max(1, game.gridHeight / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: 0, y: -1 * moveAmount}),
-        });
-        setEditor({...editor, version: editor.version + 1});
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: 0, y: -1 * moveAmount}),
+      });
+      setEditor({...editor, version: editor.version + 1});
     }
   });
   dispatch({
@@ -567,12 +574,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: (s) => {
       const game = s.getState().game;
       let moveAmount = Math.round(Math.max(1, game.gridWidth / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: -1 * moveAmount, y: 0}),
-        });
-        setEditor({...editor, version: editor.version + 1});
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: -1 * moveAmount, y: 0}),
+      });
+      setEditor({...editor, version: editor.version + 1});
     }
   });
   dispatch({
@@ -581,12 +586,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: (s) => {
       const game = s.getState().game;
       let moveAmount = Math.round(Math.max(1, game.gridWidth / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: moveAmount, y: 0}),
-        });
-        setEditor({...editor, version: editor.version + 1});
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: moveAmount, y: 0}),
+      });
+      setEditor({...editor, version: editor.version + 1});
     }
   });
   // dispatch({

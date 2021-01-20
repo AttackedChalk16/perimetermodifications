@@ -6,6 +6,7 @@ const Canvas = require('./Canvas.react');
 const Checkbox = require('./Components/Checkbox.react');
 const RadioPicker = require('./Components/RadioPicker.react');
 const TopBar = require('./TopBar.react');
+const BottomBar = require('./BottomBar.react');
 const {config} = require('../config');
 const {initMouseControlsSystem} = require('../systems/mouseControlsSystem');
 const {initGameOverSystem} = require('../systems/gameOverSystem');
@@ -57,7 +58,7 @@ function Game(props: Props): React.Node {
     // initRainSystem(store);
     // initUpgradeSystem(store);
     registerHotkeys(dispatch);
-    // initMouseControlsSystem(store, handlers);
+    // initMouseControlsSystem(store, configureMouseHandlers(game, dispatch));
   }, [gameID, tickInterval]);
 
 
@@ -110,6 +111,10 @@ function Game(props: Props): React.Node {
         totalPowerNeeded={game.bases[game.playerID].totalPowerNeeded}
         totalPowerGenerated={game.bases[game.playerID].totalPowerGenerated}
       />
+      <BottomBar dispatch={dispatch}
+        game={game}
+        mousePos={game.mouse.curPos}
+      />
     </div>
   );
 }
@@ -139,6 +144,16 @@ function registerHotkeys(dispatch) {
       });
     }
   });
+}
+
+function configureMouseHandlers(game, dispatch) {
+  const handlers = {};
+  switch (game.marqueeMode) {
+    case 'DRILL':
+    case 'PICKUP_OR_PUTDOWN':
+    case 'BLUEPRINT':
+  }
+  return handlers;
 }
 
 module.exports = Game;

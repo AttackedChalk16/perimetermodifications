@@ -21,7 +21,7 @@ const config = {
 };
 
 const nonMoltenPheromoneBlockingTypes = [
-  'DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET',
+  'DIRT',  'STONE', 'DOODAD', 'TURRET',
 ];
 const pheromoneBlockingTypes = [
   ...nonMoltenPheromoneBlockingTypes,
@@ -123,6 +123,7 @@ const pheromones = {
       diagonalLeftOver: 0,
       horizontalLeftOver: 1,
     },
+    // NOTE: not using this
     combinesTo: [{
       substance: 'PHEROMONE',
       type: 'MOLTEN_STEEL',
@@ -136,7 +137,7 @@ const pheromones = {
     decayAmount: 240,
     decayRate: 0.0005,
     color: 'rgb(100, 100, 100)',
-    tileIndex: 5,
+    tileIndex: 4,
 
     blockingTypes: [...pheromoneBlockingTypes],
     isDispersing: true,

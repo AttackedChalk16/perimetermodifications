@@ -21,7 +21,7 @@ const make = (
 	width: ?number,
 	height: ?number,
   hp: ?number,
-): Coal => {
+): Iron => {
 	return {
     ...makeEntity('IRON', position, width || 1, height || 1),
     ...config,

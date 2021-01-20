@@ -11,6 +11,7 @@ const config = {
   hp: 3,
   width: 1,
   height: 1,
+  damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
   maxTheta: Math.PI - 0.2,

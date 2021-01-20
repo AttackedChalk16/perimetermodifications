@@ -39,20 +39,26 @@ const initMouseControlsSystem = (store, handlers) => {
     onMouseUp(store, ev, handlers);
   }
 
-  document.onmousedown = (ev) => {
-    onMouseDown(store, ev, handlers);
-  }
+  // if (handlers.leftDown || handlers.rightDown) {
+    document.onmousedown = (ev) => {
+      onMouseDown(store, ev, handlers);
+    }
+  // }
 
-  document.onmouseup = (ev) => {
-    onMouseUp(store, ev, handlers);
-  }
+  // if (handlers.leftUp || handlers.rightUp) {
+    document.onmouseup = (ev) => {
+      onMouseUp(store, ev, handlers);
+    }
+  // }
 
-  let scrollLocked = false;
-  document.onwheel = (ev) => {
-    if (!scrollLocked) {
-      onScroll(store, ev, handlers);
-      scrollLocked = true;
-      setTimeout(() => {scrollLocked = false}, 150);
+  if (handlers.scroll) {
+    let scrollLocked = false;
+    document.onwheel = (ev) => {
+      if (!scrollLocked) {
+        onScroll(store, ev, handlers);
+        scrollLocked = true;
+        setTimeout(() => {scrollLocked = false}, 150);
+      }
     }
   }
 

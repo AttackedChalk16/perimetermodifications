@@ -21,7 +21,7 @@ var config = {
   gravity: -100
 };
 
-var nonMoltenPheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'];
+var nonMoltenPheromoneBlockingTypes = ['DIRT', 'STONE', 'DOODAD', 'TURRET'];
 var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['STEEL', 'IRON']);
 
 var pheromones = {
@@ -119,6 +119,7 @@ var pheromones = {
       diagonalLeftOver: 0,
       horizontalLeftOver: 1
     },
+    // NOTE: not using this
     combinesTo: [{
       substance: 'PHEROMONE',
       type: 'MOLTEN_STEEL',
@@ -130,7 +131,7 @@ var pheromones = {
     decayAmount: 240,
     decayRate: 0.0005,
     color: 'rgb(100, 100, 100)',
-    tileIndex: 5,
+    tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
@@ -362,7 +363,7 @@ var config = {
   damage: 10,
   hp: 1,
   width: 1,
-  height: 1,
+  height: 2,
   velocity: 500,
   blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
 
@@ -1064,6 +1065,7 @@ var config = {
   hp: 3,
   width: 1,
   height: 1,
+  damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
   maxTheta: Math.PI - 0.2,
@@ -1778,6 +1780,29 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           setPheromone(game, source.position, phaseChangeTo, sendToOtherPhase, playerID);
           nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] = _extends({}, source, { pheromoneType: phaseChangeTo, quantity: sendToOtherPhase });
         }
+
+        // NOTE: I'm thinking of not doing it this way since it's complicated to send
+        // the message for stuff to remove back and forth
+        // // check if the ingredients are there for combinesTo and create that
+        // // new thing
+        // if (config.combinesTo != null) {
+        //   const missingIngredients = true;
+        //   for (const ingredient of config.combinesTo.ingredients) {
+        //     if (ingredient.substance == 'ENTITY') {
+        //       const entityType = ingredient.substance.type;
+        //       for (const id of game[type]) {
+        //         const ingEntity = game.entities[id];
+        //         if (encodePosition(ingEntity.position) == encodePosition(source.position)) {
+        //           missingIngredients = false;
+        //           // TODO remove the coal
+        //         }
+        //       }
+        //     } else if (ingredient.substance == 'PHEROMONE') {
+
+        //     }
+        //   }
+        // }
+
         // then subtract the amount sent to the other phase from the amount we deal
         // with from now on
         pheromoneQuantity -= sendToOtherPhase;
@@ -3472,7 +3497,7 @@ var hasNeighbor = function hasNeighbor(game, pos, type) {
   return lookupInGrid(game.grid, pos).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return e.type == type;
+    return e != null && e.type == type;
   }).length > 0;
 };
 

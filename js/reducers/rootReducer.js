@@ -210,12 +210,17 @@ const rootReducer = (state: State, action: Action): State => {
     case 'SET_PHEROMONE_VISIBILITY':
     case 'SET_FOCUSED':
     case 'SET_CONTROLLED':
+    case 'MARK_FOR_DRILLING':
+    case 'MARK_FOR_PICKUP':
+    case 'MARK_FOR_PUTDOWN':
+    case 'MARK_BLUEPRINT':
     case 'MARK_DIRT':
     case 'MARK_DIRT_PUTDOWN':
     case 'SWAP_MINI_MAP':
     case 'SET_TUTORIAL_FLAG':
     case 'SET_IS_RAINING':
     case 'SET_MARQUEE_MODE':
+    case 'SET_KEEP_MARQUEE':
     case 'ENQUEUE_ENTITY_ACTION': {
       if (!state.game) return state;
       return {

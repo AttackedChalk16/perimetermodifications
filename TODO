@@ -11,20 +11,15 @@
     - set higher threshold for steam before it condenses back to water
   - issues:
     - bullets can shoot through 1-thick walls
-    - molten stuff:
-      - if molten iron is blocked by iron, then it can't be created
-        but if it doesn't block itself then it stacks on itself
-        creating additional iron in one position
-      - molten iron isn't preserving its quantity when condensing
-        - it ends up creating an additional entity underneath
-          (when viscosity > 0)
-    - allow wasd/arrowkeys to move screen when game is playing
+    - base for player 2 undefined
+    - infoHUD
+      - mouse.curPos can stop being up to date?
+      - should also say what agents are holding
     - indicate whether individual turrets are powered or not
     - turbines:
       - spin direction depends on left/right-hand side of turbine
       - acceleration may work better than speed for e.g. contradictory flows
       - reducing pherToGive doesn't actually slow down an array of turbines
-    - dirt should probably be marked as stale when it dies?
 
   - pheromones
     - marked dirt should be a pheromoneSource
@@ -34,31 +29,16 @@
 
 
 - - - - - - BARE BONES - - - - - -
-  - iron entity/pheromone
-    - properties:
-      - meltable
-        - have heatQuantity be divided by hp
-      - coolsToEntity pheromone property
-        - worker needs to tell client there's a new entity
-      - combinesTo pheromone property
-        - check for presence of other ingredients
-    - turns to iron pheromone at temperature
-    - viscosity property so it flows differently than water
-    - molten iron pheromone that turns back into iron entity
-  - steel entity/pheromone
-    - higher melting point?
-    - more hp than iron
-  - ice entity
-    - getTemp helper function for heat calculations
   - HUDs
-    - HUD that shows what is under the mouse
-      - entity(s?) w/hp, etc.
-      - pheromone(s?)
-      - position in the world
     - HUD for selecting marquee type
-      - palette type in level editor for letting this take over
+      - marqueeMode property
+        - needs to override handlers from levelEditor
+        - checking for handlers in mouseControlsSystem doesn't work
+        - dropDown UI in HUD
       - mark for drilling
-      - mark for pickup/putdown
+      - mark for pickup
+      - mark for putdown
+      - mark for blueprint
   - drilling agent
     - attacks marked entities
     - marked entities should switch to pheromone emitters dynamically?
@@ -70,6 +50,8 @@
 
 
 - - - - - - LATER - - - - - - - -
+  - ice entity
+    - getTemp helper function for heat calculations
   - system for creating missiles
     - pick launch location that's far away with actual ballistics trajectory
     - could have multiple "launch platforms" tuned to target the screen
@@ -118,6 +100,9 @@
   - worm
     - worm sprite indexing off-by-one when controlled?
     - worm should be able to double back on itself when stuck
+  - molten iron isn't preserving its quantity when condensing
+    (when viscosity > 0)
+    - it ends up creating an additional entity underneath
 
 
 - - - - - - - REFACTORS - - - - - - -

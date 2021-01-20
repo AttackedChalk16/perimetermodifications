@@ -390,6 +390,7 @@ const renderEntity = (ctx, game, entity, alwaysOnScreen): void => {
       for (let i = 0; i < entity.holdingIDs.length; i++) {
 
         const heldEntity = game.entities[entity.holdingIDs[i]];
+        if (heldEntity == null) continue;
         const renderFn = Entities[heldEntity.type].render;
         let position = entity.position;
         let theta = entity.theta;

@@ -374,6 +374,29 @@ const updateDispersingPheromones = (game) => {
           nextDispersingPheromones[phaseChangeTo][encodePosition(source.position)] =
             {...source, pheromoneType: phaseChangeTo,  quantity: sendToOtherPhase};
         }
+
+        // NOTE: I'm thinking of not doing it this way since it's complicated to send
+        // the message for stuff to remove back and forth
+        // // check if the ingredients are there for combinesTo and create that
+        // // new thing
+        // if (config.combinesTo != null) {
+        //   const missingIngredients = true;
+        //   for (const ingredient of config.combinesTo.ingredients) {
+        //     if (ingredient.substance == 'ENTITY') {
+        //       const entityType = ingredient.substance.type;
+        //       for (const id of game[type]) {
+        //         const ingEntity = game.entities[id];
+        //         if (encodePosition(ingEntity.position) == encodePosition(source.position)) {
+        //           missingIngredients = false;
+        //           // TODO remove the coal
+        //         }
+        //       }
+        //     } else if (ingredient.substance == 'PHEROMONE') {
+
+        //     }
+        //   }
+        // }
+
         // then subtract the amount sent to the other phase from the amount we deal
         // with from now on
         pheromoneQuantity -= sendToOtherPhase;

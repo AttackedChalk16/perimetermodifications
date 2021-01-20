@@ -17,7 +17,7 @@ const config = {
   damage: 10,
   hp: 1,
   width: 1,
-  height: 1,
+  height: 2,
   velocity: 500,
   blockingTypes: [
     'DIRT', 'STONE', 'FOOD', 'AGENT',

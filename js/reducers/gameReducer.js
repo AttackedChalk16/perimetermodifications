@@ -186,6 +186,22 @@ const gameReducer = (game: Game, action: Action): Game => {
       game.rainTicks = rainTicks;
       return game;
     }
+
+    case 'MARK_FOR_DRILLING': {
+      const {playerID, entityIDs} = action;
+
+      return game;
+    }
+    case 'MARK_FOR_PICKUP': {
+      return game;
+    }
+    case 'MARK_FOR_PUTDOWN': {
+      return game;
+    }
+    case 'MARK_BLUEPRINT': {
+      return game;
+    }
+
     case 'MARK_DIRT': {
       const {playerID, dirtIDs} = action;
       let taskNeed = 0;
@@ -233,6 +249,11 @@ const gameReducer = (game: Game, action: Action): Game => {
       return game;
     }
     case 'SET_MARQUEE_MODE': {
+      const {marqueeMode} = action;
+      game.marqueeMode = marqueeMode;
+      return game;
+    }
+    case 'SET_KEEP_MARQUEE': {
       const {keepMarquee} = action;
       game.keepMarquee = keepMarquee;
       return game;

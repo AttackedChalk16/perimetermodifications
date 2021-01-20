@@ -21,7 +21,7 @@ var config = {
   gravity: -100
 };
 
-var nonMoltenPheromoneBlockingTypes = ['DIRT', 'FOOD', 'STONE', 'DOODAD', 'TURRET'];
+var nonMoltenPheromoneBlockingTypes = ['DIRT', 'STONE', 'DOODAD', 'TURRET'];
 var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['STEEL', 'IRON']);
 
 var pheromones = {
@@ -119,6 +119,7 @@ var pheromones = {
       diagonalLeftOver: 0,
       horizontalLeftOver: 1
     },
+    // NOTE: not using this
     combinesTo: [{
       substance: 'PHEROMONE',
       type: 'MOLTEN_STEEL',
@@ -130,7 +131,7 @@ var pheromones = {
     decayAmount: 240,
     decayRate: 0.0005,
     color: 'rgb(100, 100, 100)',
-    tileIndex: 5,
+    tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
     isDispersing: true,
@@ -297,7 +298,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":33,"../selectors/sprites":41,"../utils/vectors":85,"./makeEntity":11}],3:[function(require,module,exports){
+},{"../render/renderAgent":33,"../selectors/sprites":41,"../utils/vectors":87,"./makeEntity":11}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -362,7 +363,7 @@ var config = {
   damage: 10,
   hp: 1,
   width: 1,
-  height: 1,
+  height: 2,
   velocity: 500,
   blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
 
@@ -415,7 +416,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":41,"../simulation/actionQueue":43,"../utils/vectors":85,"./makeEntity":11}],5:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":41,"../simulation/actionQueue":43,"../utils/vectors":87,"./makeEntity":11}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -809,7 +810,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":41,"../simulation/actionQueue":43,"../utils/vectors":85,"./makeEntity":11}],13:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":41,"../simulation/actionQueue":43,"../utils/vectors":87,"./makeEntity":11}],13:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -1039,7 +1040,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":33,"../utils/vectors":85,"./makeEntity.js":11}],18:[function(require,module,exports){
+},{"../render/renderAgent":33,"../utils/vectors":87,"./makeEntity.js":11}],18:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1064,6 +1065,7 @@ var config = {
   hp: 3,
   width: 1,
   height: 1,
+  damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
   maxTheta: Math.PI - 0.2,
@@ -1141,7 +1143,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":33,"../utils/vectors":85,"./makeEntity.js":11}],19:[function(require,module,exports){
+},{"../render/renderAgent":33,"../utils/vectors":87,"./makeEntity.js":11}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1254,7 +1256,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":33,"../render/renderSegmented":36,"../utils/vectors":85,"./agent.js":2}],20:[function(require,module,exports){
+},{"../render/renderAgent":33,"../render/renderSegmented":36,"../utils/vectors":87,"./agent.js":2}],20:[function(require,module,exports){
 'use strict';
 
 var _require = require('redux'),
@@ -1283,7 +1285,7 @@ function renderUI(store) {
     modal: state.modal
   }), document.getElementById('container'));
 }
-},{"./reducers/rootReducer":30,"./ui/Main.react":72,"react":121,"react-dom":118,"redux":122}],21:[function(require,module,exports){
+},{"./reducers/rootReducer":30,"./ui/Main.react":74,"react":123,"react-dom":120,"redux":124}],21:[function(require,module,exports){
 // @flow
 
 module.exports = {
@@ -1656,9 +1658,31 @@ var gameReducer = function gameReducer(game, action) {
         game.rainTicks = rainTicks;
         return game;
       }
-    case 'MARK_DIRT':
+
+    case 'MARK_FOR_DRILLING':
       {
         var _playerID2 = action.playerID,
+            entityIDs = action.entityIDs;
+
+
+        return game;
+      }
+    case 'MARK_FOR_PICKUP':
+      {
+        return game;
+      }
+    case 'MARK_FOR_PUTDOWN':
+      {
+        return game;
+      }
+    case 'MARK_BLUEPRINT':
+      {
+        return game;
+      }
+
+    case 'MARK_DIRT':
+      {
+        var _playerID3 = action.playerID,
             dirtIDs = action.dirtIDs;
 
         var taskNeed = 0;
@@ -1676,8 +1700,8 @@ var gameReducer = function gameReducer(game, action) {
               taskNeed++;
               game.markedDirtIDs.push(_id);
             }
-            dirt.marked = _playerID2;
-            fillPheromone(game, dirt.position, 'MARKED_DIRT_PHER', _playerID2);
+            dirt.marked = _playerID3;
+            fillPheromone(game, dirt.position, 'MARKED_DIRT_PHER', _playerID3);
             markEntityAsStale(game, dirt);
           }
         } catch (err) {
@@ -1695,12 +1719,12 @@ var gameReducer = function gameReducer(game, action) {
           }
         }
 
-        game.bases[_playerID2].taskNeed['GO_TO_DIRT'] += taskNeed;
+        game.bases[_playerID3].taskNeed['GO_TO_DIRT'] += taskNeed;
         return game;
       }
     case 'MARK_DIRT_PUTDOWN':
       {
-        var _playerID3 = action.playerID,
+        var _playerID4 = action.playerID,
             emptyPositions = action.emptyPositions;
         var _iteratorNormalCompletion5 = true;
         var _didIteratorError5 = false;
@@ -1744,7 +1768,7 @@ var gameReducer = function gameReducer(game, action) {
             } else {
               game.dirtPutdownPositions.push(_pos);
               game.floodFillSources.push({
-                playerID: _playerID3,
+                playerID: _playerID4,
                 pheromoneType: 'DIRT_DROP',
                 position: _pos,
                 quantity: globalConfig.pheromones.DIRT_DROP.quantity
@@ -1775,6 +1799,13 @@ var gameReducer = function gameReducer(game, action) {
         return game;
       }
     case 'SET_MARQUEE_MODE':
+      {
+        var marqueeMode = action.marqueeMode;
+
+        game.marqueeMode = marqueeMode;
+        return game;
+      }
+    case 'SET_KEEP_MARQUEE':
       {
         var keepMarquee = action.keepMarquee;
 
@@ -1840,7 +1871,7 @@ function createEntitiesReducer(game, action) {
 }
 
 module.exports = { gameReducer: gameReducer };
-},{"../config":1,"../entities/registry":13,"../render/render":32,"../selectors/pheromones":40,"../simulation/actionQueue":43,"../simulation/entityOperations":45,"../simulation/pheromones":48,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],27:[function(require,module,exports){
+},{"../config":1,"../entities/registry":13,"../render/render":32,"../selectors/pheromones":40,"../simulation/actionQueue":43,"../simulation/entityOperations":45,"../simulation/pheromones":48,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],27:[function(require,module,exports){
 'use strict';
 
 var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
@@ -2181,12 +2212,17 @@ var rootReducer = function rootReducer(state, action) {
     case 'SET_PHEROMONE_VISIBILITY':
     case 'SET_FOCUSED':
     case 'SET_CONTROLLED':
+    case 'MARK_FOR_DRILLING':
+    case 'MARK_FOR_PICKUP':
+    case 'MARK_FOR_PUTDOWN':
+    case 'MARK_BLUEPRINT':
     case 'MARK_DIRT':
     case 'MARK_DIRT_PUTDOWN':
     case 'SWAP_MINI_MAP':
     case 'SET_TUTORIAL_FLAG':
     case 'SET_IS_RAINING':
     case 'SET_MARQUEE_MODE':
+    case 'SET_KEEP_MARQUEE':
     case 'ENQUEUE_ENTITY_ACTION':
       {
         if (!state.game) return state;
@@ -2378,7 +2414,7 @@ function upgradeReducer(state, action) {
 }
 
 module.exports = { rootReducer: rootReducer };
-},{"../levels/levels":21,"../simulation/entityOperations":45,"../state/gameState":49,"../state/state":50,"../utils/helpers":83,"./gameReducer":26,"./hotKeysReducer":27,"./modalReducer":28,"./mouseReducer":29,"./tickReducer":31}],31:[function(require,module,exports){
+},{"../levels/levels":21,"../simulation/entityOperations":45,"../state/gameState":49,"../state/state":50,"../utils/helpers":85,"./gameReducer":26,"./hotKeysReducer":27,"./modalReducer":28,"./mouseReducer":29,"./tickReducer":31}],31:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2538,6 +2574,7 @@ var doTick = function doTick(game) {
   updateTowers(game);
   updateBallistics(game);
   updateFlammables(game);
+  updateCoal(game);
   updateMeltables(game);
   updateExplosives(game);
   updateGenerators(game);
@@ -2716,6 +2753,41 @@ var updateFlammables = function updateFlammables(game) {
   }
 };
 
+var updateCoal = function updateCoal(game) {
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = game.COAL[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var id = _step2.value;
+
+      var coal = game.entities[id];
+      var moltenIron = getPheromoneAtPosition(game, coal.position, 'MOLTEN_IRON', 0);
+      if (moltenIron > 0) {
+        var position = _extends({}, coal.position);
+        removeEntity(game, coal);
+        // setPheromone(game, position, 'MOLTEN_STEEL', moltenIron * 2, 0);
+        fillPheromone(game, position, 'MOLTEN_STEEL', game.gaiaID, moltenIron * 2);
+        setPheromone(game, position, 'MOLTEN_IRON', 0, game.gaiaID);
+      }
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+};
+
 var updateMeltables = function updateMeltables(game) {
   for (var id in game.MELTABLE) {
     var meltable = game.entities[id];
@@ -2723,6 +2795,7 @@ var updateMeltables = function updateMeltables(game) {
     if (temp >= meltable.meltTemp) {
       var config = Entities[meltable.type].config;
       changePheromoneEmitterQuantity(game, meltable, meltable.heatQuantity * (meltable.hp / config.hp));
+      changeEntityType(game, meltable, meltable.type, 'FOOD');
       queueAction(game, meltable, makeAction(game, meltable, 'DIE'));
     }
   }
@@ -2742,13 +2815,13 @@ var updateTowers = function updateTowers(game) {
     // choose target if possible
     if (tower.targetID == null) {
       var possibleTargets = [];
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator2 = game.MISSILE[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var missileID = _step2.value;
+        for (var _iterator3 = game.MISSILE[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var missileID = _step3.value;
 
           var missile = game.entities[missileID];
           if (missile.playerID != tower.playerID) {
@@ -2756,16 +2829,16 @@ var updateTowers = function updateTowers(game) {
           }
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
           }
         } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
+          if (_didIteratorError3) {
+            throw _iteratorError3;
           }
         }
       }
@@ -2828,6 +2901,7 @@ var updateGenerators = function updateGenerators(game) {
     if (generator.type == 'TURBINE') {
       generator.theta = (generator.theta + generator.thetaSpeed) % (2 * Math.PI);
       powerGenerated *= generator.thetaSpeed / generator.maxThetaSpeed;
+      generator.powerGenerated = powerGenerated;
     }
     totalPowerGenerated += Math.ceil(powerGenerated);
   }
@@ -3028,28 +3102,28 @@ var stepAction = function stepAction(game, entity, decisionFunction) {
 //////////////////////////////////////////////////////////////////////////
 
 var updateTiledSprites = function updateTiledSprites(game) {
-  var _iteratorNormalCompletion3 = true;
-  var _didIteratorError3 = false;
-  var _iteratorError3 = undefined;
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
 
   try {
-    for (var _iterator3 = game.staleTiles[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-      var id = _step3.value;
+    for (var _iterator4 = game.staleTiles[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var id = _step4.value;
 
       var entity = game.entities[id];
       entity.dictIndexStr = getDictIndexStr(game, entity);
     }
   } catch (err) {
-    _didIteratorError3 = true;
-    _iteratorError3 = err;
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion3 && _iterator3.return) {
-        _iterator3.return();
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
       }
     } finally {
-      if (_didIteratorError3) {
-        throw _iteratorError3;
+      if (_didIteratorError4) {
+        throw _iteratorError4;
       }
     }
   }
@@ -3064,7 +3138,7 @@ var updateRain = function updateRain(game) {
 };
 
 module.exports = { tickReducer: tickReducer };
-},{"../config":1,"../entities/registry":13,"../render/render":32,"../selectors/collisions":37,"../selectors/misc":38,"../selectors/neighbors":39,"../selectors/pheromones":40,"../selectors/sprites":41,"../simulation/actionOperations":42,"../simulation/actionQueue.js":43,"../simulation/agentOperations":44,"../simulation/entityOperations":45,"../simulation/miscOperations":47,"../simulation/pheromones":48,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/stochastic":84,"../utils/vectors":85}],32:[function(require,module,exports){
+},{"../config":1,"../entities/registry":13,"../render/render":32,"../selectors/collisions":37,"../selectors/misc":38,"../selectors/neighbors":39,"../selectors/pheromones":40,"../selectors/sprites":41,"../simulation/actionOperations":42,"../simulation/actionQueue.js":43,"../simulation/agentOperations":44,"../simulation/entityOperations":45,"../simulation/miscOperations":47,"../simulation/pheromones":48,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/stochastic":86,"../utils/vectors":87}],32:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3503,6 +3577,7 @@ var renderEntity = function renderEntity(ctx, game, entity, alwaysOnScreen) {
       for (var i = 0; i < entity.holdingIDs.length; i++) {
 
         var heldEntity = game.entities[entity.holdingIDs[i]];
+        if (heldEntity == null) continue;
         var renderFn = Entities[heldEntity.type].render;
         var position = entity.position;
         var theta = entity.theta;
@@ -3709,7 +3784,7 @@ var renderPheromones = function renderPheromones(ctx, game) {
 };
 
 module.exports = { render: render };
-},{"../config":1,"../entities/registry":13,"../selectors/misc":38,"../selectors/sprites":41,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85,"./renderMinimap":35}],33:[function(require,module,exports){
+},{"../config":1,"../entities/registry":13,"../selectors/misc":38,"../selectors/sprites":41,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87,"./renderMinimap":35}],33:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3938,7 +4013,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":38,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85,"./renderHealthBar":34}],34:[function(require,module,exports){
+},{"../selectors/misc":38,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87,"./renderHealthBar":34}],34:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3980,7 +4055,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":82,"../utils/vectors":85}],35:[function(require,module,exports){
+},{"../utils/gridHelpers":84,"../utils/vectors":87}],35:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4318,7 +4393,7 @@ var onMinimap = function onMinimap(dims, entity) {
 module.exports = {
   renderMinimap: renderMinimap
 };
-},{"../selectors/misc":38,"../selectors/sprites":41,"../utils/gridHelpers":82,"../utils/vectors":85,"./renderSegmented":36}],36:[function(require,module,exports){
+},{"../selectors/misc":38,"../selectors/sprites":41,"../utils/gridHelpers":84,"../utils/vectors":87,"./renderSegmented":36}],36:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -4466,7 +4541,7 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":38,"../selectors/sprites":41,"../utils/vectors":85,"./renderHealthBar":34}],37:[function(require,module,exports){
+},{"../selectors/misc":38,"../selectors/sprites":41,"../utils/vectors":87,"./renderHealthBar":34}],37:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -4533,7 +4608,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":82}],38:[function(require,module,exports){
+},{"../utils/gridHelpers":84}],38:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4726,7 +4801,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":37,"../selectors/neighbors":39,"../simulation/actionQueue":43,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],39:[function(require,module,exports){
+},{"../selectors/collisions":37,"../selectors/neighbors":39,"../simulation/actionQueue":43,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],39:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -4993,7 +5068,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":37,"../utils/gridHelpers":82,"../utils/vectors":85}],40:[function(require,module,exports){
+},{"../selectors/collisions":37,"../utils/gridHelpers":84,"../utils/vectors":87}],40:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5132,7 +5207,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":39,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],41:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":39,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],41:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5445,7 +5520,7 @@ var hasNeighbor = function hasNeighbor(game, pos, type) {
   return lookupInGrid(game.grid, pos).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return e.type == type;
+    return e != null && e.type == type;
   }).length > 0;
 };
 
@@ -5576,7 +5651,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":38,"../selectors/neighbors":39,"../simulation/actionQueue":43,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],42:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":38,"../selectors/neighbors":39,"../simulation/actionQueue":43,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],42:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5774,7 +5849,7 @@ var entityDie = function entityDie(game, entity) {
 module.exports = {
   entityStartCurrentAction: entityStartCurrentAction
 };
-},{"../entities/registry":13,"../selectors/misc":38,"../selectors/sprites":41,"../simulation/actionQueue":43,"../simulation/agentOperations":44,"../simulation/entityOperations":45,"../simulation/explosiveOperations":46,"../utils/helpers":83,"../utils/vectors":85}],43:[function(require,module,exports){
+},{"../entities/registry":13,"../selectors/misc":38,"../selectors/sprites":41,"../simulation/actionQueue":43,"../simulation/agentOperations":44,"../simulation/entityOperations":45,"../simulation/explosiveOperations":46,"../utils/helpers":85,"../utils/vectors":87}],43:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -6001,7 +6076,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":40,"../utils/helpers":83,"../utils/vectors":85}],44:[function(require,module,exports){
+},{"../selectors/pheromones":40,"../utils/helpers":85,"../utils/vectors":87}],44:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -6356,7 +6431,7 @@ module.exports = {
   agentDecideMove: agentDecideMove,
   agentSwitchTask: agentSwitchTask
 };
-},{"../config":1,"../entities/registry":13,"../selectors/collisions":37,"../selectors/misc":38,"../selectors/neighbors":39,"../selectors/pheromones":40,"../simulation/actionQueue":43,"../simulation/entityOperations":45,"../simulation/pheromones":48,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/stochastic":84,"../utils/vectors":85}],45:[function(require,module,exports){
+},{"../config":1,"../entities/registry":13,"../selectors/collisions":37,"../selectors/misc":38,"../selectors/neighbors":39,"../selectors/pheromones":40,"../simulation/actionQueue":43,"../simulation/entityOperations":45,"../simulation/pheromones":48,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/stochastic":86,"../utils/vectors":87}],45:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -7118,7 +7193,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":11,"../entities/registry":13,"../selectors/neighbors":39,"../selectors/pheromones":40,"../simulation/pheromones":48,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],46:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":11,"../entities/registry":13,"../selectors/neighbors":39,"../selectors/pheromones":40,"../simulation/pheromones":48,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],46:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -7227,7 +7302,7 @@ var triggerExplosion = function triggerExplosion(game, explosive) {
 module.exports = {
   triggerExplosion: triggerExplosion
 };
-},{"../simulation/actionQueue":43,"../simulation/entityOperations":45,"../simulation/miscOperations":47,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],47:[function(require,module,exports){
+},{"../simulation/actionQueue":43,"../simulation/entityOperations":45,"../simulation/miscOperations":47,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],47:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -7614,7 +7689,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":39,"../selectors/pheromones":40,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],49:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":39,"../selectors/pheromones":40,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],49:[function(require,module,exports){
 'use strict';
 
 var _require = require('../entities/makeEntity'),
@@ -7726,6 +7801,8 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
     dispersingPheromonePositions: [],
     pheromoneWorker: new Worker('bin/pheromoneWorker.js'),
 
+    keepMarquee: false,
+    marqueeMode: 'DRILL',
     mouse: {
       isLeftDown: false,
       isRightDown: false,
@@ -7790,7 +7867,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
 };
 
 module.exports = { initBaseState: initBaseState, initPlayer: initPlayer };
-},{"../config":1,"../entities/makeEntity":11,"../entities/registry":13,"../simulation/entityOperations":45,"../utils/gridHelpers":82,"../utils/stochastic":84,"../utils/vectors":85}],50:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":11,"../entities/registry":13,"../simulation/entityOperations":45,"../utils/gridHelpers":84,"../utils/stochastic":86,"../utils/vectors":87}],50:[function(require,module,exports){
 'use strict';
 
 var initState = function initState() {
@@ -7954,7 +8031,7 @@ var handleGameWon = function handleGameWon(store, dispatch, state, reason) {
 };
 
 module.exports = { initGameOverSystem: initGameOverSystem };
-},{"../render/render":32,"../ui/components/Button.react":75,"../ui/components/Divider.react":77,"../ui/components/Modal.react":79,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85,"axios":86,"react":121}],52:[function(require,module,exports){
+},{"../render/render":32,"../ui/components/Button.react":77,"../ui/components/Divider.react":79,"../ui/components/Modal.react":81,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87,"axios":88,"react":123}],52:[function(require,module,exports){
 'use strict';
 
 var initKeyboardControlsSystem = function initKeyboardControlsSystem(store) {
@@ -8142,24 +8219,30 @@ var initMouseControlsSystem = function initMouseControlsSystem(store, handlers) 
     onMouseUp(store, ev, handlers);
   };
 
+  // if (handlers.leftDown || handlers.rightDown) {
   document.onmousedown = function (ev) {
     onMouseDown(store, ev, handlers);
   };
+  // }
 
+  // if (handlers.leftUp || handlers.rightUp) {
   document.onmouseup = function (ev) {
     onMouseUp(store, ev, handlers);
   };
+  // }
 
-  var scrollLocked = false;
-  document.onwheel = function (ev) {
-    if (!scrollLocked) {
-      onScroll(store, ev, handlers);
-      scrollLocked = true;
-      setTimeout(function () {
-        scrollLocked = false;
-      }, 150);
-    }
-  };
+  if (handlers.scroll) {
+    var scrollLocked = false;
+    document.onwheel = function (ev) {
+      if (!scrollLocked) {
+        onScroll(store, ev, handlers);
+        scrollLocked = true;
+        setTimeout(function () {
+          scrollLocked = false;
+        }, 150);
+      }
+    };
+  }
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -8309,7 +8392,7 @@ var getMousePixel = function getMousePixel(ev, canvas) {
 };
 
 module.exports = { initMouseControlsSystem: initMouseControlsSystem };
-},{"../config":1,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85}],54:[function(require,module,exports){
+},{"../config":1,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87}],54:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -8399,7 +8482,7 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
 };
 
 module.exports = { initPheromoneWorkerSystem: initPheromoneWorkerSystem };
-},{"../entities/registry":13,"../utils/helpers":83,"../utils/vectors":85}],55:[function(require,module,exports){
+},{"../entities/registry":13,"../utils/helpers":85,"../utils/vectors":87}],55:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -8443,7 +8526,7 @@ var initRainSystem = function initRainSystem(store) {
 };
 
 module.exports = { initRainSystem: initRainSystem };
-},{"../config":1,"../simulation/pheromones":48,"../utils/stochastic":84}],56:[function(require,module,exports){
+},{"../config":1,"../simulation/pheromones":48,"../utils/stochastic":86}],56:[function(require,module,exports){
 'use strict';
 
 var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
@@ -8523,6 +8606,38 @@ module.exports = {
   loadLevel: loadLevel
 };
 },{"../levels/levels":21}],58:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var InfoHUD = require('./InfoHUD.react');
+
+var BottomBar = function BottomBar(props) {
+  var isExperimental = props.isExperimental,
+      dispatch = props.dispatch,
+      game = props.game,
+      mousePos = props.mousePos;
+
+
+  var height = 150;
+  var bottomPadding = 8;
+  return React.createElement(
+    'div',
+    {
+      style: {
+        position: 'absolute',
+        top: window.innerHeight - height - bottomPadding,
+        height: height,
+        width: '100%',
+        zIndex: 2
+        // textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff',
+      }
+    },
+    React.createElement(InfoHUD, { game: game, mousePos: mousePos })
+  );
+};
+
+module.exports = BottomBar;
+},{"./InfoHUD.react":71,"react":123}],59:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -8661,7 +8776,7 @@ function withPropsChecker(WrappedComponent) {
 }
 
 module.exports = React.memo(Canvas);
-},{"../config":1,"react":121}],59:[function(require,module,exports){
+},{"../config":1,"react":123}],60:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -8749,7 +8864,7 @@ var AudioWidget = function AudioWidget(props) {
 };
 
 module.exports = AudioWidget;
-},{"./Button.react":60,"react":121}],60:[function(require,module,exports){
+},{"./Button.react":61,"react":123}],61:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -8833,7 +8948,7 @@ function Button(props) {
 }
 
 module.exports = Button;
-},{"react":121}],61:[function(require,module,exports){
+},{"react":123}],62:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8873,7 +8988,7 @@ function Checkbox(props) {
 }
 
 module.exports = Checkbox;
-},{"react":121}],62:[function(require,module,exports){
+},{"react":123}],63:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8889,7 +9004,7 @@ function Divider(props) {
 }
 
 module.exports = Divider;
-},{"react":121}],63:[function(require,module,exports){
+},{"react":123}],64:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8930,7 +9045,7 @@ var Dropdown = function Dropdown(props) {
 };
 
 module.exports = Dropdown;
-},{"react":121}],64:[function(require,module,exports){
+},{"react":123}],65:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9004,7 +9119,7 @@ function Modal(props) {
 }
 
 module.exports = Modal;
-},{"../../utils/helpers":83,"./Button.react":60,"react":121}],65:[function(require,module,exports){
+},{"../../utils/helpers":85,"./Button.react":61,"react":123}],66:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -9094,7 +9209,7 @@ var submitValue = function submitValue(onChange, nextVal, onlyInt) {
 };
 
 module.exports = NumberField;
-},{"react":121}],66:[function(require,module,exports){
+},{"react":123}],67:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -9183,7 +9298,7 @@ var RadioPicker = function (_React$Component) {
 }(React.Component);
 
 module.exports = RadioPicker;
-},{"react":121}],67:[function(require,module,exports){
+},{"react":123}],68:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9254,7 +9369,7 @@ function Slider(props) {
 }
 
 module.exports = Slider;
-},{"./NumberField.react":65,"react":121}],68:[function(require,module,exports){
+},{"./NumberField.react":66,"react":123}],69:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -9433,7 +9548,7 @@ function ExperimentalSidebar(props) {
 }
 
 module.exports = ExperimentalSidebar;
-},{"./Components/Button.react":60,"./Components/Checkbox.react":61,"./Components/Divider.react":62,"./Components/Dropdown.react":63,"./Components/Slider.react":67,"react":121}],69:[function(require,module,exports){
+},{"./Components/Button.react":61,"./Components/Checkbox.react":62,"./Components/Divider.react":63,"./Components/Dropdown.react":64,"./Components/Slider.react":68,"react":123}],70:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9442,6 +9557,7 @@ var Canvas = require('./Canvas.react');
 var Checkbox = require('./Components/Checkbox.react');
 var RadioPicker = require('./Components/RadioPicker.react');
 var TopBar = require('./TopBar.react');
+var BottomBar = require('./BottomBar.react');
 
 var _require = require('../config'),
     config = _require.config;
@@ -9517,7 +9633,7 @@ function Game(props) {
     // initRainSystem(store);
     // initUpgradeSystem(store);
     registerHotkeys(dispatch);
-    // initMouseControlsSystem(store, handlers);
+    // initMouseControlsSystem(store, configureMouseHandlers(game, dispatch));
   }, [gameID, tickInterval]);
 
   // ---------------------------------------------
@@ -9566,6 +9682,10 @@ function Game(props) {
       powerMargin: game.bases[game.playerID].powerMargin,
       totalPowerNeeded: game.bases[game.playerID].totalPowerNeeded,
       totalPowerGenerated: game.bases[game.playerID].totalPowerGenerated
+    }),
+    React.createElement(BottomBar, { dispatch: dispatch,
+      game: game,
+      mousePos: game.mouse.curPos
     })
   );
 }
@@ -9592,8 +9712,271 @@ function registerHotkeys(dispatch) {
   });
 }
 
+function configureMouseHandlers(game, dispatch) {
+  var handlers = {};
+  switch (game.marqueeMode) {
+    case 'DRILL':
+    case 'PICKUP_OR_PUTDOWN':
+    case 'BLUEPRINT':
+  }
+  return handlers;
+}
+
 module.exports = Game;
-},{"../config":1,"../selectors/misc":38,"../simulation/actionQueue":43,"../systems/gameOverSystem":51,"../systems/keyboardControlsSystem":52,"../systems/mouseControlsSystem":53,"../systems/pheromoneWorkerSystem":54,"../systems/rainSystem":55,"../systems/spriteSheetSystem":56,"../utils/gridHelpers":82,"../utils/helpers":83,"../utils/vectors":85,"./Canvas.react":58,"./Components/Button.react":60,"./Components/Checkbox.react":61,"./Components/RadioPicker.react":66,"./ExperimentalSidebar.react":68,"./TopBar.react":73,"react":121}],70:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":38,"../simulation/actionQueue":43,"../systems/gameOverSystem":51,"../systems/keyboardControlsSystem":52,"../systems/mouseControlsSystem":53,"../systems/pheromoneWorkerSystem":54,"../systems/rainSystem":55,"../systems/spriteSheetSystem":56,"../utils/gridHelpers":84,"../utils/helpers":85,"../utils/vectors":87,"./BottomBar.react":58,"./Canvas.react":59,"./Components/Button.react":61,"./Components/Checkbox.react":62,"./Components/RadioPicker.react":67,"./ExperimentalSidebar.react":69,"./TopBar.react":75,"react":123}],71:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+
+var _require = require('../entities/registry'),
+    Entities = _require.Entities;
+
+var _require2 = require('../config'),
+    pheromones = _require2.pheromones;
+
+var _require3 = require('../utils/helpers'),
+    encodePosition = _require3.encodePosition;
+
+var _require4 = require('../utils/gridHelpers'),
+    lookupInGrid = _require4.lookupInGrid,
+    getPheromonesInCell = _require4.getPheromonesInCell;
+
+var _require5 = require('../selectors/pheromones'),
+    getPheromoneAtPosition = _require5.getPheromoneAtPosition;
+
+var InfoHUD = function InfoHUD(props) {
+  var mousePos = props.mousePos,
+      game = props.game;
+
+
+  var pheromoneInfoCards = [];
+  var pherInCell = getPheromonesInCell(game.grid, mousePos, 0 /* playerID */);
+  for (var pherType in pherInCell) {
+    if (pherType == 'HEAT' || pherType == 'COLD') continue;
+    if (pherInCell[pherType] > 0) {
+      pheromoneInfoCards.push(React.createElement(PheromoneInfoCard, {
+        key: 'pherInfo_' + pherType + encodePosition(mousePos) + pherInCell[pherType],
+        pheromoneType: pherType,
+        quantity: pherInCell[pherType]
+      }));
+    }
+  }
+
+  var entityInfoCards = lookupInGrid(game.grid, mousePos).map(function (id) {
+    return game.entities[id];
+  }).map(function (e) {
+    return React.createElement(EntityInfoCard, { key: 'info_' + e.id, entity: e });
+  });
+
+  var temp = getPheromoneAtPosition(game, mousePos, 'HEAT', 0);
+
+  return React.createElement(
+    'div',
+    {
+      style: {}
+    },
+    React.createElement(
+      InfoCard,
+      null,
+      React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'b',
+          null,
+          'Position: '
+        )
+      ),
+      React.createElement(
+        'div',
+        null,
+        'x: ',
+        mousePos.x,
+        ' y: ',
+        mousePos.y
+      ),
+      React.createElement(
+        'div',
+        null,
+        React.createElement(
+          'b',
+          null,
+          'Temperature'
+        ),
+        ': ',
+        temp
+      )
+    ),
+    entityInfoCards,
+    pheromoneInfoCards
+  );
+};
+
+var PheromoneInfoCard = function PheromoneInfoCard(props) {
+  var pheromoneType = props.pheromoneType,
+      quantity = props.quantity;
+
+  var config = pheromones[pheromoneType];
+  return React.createElement(
+    InfoCard,
+    null,
+    React.createElement(
+      'div',
+      { style: { textAlign: 'center' } },
+      React.createElement(
+        'b',
+        null,
+        pheromoneType
+      )
+    ),
+    React.createElement(
+      'div',
+      null,
+      'Concentration: ',
+      Math.round(quantity),
+      '/',
+      config.quantity,
+      config.heatPoint ? React.createElement(
+        'div',
+        null,
+        'Boil Temp: ',
+        config.heatPoint
+      ) : null,
+      config.heatsTo ? React.createElement(
+        'div',
+        null,
+        'Boils To: ',
+        config.heatsTo
+      ) : null,
+      config.coolPoint ? React.createElement(
+        'div',
+        null,
+        'Cools At: ',
+        config.coolPoint
+      ) : null,
+      config.coolsTo ? React.createElement(
+        'div',
+        null,
+        'Cools To: ',
+        config.coolsTo
+      ) : null
+    )
+  );
+};
+
+var EntityInfoCard = function EntityInfoCard(props) {
+  var entity = props.entity;
+
+  var config = Entities[entity.type].config;
+
+  return React.createElement(
+    InfoCard,
+    null,
+    React.createElement(
+      'div',
+      { style: { textAlign: 'center' } },
+      React.createElement(
+        'b',
+        null,
+        entity.type
+      )
+    ),
+    entity.hp ? React.createElement(
+      'div',
+      null,
+      'HP: ',
+      entity.hp,
+      '/',
+      config.hp
+    ) : null,
+    entity.fuel ? React.createElement(
+      'div',
+      null,
+      'Fuel (seconds): ',
+      Math.round(entity.fuel / 1000),
+      '/',
+      Math.round(config.fuel / 1000)
+    ) : null,
+    entity.onFire != null ? React.createElement(
+      'div',
+      null,
+      'On Fire: ',
+      entity.onFire ? 'Yes' : 'No'
+    ) : null,
+    entity.heatQuantity != null ? React.createElement(
+      'div',
+      null,
+      'Fire Temp: ',
+      entity.heatQuantity
+    ) : null,
+    entity.combustionTemp != null ? React.createElement(
+      'div',
+      null,
+      'Combustion Temp: ',
+      entity.combustionTemp
+    ) : null,
+    entity.powerConsumed != null ? React.createElement(
+      'div',
+      null,
+      'Power Needed: ',
+      entity.powerConsumed
+    ) : null,
+    entity.isPowered != null ? React.createElement(
+      'div',
+      null,
+      'Is Powered: ',
+      entity.isPowered ? 'Yes' : 'No'
+    ) : null,
+    entity.meltTemp != null ? React.createElement(
+      'div',
+      null,
+      'Melts To: ',
+      entity.pheromoneType
+    ) : null,
+    entity.meltTemp != null ? React.createElement(
+      'div',
+      null,
+      'Melt Temp: ',
+      entity.meltTemp
+    ) : null,
+    entity.damage ? React.createElement(
+      'div',
+      null,
+      'Damage: ',
+      entity.damage
+    ) : null,
+    entity.powerGenerated != null ? React.createElement(
+      'div',
+      null,
+      'Power Generated: ',
+      entity.powerGenerated.toFixed(2),
+      '/',
+      config.powerGenerated
+    ) : null
+  );
+};
+
+var InfoCard = function InfoCard(props) {
+  return React.createElement(
+    'div',
+    {
+      style: {
+        border: '1px solid black',
+        backgroundColor: 'white',
+        // width: 200,
+        // height: 148,
+        verticalAlign: 'top',
+        marginLeft: 4,
+        display: 'inline-block',
+        padding: 4
+      }
+    },
+    props.children
+  );
+};
+
+module.exports = InfoHUD;
+},{"../config":1,"../entities/registry":13,"../selectors/pheromones":40,"../utils/gridHelpers":84,"../utils/helpers":85,"react":123}],72:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -9769,6 +10152,9 @@ function LevelEditor(props) {
     case 'COPY-PASTE':
       palette = copyPastePalette(dispatch, state, editor, setEditor);
       break;
+    case 'MARQUEE':
+      palette = marqueePalette(dispatch, state, editor, setEditor);
+      break;
   }
 
   return React.createElement(
@@ -9845,14 +10231,14 @@ function LevelEditor(props) {
       'div',
       null,
       React.createElement(Dropdown, {
-        options: ['CREATE ENTITIES', 'PHEROMONES', 'COPY-PASTE'],
+        options: ['CREATE ENTITIES', 'PHEROMONES', 'COPY-PASTE', 'MARQUEE'],
         selected: editor.paletteMode,
         onChange: function onChange(paletteMode) {
           setEditor(_extends({}, editor, { paletteMode: paletteMode }));
           if (paletteMode == 'COPY-PASTE') {
-            dispatch({ type: 'SET_MARQUEE_MODE', keepMarquee: true });
+            dispatch({ type: 'SET_KEEP_MARQUEE', keepMarquee: true });
           } else {
-            dispatch({ type: 'SET_MARQUEE_MODE', keepMarquee: false });
+            dispatch({ type: 'SET_KEEP_MARQUEE', keepMarquee: false });
           }
         }
       })
@@ -10215,6 +10601,10 @@ function copyPastePalette(dispatch, state, editor, setEditor) {
   );
 }
 
+function marqueePalette(dispatch, state, editor, setEditor) {
+  return React.createElement('div', null);
+}
+
 // ---------------------------------------------------------------
 // Hotkeys
 // ---------------------------------------------------------------
@@ -10226,12 +10616,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: function fn(s) {
       var game = s.getState().game;
       var moveAmount = Math.round(Math.max(1, game.gridHeight / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: 0, y: moveAmount })
-        });
-        setEditor(_extends({}, editor, { version: editor.version + 1 }));
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: 0, y: moveAmount })
+      });
+      setEditor(_extends({}, editor, { version: editor.version + 1 }));
     }
   });
   dispatch({
@@ -10240,12 +10628,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: function fn(s) {
       var game = s.getState().game;
       var moveAmount = Math.round(Math.max(1, game.gridHeight / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: 0, y: -1 * moveAmount })
-        });
-        setEditor(_extends({}, editor, { version: editor.version + 1 }));
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: 0, y: -1 * moveAmount })
+      });
+      setEditor(_extends({}, editor, { version: editor.version + 1 }));
     }
   });
   dispatch({
@@ -10254,12 +10640,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: function fn(s) {
       var game = s.getState().game;
       var moveAmount = Math.round(Math.max(1, game.gridWidth / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: -1 * moveAmount, y: 0 })
-        });
-        setEditor(_extends({}, editor, { version: editor.version + 1 }));
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: -1 * moveAmount, y: 0 })
+      });
+      setEditor(_extends({}, editor, { version: editor.version + 1 }));
     }
   });
   dispatch({
@@ -10268,12 +10652,10 @@ function registerHotkeys(dispatch, editor, setEditor) {
     fn: function fn(s) {
       var game = s.getState().game;
       var moveAmount = Math.round(Math.max(1, game.gridWidth / 10));
-      if (game.tickInterval == null) {
-        dispatch({
-          type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: moveAmount, y: 0 })
-        });
-        setEditor(_extends({}, editor, { version: editor.version + 1 }));
-      }
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, { x: moveAmount, y: 0 })
+      });
+      setEditor(_extends({}, editor, { version: editor.version + 1 }));
     }
   });
   // dispatch({
@@ -10591,7 +10973,7 @@ function createEntityOptions(game, editor, setEditor) {
 }
 
 module.exports = LevelEditor;
-},{"../config":1,"../entities/registry":13,"../render/render":32,"../systems/mouseControlsSystem":53,"../utils/vectors":85,"./components/Button.react":75,"./components/Checkbox.react":76,"./components/Divider.react":77,"./components/Dropdown.react":78,"./components/NumberField.react":80,"./components/Slider.react":81,"react":121}],71:[function(require,module,exports){
+},{"../config":1,"../entities/registry":13,"../render/render":32,"../systems/mouseControlsSystem":53,"../utils/vectors":87,"./components/Button.react":77,"./components/Checkbox.react":78,"./components/Divider.react":79,"./components/Dropdown.react":80,"./components/NumberField.react":82,"./components/Slider.react":83,"react":123}],73:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -10942,7 +11324,7 @@ function playLevel(store, levelName, setLoadingProgress, setIsLoaded) {
 }
 
 module.exports = Lobby;
-},{"../config":1,"../levels/levels":21,"../systems/spriteSheetSystem":56,"../thunks/levelThunks":57,"../ui/components/Modal.react":79,"../utils/helpers":83,"./components/AudioWidget.react":74,"./components/Button.react":75,"./components/Checkbox.react":76,"./components/Divider.react":77,"./components/Dropdown.react":78,"axios":86,"react":121}],72:[function(require,module,exports){
+},{"../config":1,"../levels/levels":21,"../systems/spriteSheetSystem":56,"../thunks/levelThunks":57,"../ui/components/Modal.react":81,"../utils/helpers":85,"./components/AudioWidget.react":76,"./components/Button.react":77,"./components/Checkbox.react":78,"./components/Divider.react":79,"./components/Dropdown.react":80,"axios":88,"react":123}],74:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10989,7 +11371,7 @@ function Main(props) {
 }
 
 module.exports = Main;
-},{"./Game.react":69,"./LevelEditor.react":70,"./Lobby.react":71,"react":121}],73:[function(require,module,exports){
+},{"./Game.react":70,"./LevelEditor.react":72,"./Lobby.react":73,"react":123}],75:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -11208,23 +11590,23 @@ function dismissModal(dispatch) {
 }
 
 module.exports = memo(TopBar);
-},{"../config":1,"../utils/helpers":83,"./Components/AudioWidget.react":59,"./Components/Button.react":60,"./Components/Modal.react":64,"react":121}],74:[function(require,module,exports){
-arguments[4][59][0].apply(exports,arguments)
-},{"./Button.react":75,"dup":59,"react":121}],75:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":85,"./Components/AudioWidget.react":60,"./Components/Button.react":61,"./Components/Modal.react":65,"react":123}],76:[function(require,module,exports){
 arguments[4][60][0].apply(exports,arguments)
-},{"dup":60,"react":121}],76:[function(require,module,exports){
+},{"./Button.react":77,"dup":60,"react":123}],77:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"dup":61,"react":121}],77:[function(require,module,exports){
+},{"dup":61,"react":123}],78:[function(require,module,exports){
 arguments[4][62][0].apply(exports,arguments)
-},{"dup":62,"react":121}],78:[function(require,module,exports){
+},{"dup":62,"react":123}],79:[function(require,module,exports){
 arguments[4][63][0].apply(exports,arguments)
-},{"dup":63,"react":121}],79:[function(require,module,exports){
+},{"dup":63,"react":123}],80:[function(require,module,exports){
 arguments[4][64][0].apply(exports,arguments)
-},{"../../utils/helpers":83,"./Button.react":75,"dup":64,"react":121}],80:[function(require,module,exports){
+},{"dup":64,"react":123}],81:[function(require,module,exports){
 arguments[4][65][0].apply(exports,arguments)
-},{"dup":65,"react":121}],81:[function(require,module,exports){
-arguments[4][67][0].apply(exports,arguments)
-},{"./NumberField.react":80,"dup":67,"react":121}],82:[function(require,module,exports){
+},{"../../utils/helpers":85,"./Button.react":77,"dup":65,"react":123}],82:[function(require,module,exports){
+arguments[4][66][0].apply(exports,arguments)
+},{"dup":66,"react":123}],83:[function(require,module,exports){
+arguments[4][68][0].apply(exports,arguments)
+},{"./NumberField.react":82,"dup":68,"react":123}],84:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -11360,7 +11742,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":83,"../utils/vectors":85}],83:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":85,"../utils/vectors":87}],85:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -11471,7 +11853,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":85}],84:[function(require,module,exports){
+},{"./vectors":87}],86:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -11526,7 +11908,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],85:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -11725,9 +12107,9 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}],86:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":88}],87:[function(require,module,exports){
+},{"./lib/axios":90}],89:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -11908,7 +12290,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":94,"../core/createError":95,"./../core/settle":99,"./../helpers/buildURL":103,"./../helpers/cookies":105,"./../helpers/isURLSameOrigin":108,"./../helpers/parseHeaders":110,"./../utils":112}],88:[function(require,module,exports){
+},{"../core/buildFullPath":96,"../core/createError":97,"./../core/settle":101,"./../helpers/buildURL":105,"./../helpers/cookies":107,"./../helpers/isURLSameOrigin":110,"./../helpers/parseHeaders":112,"./../utils":114}],90:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -11966,7 +12348,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":89,"./cancel/CancelToken":90,"./cancel/isCancel":91,"./core/Axios":92,"./core/mergeConfig":98,"./defaults":101,"./helpers/bind":102,"./helpers/isAxiosError":107,"./helpers/spread":111,"./utils":112}],89:[function(require,module,exports){
+},{"./cancel/Cancel":91,"./cancel/CancelToken":92,"./cancel/isCancel":93,"./core/Axios":94,"./core/mergeConfig":100,"./defaults":103,"./helpers/bind":104,"./helpers/isAxiosError":109,"./helpers/spread":113,"./utils":114}],91:[function(require,module,exports){
 'use strict';
 
 /**
@@ -11987,7 +12369,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],90:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -12046,14 +12428,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":89}],91:[function(require,module,exports){
+},{"./Cancel":91}],93:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],92:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12150,7 +12532,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":103,"./../utils":112,"./InterceptorManager":93,"./dispatchRequest":96,"./mergeConfig":98}],93:[function(require,module,exports){
+},{"../helpers/buildURL":105,"./../utils":114,"./InterceptorManager":95,"./dispatchRequest":98,"./mergeConfig":100}],95:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12204,7 +12586,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":112}],94:[function(require,module,exports){
+},{"./../utils":114}],96:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -12226,7 +12608,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":104,"../helpers/isAbsoluteURL":106}],95:[function(require,module,exports){
+},{"../helpers/combineURLs":106,"../helpers/isAbsoluteURL":108}],97:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -12246,7 +12628,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":97}],96:[function(require,module,exports){
+},{"./enhanceError":99}],98:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12327,7 +12709,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":91,"../defaults":101,"./../utils":112,"./transformData":100}],97:[function(require,module,exports){
+},{"../cancel/isCancel":93,"../defaults":103,"./../utils":114,"./transformData":102}],99:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12371,7 +12753,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],98:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -12460,7 +12842,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":112}],99:[function(require,module,exports){
+},{"../utils":114}],101:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -12487,7 +12869,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":95}],100:[function(require,module,exports){
+},{"./createError":97}],102:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12509,7 +12891,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":112}],101:[function(require,module,exports){
+},{"./../utils":114}],103:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -12611,7 +12993,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":87,"./adapters/xhr":87,"./helpers/normalizeHeaderName":109,"./utils":112,"_process":131}],102:[function(require,module,exports){
+},{"./adapters/http":89,"./adapters/xhr":89,"./helpers/normalizeHeaderName":111,"./utils":114,"_process":133}],104:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -12624,7 +13006,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],103:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12696,7 +13078,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":112}],104:[function(require,module,exports){
+},{"./../utils":114}],106:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12712,7 +13094,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],105:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12767,7 +13149,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":112}],106:[function(require,module,exports){
+},{"./../utils":114}],108:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12783,7 +13165,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],107:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12796,7 +13178,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],108:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12866,7 +13248,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":112}],109:[function(require,module,exports){
+},{"./../utils":114}],111:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -12880,7 +13262,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":112}],110:[function(require,module,exports){
+},{"../utils":114}],112:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -12935,7 +13317,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":112}],111:[function(require,module,exports){
+},{"./../utils":114}],113:[function(require,module,exports){
 'use strict';
 
 /**
@@ -12964,7 +13346,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],112:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -13317,7 +13699,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":102}],113:[function(require,module,exports){
+},{"./helpers/bind":104}],115:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -13409,7 +13791,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],114:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 (function (process){(function (){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -13515,7 +13897,7 @@ checkPropTypes.resetWarningCache = function() {
 module.exports = checkPropTypes;
 
 }).call(this)}).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":115,"_process":131}],115:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":117,"_process":133}],117:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -13529,7 +13911,7 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],116:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react-dom.development.js
@@ -38545,7 +38927,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":131,"object-assign":113,"prop-types/checkPropTypes":114,"react":121,"scheduler":127,"scheduler/tracing":128}],117:[function(require,module,exports){
+},{"_process":133,"object-assign":115,"prop-types/checkPropTypes":116,"react":123,"scheduler":129,"scheduler/tracing":130}],119:[function(require,module,exports){
 /** @license React v16.14.0
  * react-dom.production.min.js
  *
@@ -38839,7 +39221,7 @@ exports.flushSync=function(a,b){if((W&(fj|gj))!==V)throw Error(u(187));var c=W;W
 exports.unmountComponentAtNode=function(a){if(!gk(a))throw Error(u(40));return a._reactRootContainer?(Nj(function(){ik(null,null,a,!1,function(){a._reactRootContainer=null;a[Od]=null})}),!0):!1};exports.unstable_batchedUpdates=Mj;exports.unstable_createPortal=function(a,b){return kk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!gk(c))throw Error(u(200));if(null==a||void 0===a._reactInternalFiber)throw Error(u(38));return ik(a,b,c,!1,d)};exports.version="16.14.0";
 
-},{"object-assign":113,"react":121,"scheduler":127}],118:[function(require,module,exports){
+},{"object-assign":115,"react":123,"scheduler":129}],120:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -38881,7 +39263,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":116,"./cjs/react-dom.production.min.js":117,"_process":131}],119:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":118,"./cjs/react-dom.production.min.js":119,"_process":133}],121:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react.development.js
@@ -40797,7 +41179,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":131,"object-assign":113,"prop-types/checkPropTypes":114}],120:[function(require,module,exports){
+},{"_process":133,"object-assign":115,"prop-types/checkPropTypes":116}],122:[function(require,module,exports){
 /** @license React v16.14.0
  * react.production.min.js
  *
@@ -40824,7 +41206,7 @@ key:d,ref:g,props:e,_owner:k}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:A,_ctor:a,_status:-1,_result:null}};exports.memo=function(a,b){return{$$typeof:z,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return Z().useCallback(a,b)};exports.useContext=function(a,b){return Z().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return Z().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return Z().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return Z().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return Z().useMemo(a,b)};exports.useReducer=function(a,b,c){return Z().useReducer(a,b,c)};exports.useRef=function(a){return Z().useRef(a)};exports.useState=function(a){return Z().useState(a)};exports.version="16.14.0";
 
-},{"object-assign":113}],121:[function(require,module,exports){
+},{"object-assign":115}],123:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -40835,7 +41217,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react.development.js":119,"./cjs/react.production.min.js":120,"_process":131}],122:[function(require,module,exports){
+},{"./cjs/react.development.js":121,"./cjs/react.production.min.js":122,"_process":133}],124:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -41513,7 +41895,7 @@ exports.compose = compose;
 exports.createStore = createStore;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":131,"symbol-observable":129}],123:[function(require,module,exports){
+},{"_process":133,"symbol-observable":131}],125:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler-tracing.development.js
@@ -41866,7 +42248,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":131}],124:[function(require,module,exports){
+},{"_process":133}],126:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler-tracing.production.min.js
  *
@@ -41878,7 +42260,7 @@ exports.unstable_wrap = unstable_wrap;
 
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],125:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler.development.js
@@ -42740,7 +43122,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":131}],126:[function(require,module,exports){
+},{"_process":133}],128:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler.production.min.js
  *
@@ -42763,7 +43145,7 @@ exports.unstable_getCurrentPriorityLevel=function(){return R};exports.unstable_g
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();if("object"===typeof c&&null!==c){var e=c.delay;e="number"===typeof e&&0<e?d+e:d;c="number"===typeof c.timeout?c.timeout:Y(a)}else c=Y(a),e=d;c=e+c;a={id:P++,callback:b,priorityLevel:a,startTime:e,expirationTime:c,sortIndex:-1};e>d?(a.sortIndex=e,J(O,a),null===L(N)&&a===L(O)&&(U?h():U=!0,g(W,e-d))):(a.sortIndex=c,J(N,a),T||S||(T=!0,f(X)));return a};
 exports.unstable_shouldYield=function(){var a=exports.unstable_now();V(a);var b=L(N);return b!==Q&&null!==Q&&null!==b&&null!==b.callback&&b.startTime<=a&&b.expirationTime<Q.expirationTime||k()};exports.unstable_wrapCallback=function(a){var b=R;return function(){var c=R;R=b;try{return a.apply(this,arguments)}finally{R=c}}};
 
-},{}],127:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -42774,7 +43156,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":125,"./cjs/scheduler.production.min.js":126,"_process":131}],128:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":127,"./cjs/scheduler.production.min.js":128,"_process":133}],130:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -42785,7 +43167,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":123,"./cjs/scheduler-tracing.production.min.js":124,"_process":131}],129:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":125,"./cjs/scheduler-tracing.production.min.js":126,"_process":133}],131:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -42817,7 +43199,7 @@ if (typeof self !== 'undefined') {
 var result = (0, _ponyfill2['default'])(root);
 exports['default'] = result;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill.js":130}],130:[function(require,module,exports){
+},{"./ponyfill.js":132}],132:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -42841,7 +43223,7 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],131:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 

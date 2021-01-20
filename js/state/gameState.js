@@ -99,6 +99,8 @@ const initBaseState = (
     dispersingPheromonePositions: [],
     pheromoneWorker: new Worker('bin/pheromoneWorker.js'),
 
+    keepMarquee: false,
+    marqueeMode: 'DRILL',
     mouse: {
       isLeftDown: false,
       isRightDown: false,
