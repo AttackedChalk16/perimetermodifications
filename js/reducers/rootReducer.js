@@ -219,7 +219,9 @@ const rootReducer = (state: State, action: Action): State => {
     case 'SWAP_MINI_MAP':
     case 'SET_TUTORIAL_FLAG':
     case 'SET_IS_RAINING':
-    case 'SET_MARQUEE_MODE':
+    case 'SET_MOUSE_MODE':
+    case 'SET_PLACE_TYPE':
+    case 'COLLECT_ENTITIES':
     case 'SET_KEEP_MARQUEE':
     case 'ENQUEUE_ENTITY_ACTION': {
       if (!state.game) return state;

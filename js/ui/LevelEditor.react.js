@@ -64,6 +64,7 @@ function LevelEditor(props: Props): React.Node {
     warheadType: 'DYNAMITE',
     fireRate: Entities.TURRET.config.SHOOT.duration,
     projectileType: 'BULLET',
+    explosionRadiusType: 'CIRCULAR',
 
     // copy-paste mode
     clipboardMode: 'COPY',
@@ -79,7 +80,9 @@ function LevelEditor(props: Props): React.Node {
         dispatch({type: 'INCREMENT_ZOOM', zoom});
       },
     };
+    let shouldInit = true;
     if (editor.paletteMode == 'CREATE ENTITIES') {
+      dispatch({type: 'SET_MOUSE_MODE', mouseMode: 'NONE'});
       handlers.mouseMove = () => {}; // placeholder
       handlers.leftUp = (state, dispatch, gridPos) =>  {
         const rect = toRect(state.game.mouse.downPos, gridPos);
@@ -91,7 +94,8 @@ function LevelEditor(props: Props): React.Node {
         setEditor({...editor, version: editor.version + 1});
       };
     } else if (editor.paletteMode == 'PHEROMONES') {
-      handlers.mouseMove = null;
+      dispatch({type: 'SET_MOUSE_MODE', mouseMode: 'NONE'});
+      handlers.mouseMove = () => {}; // placeholder
       handlers.leftDown = (state, dispatch, gridPos) => {
         dispatch({
           type: 'FILL_PHEROMONE',
@@ -102,6 +106,7 @@ function LevelEditor(props: Props): React.Node {
         });
       };
     } else if (editor.paletteMode == 'COPY-PASTE') {
+      dispatch({type: 'SET_MOUSE_MODE', mouseMode: 'NONE'});
       handlers.mouseMove = () => {}; // placeholder
       handlers.leftUp = (state, dispatch, gridPos) =>  {
         const rect = toRect(state.game.mouse.downPos, gridPos);
@@ -112,8 +117,13 @@ function LevelEditor(props: Props): React.Node {
         }
         setEditor({...editor, version: editor.version + 1});
       };
+    } else if (editor.paletteMode == 'MARQUEE') {
+      shouldInit = false;
+      dispatch({type: 'SET_MOUSE_MODE', mouseMode: 'COLLECT'});
     }
-    initMouseControlsSystem(store, handlers);
+    if (shouldInit) {
+      initMouseControlsSystem(store, handlers);
+    }
     registerHotkeys(dispatch, editor, setEditor);
     render(game);
   }, [editor, editor.paletteMode]);
@@ -678,9 +688,12 @@ function createEntities(game, dispatch, editor, rect): void {
       args = [1, 1, editor.background]; // width and height
       break;
     case 'TURBINE':
-    case 'DYNAMITE':
     case 'AGENT':
+    case 'BASE':
       args = [editor.playerID];
+      break;
+    case 'DYNAMITE':
+      args = [editor.playerID, editor.explosionRadiusType];
       break;
     case 'MISSILE': {
       let warhead = null;
@@ -807,6 +820,17 @@ function createEntityOptions(game, editor, setEditor): React.Node {
         <NumberField
           value={editor.fireRate}
           onChange={(fireRate) => setEditor({...editor, fireRate})}
+        />
+      </span>);
+      break;
+    }
+    case 'DYNAMITE': {
+      options.push(<span>
+        Explosion Radius Type:
+        <Dropdown
+          options={['CIRCULAR', 'HORIZONTAL', 'VERTICAL']}
+          selected={editor.explosionRadiusType}
+          onChange={(explosionRadiusType) => setEditor({...editor, explosionRadiusType})}
         />
       </span>);
       break;

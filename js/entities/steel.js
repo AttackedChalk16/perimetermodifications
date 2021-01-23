@@ -8,6 +8,7 @@ const {makeEntity} = require('./makeEntity');
 const config = {
   isTiled: true,
   isMeltable: true,
+  isCollectable: true,
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_STEEL',
   hp: 240,

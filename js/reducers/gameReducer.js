@@ -2,12 +2,14 @@
 
 const {
   addEntity, removeEntity, markEntityAsStale,
-  changeEntitySize,
+  changeEntitySize, changeEntityType,
 } = require('../simulation/entityOperations');
 const {
   entityInsideGrid, lookupInGrid, getEntityPositions,
 } = require('../utils/gridHelpers');
-const {queueAction, makeAction} = require('../simulation/actionQueue');
+const {
+  queueAction, makeAction, isActionTypeQueued,
+} = require('../simulation/actionQueue');
 const {add, subtract, round, floor, ceil, equals} = require('../utils/vectors');
 const {render} = require('../render/render');
 const {fillPheromone, clearPheromone, setPheromone} = require('../simulation/pheromones');
@@ -243,14 +245,52 @@ const gameReducer = (game: Game, action: Action): Game => {
       }
       return game;
     }
+    case 'COLLECT_ENTITIES': {
+      const {entities} = action;
+      for (const entity of entities) {
+        entity.collectedAs = entity.type;
+        changeEntityType(game, entity, entity.type, 'AGENT');
+        delete entity.notAnimated;
+        delete game.NOT_ANIMATED[entity.id];
+        entity.isAgent = true;
+        entity.blockingTypes = [...Entities.AGENT.config.blockingTypes];
+        entity.actions = [];
+        entity.playerID = game.playerID;
+        entity.MOVE = {
+          duration: 4,
+          spriteOrder: [1],
+        };
+        entity.MOVE_TURN = {
+          duration: 2,
+          spriteOrder: [1],
+        };
+        entity.TURN =  {
+          duration: 1,
+          spriteOrder: [1],
+        };
+        entity.task = 'RETURN';
+        entity.RETURN = {
+          base: 0,
+          forwardMovementBonus: 0,
+          prevPositionPenalty: -100,
+          COLONY: 1000,
+        }
+      }
+      return game;
+    }
+    case 'SET_PLACE_TYPE': {
+      const {placeType} = action;
+      game.placeType = placeType;
+      return game;
+    }
     case 'SWAP_MINI_MAP': {
       game.maxMinimap = !game.maxMinimap;
       game.viewImage.allStale = true;
       return game;
     }
-    case 'SET_MARQUEE_MODE': {
-      const {marqueeMode} = action;
-      game.marqueeMode = marqueeMode;
+    case 'SET_MOUSE_MODE': {
+      const {mouseMode} = action;
+      game.mouseMode = mouseMode;
       return game;
     }
     case 'SET_KEEP_MARQUEE': {

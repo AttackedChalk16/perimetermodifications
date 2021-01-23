@@ -241,7 +241,7 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
   // marquee
   if (
     game.isExperimental && document.onmousemove != null &&
-    (game.mouse.isLeftDown || game.keepMarquee)
+    (game.mouse.isLeftDown || game.keepMarquee) && game.mouseMode != 'COLLECT'
   ) {
     ctx.strokeStyle = 'black';
     const {curPos, downPos} = game.mouse;
@@ -352,7 +352,10 @@ const refreshStaleImage = (game, dims): void => {
 
 const renderEntity = (ctx, game, entity, alwaysOnScreen): void => {
   if (entity == null || entity.position == null) return;
-  const {render} = Entities[entity.type];
+  let {render} = Entities[entity.type];
+  if (entity.collectedAs != null) {
+    render = Entities[entity.collectedAs].render;
+  }
   if (
     !onScreen(game, entity)
     && !entity.notAnimated
@@ -370,7 +373,7 @@ const renderEntity = (ctx, game, entity, alwaysOnScreen): void => {
     };
   }
 
-  Entities[entity.type].render(ctx, game, entity);
+  render(ctx, game, entity);
 
   if (game.showEntityIDs) {
     // ctx.translate(game.viewPos.x, game.viewPos.y);

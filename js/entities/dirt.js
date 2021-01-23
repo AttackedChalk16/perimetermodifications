@@ -8,6 +8,7 @@ const {makeEntity} = require('./makeEntity');
 const config = {
   notAnimated: true,
   isTiled: true,
+  isCollectable: true,
   hp: 10,
 };
 

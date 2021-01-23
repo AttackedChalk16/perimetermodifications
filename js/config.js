@@ -33,9 +33,9 @@ const pheromones = {
     quantity: 350,
     decayAmount: 1,
     color: 'rgb(0, 0, 255)',
-    tileIndex: 1,
+    tileIndex: 0,
 
-    blockingTypes: pheromoneBlockingTypes,
+    blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
   },
   DIRT_DROP: {
     quantity: 300,

@@ -5,7 +5,9 @@ const Button = require('./Components/Button.react');
 const Modal = require('./Components/Modal.react');
 const globalConfig = require('../config');
 const {getDisplayTime} = require('../utils/helpers');
+const InfoCard = require('../ui/components/InfoCard.react');
 const {memo} = React;
+const {Entities} = require('../entities/registry');
 
 function TopBar(props) {
   const {
@@ -18,6 +20,8 @@ function TopBar(props) {
     totalPowerGenerated,
     powerMargin,
     totalPowerNeeded,
+    base,
+    placeType,
   } = props;
 
   if (isExperimental && tickInterval == null) {
@@ -27,7 +31,7 @@ function TopBar(props) {
   const height = 100;
   const topPadding = 8;
   const leftPadding = canvasWidth / 2 - 100;
-  let centralStuff = (
+  let powerStuff = (
     <div>
       <div><b>Power Generated: </b>{totalPowerGenerated}</div>
       <div><b>Power Consumed: </b>{totalPowerNeeded}</div>
@@ -37,8 +41,42 @@ function TopBar(props) {
     </div>
   );
 
+  const placeEntityCards = []
+  for (const entityType in Entities) {
+    const config = Entities[entityType].config;
+    if (!config.isCollectable) continue;
+    placeEntityCards.push(
+      <PlaceEntityCard key={"placeEntityCard_" + entityType}
+        dispatch={dispatch}
+        entityType={entityType}
+        quantity={base.resources[entityType] || 0}
+        isSelected={entityType == placeType}
+      />
+    );
+  }
+  const placeBuildingCards = []
+  for (const entityType in Entities) {
+    const config = Entities[entityType].config;
+    if (config.cost == null) continue;
+    placeBuildingCards.push(
+      <PlaceBuildingCard key={"placeEntityCard_" + entityType}
+        dispatch={dispatch}
+        entityType={entityType}
+        cost={config.cost}
+        isSelected={entityType == placeType}
+      />
+    );
+  }
+  let placingStuff = (
+    <span>
+      <div>{placeEntityCards}</div>
+      <div>{placeBuildingCards}</div>
+    </span>
+  );
+
   return (
     <div
+      id="topBar"
       style={{
         position: 'absolute',
         top: topPadding,
@@ -50,8 +88,9 @@ function TopBar(props) {
     >
       <div
         style={{
-          float: 'left',
+          // float: 'left',
           paddingLeft: 8,
+          display: 'inline-block',
         }}
       >
         <AudioWidget
@@ -88,22 +127,20 @@ function TopBar(props) {
       </div>
       <div
         style={{
-          float: 'right',
-          paddingRight: 8,
+          // left: leftPadding,
+          display: 'inline-block',
+          // position: 'absolute',
         }}
       >
-        <Button
-          label="+"
-          onClick={() => dispatch({type: 'SWAP_MINI_MAP'})}
-        />
+        {powerStuff}
       </div>
       <div
         style={{
-          left: leftPadding,
-          position: 'absolute',
+          display: 'inline-block',
+          verticalAlign: 'top',
         }}
       >
-        {centralStuff}
+        {placingStuff}
       </div>
     </div>
   );
@@ -145,4 +182,61 @@ function dismissModal(dispatch) {
   dispatch({type: 'START_TICK'});
 }
 
-module.exports = memo(TopBar);
+function PlaceEntityCard(props) {
+  const {dispatch, entityType, quantity, isSelected} = props;
+  let selectedStyle = {
+    border: '4px solid red',
+  }
+  if (!isSelected) {
+    selectedStyle = {};
+  }
+  return (
+    <div
+      style={{
+        ...selectedStyle,
+        display: 'inline-block',
+      }}
+      onClick={() => dispatch({type: 'SET_PLACE_TYPE', placeType: entityType})}
+    >
+      <InfoCard>
+        <div><b>{entityType}</b></div>
+        <div>{quantity}</div>
+      </InfoCard>
+    </div>
+  );
+}
+
+function PlaceBuildingCard(props) {
+  const {dispatch, entityType, cost, isSelected} = props;
+  let selectedStyle = {
+    border: '4px solid red',
+  }
+  if (!isSelected) {
+    selectedStyle = {};
+  }
+
+  const costBreakdown = [];
+  for (const type in cost) {
+    costBreakdown.push(<div key={"cost_" + entityType + "_" + type}>
+      {type}: {cost[type]}
+    </div>);
+  }
+
+  return (
+    <div
+      style={{
+        ...selectedStyle,
+        display: 'inline-block',
+      }}
+      onClick={() => dispatch({type: 'SET_PLACE_TYPE', placeType: entityType})}
+    >
+      <InfoCard>
+        <div><b>{entityType}</b></div>
+        <div>Cost:</div>
+        {costBreakdown}
+      </InfoCard>
+    </div>
+  );
+}
+
+module.exports = TopBar;

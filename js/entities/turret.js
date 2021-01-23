@@ -27,6 +27,9 @@ const config = {
     spriteOrder: [0],
   },
 
+  cost: {
+    STEEL: 4,
+  },
 };
 
 const make = (

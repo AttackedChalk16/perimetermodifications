@@ -35,7 +35,7 @@ const collisionsAtSpace = (
     // BUT only when we are considering what neighboring spaces are free to move to,
     // NOT whether a move we've made collides with ourself
     .filter(e => {
-      return entity.segmented && neighbor ? true : e.id != entity.id;
+      return e != null && entity.segmented && neighbor ? true : e.id != entity.id;
     })
     .filter(e => {
       return blockingTypes.includes(e.type);

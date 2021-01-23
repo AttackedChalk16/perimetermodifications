@@ -4,57 +4,105 @@
 -------> ./todos/REFACTOR
 -------> ./todos/INLINE
 
+
+- - - - - - ISSUES - - - - - -
+  - placing resources
+    - have placing dirt mark its neighbors as stale correctly
+    - resources that are available is not updating properly
+  - resource collection
+    - what about collecting entities with lower hp?
+      - if they don't switch to agent, then they block pheromones
+    - removing dirt should also mark neighbors as stale
+  - bullets can shoot through 1-thick walls
+  - indicate whether individual turrets are powered or not
+  - turbines:
+    - spin direction depends on left/right-hand side of turbine
+    - acceleration may work better than speed for e.g. contradictory flows
+    - reducing pherToGive doesn't actually slow down an array of turbines
+
+
 - - - - - - TODO - - - - - -
-  - get a good average fps algorithm going
   - steam
     - if steam cool rate is less than water heat rate then clouds might form
     - set higher threshold for steam before it condenses back to water
-  - issues:
-    - bullets can shoot through 1-thick walls
-    - base for player 2 undefined
-    - infoHUD
-      - mouse.curPos can stop being up to date?
-      - should also say what agents are holding
-    - indicate whether individual turrets are powered or not
-    - turbines:
-      - spin direction depends on left/right-hand side of turbine
-      - acceleration may work better than speed for e.g. contradictory flows
-      - reducing pherToGive doesn't actually slow down an array of turbines
-
-  - pheromones
-    - marked dirt should be a pheromoneSource
-      - by changing quantity from 0
-    - allow pheromoneEmitters to emit dispersing pheromones
-  - minimap rendering functions too
 
 
 - - - - - - BARE BONES - - - - - -
-  - HUDs
-    - HUD for selecting marquee type
-      - marqueeMode property
-        - needs to override handlers from levelEditor
-        - checking for handlers in mouseControlsSystem doesn't work
-        - dropDown UI in HUD
-      - mark for drilling
-      - mark for pickup
-      - mark for putdown
-      - mark for blueprint
-  - drilling agent
-    - attacks marked entities
-    - marked entities should switch to pheromone emitters dynamically?
-      or can they always be pheromone emitters?
-  - engineer agent(s)
-    - marking pickup/putdown
-    - marking blueprints to construction things
-      - and marking building materials?
+  - god mode:
+    - coal should be lit or not
+    - select a building you have the resources for to place it
+      - buildings have costs
+      - costs are checked in thunk
+      - how to manage arguments for each type of building? (and resource?)
+    - UI for seeing what you have collected and selecting it
+    - HUDS
+      - grey-out cards you can't place
+      - have HUD border be green if it is affordable, else red
+      - have HUD border match the infocard border
+      - render the entity in the cards for the HUDS
+  - turrets
+    - basic turret that shoots slow and doesn't require power
+    - laser turret that requires a lot of power
+  - system for creating missiles
+    - allow for launching from either side of the screen
+  - explosives:
+    - pre-render what an explosion under the mouse would look like
+    - render horizontal/vertical explosions differently
 
 
 - - - - - - LATER - - - - - - - -
+  - sand
+    - pheromone with certain viscosity
+    - under heat turns to liquid sand
+      - which cools to glass
+      - which combines with coal into silicon
+  - oil
+    - how to catch it on fire?
+    - can be separated into sulphur?
+  - sulphur
+    - separated from oil somehow?
+    - just mined like sand?
+  - dynamite = coal + sulphur?
   - ice entity
     - getTemp helper function for heat calculations
-  - system for creating missiles
-    - pick launch location that's far away with actual ballistics trajectory
-    - could have multiple "launch platforms" tuned to target the screen
+  - get a good average fps algorithm going
+
+
+- - - - - - - TO THINK ABOUT - - - - - - -
+  - "god" mode instead of agents:
+    - configurable explosives for clearing areas
+    - "base" where resources are accumulated
+    - mouse interactions:
+      - what about pheromones like water/oil/sand?
+      - palette for each type of resource to place in the world
+        - basic resources:
+          - dirt, stone, coal, iron, steel, sand, glass, silicon
+        - structures
+          - explosives, turbines, turrets
+      - collecting resources
+        - only collecting resources that are "connected" to the base?
+        - including dirt that you can just click
+        - could animate it being sucked into the base
+      - fire starter of some sort (lighter, explosives?)
+    - how are resources delivered to the base?
+      - trains?
+        - how do you load stuff onto a train?
+      - if there's a path to the base you can just click it to collect it?
+        - how to visualize this path to make it understandable?
+  - ways to have additional interaction with terrain/environment
+    - water wears away dirt over time
+    - explosives as a base building mechanic
+  - crafting
+    - towers
+    - turbines
+    - how to convey crafting recipes
+      - e.g. tower comes from steel (and?), where does steel come from
+  - agent roles
+    - drill
+    - train
+    - miner/digger/furnace shoveller
+    - engineer
+    - demolitions expert
 
 
 - - - - - - - TO DRAW - - - - - -
@@ -71,38 +119,46 @@
     - drill
     - train engine + cars
 
-- - - - - - - TO THINK ABOUT - - - - - - -
-  - ways to have additional interaction with terrain/environment
-    - water wears away dirt over time
-    - explosives as a base building mechanic
-  - temperature
-    - water -> steam -> water (-> ice)
-    - solid iron -> molten iron
-    - coal + molten iron -> molten steel
-    - fire
-  - crafting
-    - towers
-    - turbines
-    - how to convey crafting recipes
-      - e.g. tower comes from steel (and?), where does steel come from
-  - agent roles
-    - drill
-    - train
-    - miner/digger/furnace shoveller
-    - engineer
-    - demolitions expert
-
-
 
 - - - - - - - BUGS - - - - - - -
+  - when pheromone emitters that are bigger than 1x1 dies, it doesn't clear the
+    whole pheromone footprint
   - resetting the world after firing a bunch of missiles can cause error
     in collisionsAtSpace when the missiles blow up on each other
   - worm
     - worm sprite indexing off-by-one when controlled?
     - worm should be able to double back on itself when stuck
+  - clicking top and bottom bars
+    - allow pass-through wherever possible
+    - then don't have to remove them when paused in editor?
   - molten iron isn't preserving its quantity when condensing
     (when viscosity > 0)
     - it ends up creating an additional entity underneath
+
+
+- - - - - - AGENT-BASED MECHANICS - - - - - -
+  - HUDs
+    - infoHUD
+      - should also say what agents are holding
+    - HUD for selecting marquee type
+      - marqueeMode property
+        - needs to override handlers from levelEditor
+        - checking for handlers in mouseControlsSystem doesn't work
+        - dropDown UI in HUD
+      - mark for drilling
+      - mark for pickup
+      - mark for putdown
+      - mark for blueprint
+      - marked dirt should be a pheromoneSource
+        - by changing quantity from 0
+  - drilling agent
+    - attacks marked entities
+    - marked entities should switch to pheromone emitters dynamically?
+      or can they always be pheromone emitters?
+  - engineer agent(s)
+    - marking pickup/putdown
+    - marking blueprints to construction things
+      - and marking building materials?
 
 
 - - - - - - - REFACTORS - - - - - - -

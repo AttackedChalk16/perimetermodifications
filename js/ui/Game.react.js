@@ -12,11 +12,13 @@ const {initMouseControlsSystem} = require('../systems/mouseControlsSystem');
 const {initGameOverSystem} = require('../systems/gameOverSystem');
 const {initSpriteSheetSystem} = require('../systems/spriteSheetSystem');
 const {initRainSystem} = require('../systems/rainSystem');
+const {initMissileAttackSystem} = require('../systems/missileAttackSystem');
 const {initPheromoneWorkerSystem} = require('../systems/pheromoneWorkerSystem');
 const {
   initKeyboardControlsSystem
 } = require('../systems/keyboardControlsSystem');
 const ExperimentalSidebar = require('./ExperimentalSidebar.react');
+const {handleCollect, handlePlace} = require('../thunks/mouseInteractions');
 const {useEffect, useState, useMemo, Component, memo} = React;
 const {add, subtract} = require('../utils/vectors');
 const {lookupInGrid} = require('../utils/gridHelpers');
@@ -55,11 +57,15 @@ function Game(props: Props): React.Node {
     // initSpriteSheetSystem(store);
     initGameOverSystem(store);
     initPheromoneWorkerSystem(store);
+    initMissileAttackSystem(store);
     // initRainSystem(store);
     // initUpgradeSystem(store);
     registerHotkeys(dispatch);
-    // initMouseControlsSystem(store, configureMouseHandlers(game, dispatch));
-  }, [gameID, tickInterval]);
+  }, [gameID]);
+
+  useEffect(() => {
+    initMouseControlsSystem(store, configureMouseHandlers(state.game));
+  }, [state.game.mouseMode]);
 
 
   // ---------------------------------------------
@@ -110,6 +116,9 @@ function Game(props: Props): React.Node {
         powerMargin={game.bases[game.playerID].powerMargin}
         totalPowerNeeded={game.bases[game.playerID].totalPowerNeeded}
         totalPowerGenerated={game.bases[game.playerID].totalPowerGenerated}
+        base={game.bases[game.playerID]}
+        placeType={game.placeType}
+        tick={game.time}
       />
       <BottomBar dispatch={dispatch}
         game={game}
@@ -146,12 +155,14 @@ function registerHotkeys(dispatch) {
   });
 }
 
-function configureMouseHandlers(game, dispatch) {
+function configureMouseHandlers(game) {
   const handlers = {};
-  switch (game.marqueeMode) {
-    case 'DRILL':
-    case 'PICKUP_OR_PUTDOWN':
-    case 'BLUEPRINT':
+  handlers.mouseMove = (state, dispatch, gridPos) => {
+    if (state.game.mouse.isLeftDown) {
+      handleCollect(state, dispatch, gridPos);
+    } else if (state.game.mouse.isRightDown) {
+      handlePlace(state, dispatch, gridPos);
+    }
   }
   return handlers;
 }

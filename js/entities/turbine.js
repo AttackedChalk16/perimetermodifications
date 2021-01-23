@@ -11,6 +11,9 @@ const config = {
   width: 2,
   height: 2,
   maxThetaSpeed: 0.4,
+  cost: {
+    STEEL: 4,
+  },
 };
 
 const make = (

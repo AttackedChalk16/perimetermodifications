@@ -15,7 +15,7 @@ const initRainSystem = (store) => {
     time = game.time;
 
     // rain for 30 seconds every 4 minutes
-    if (time > 1 && time % (24 * 4 * 60) == 0) {
+    if (time > 1 && time % (60 * 4 * 60) == 0) {
       dispatch({type: 'SET_IS_RAINING', rainTicks: 24 * 15});
     }
 

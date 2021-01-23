@@ -200,6 +200,8 @@ const agentDecideMove = (game: Game, agent: Agent): Game => {
 
 
 const agentDecideTask = (game, agent, nextPos): void => {
+  if (agent.isCollectable) return; // collectables already have their task set
+
   const holdingFood = agent.holding != null && agent.holding.type == 'FOOD';
   const holdingDirt = agent.holding != null && agent.holding.type == 'DIRT';
 
@@ -271,12 +273,13 @@ const agentDecideAction = (game: Game, agent: Agent): void => {
           }
         }
       }
-      // MOVE
-      agentDecideMove(game, agent);
       break;
     }
 
   }
+
+  // MOVE
+  agentDecideMove(game, agent);
 
 };
 

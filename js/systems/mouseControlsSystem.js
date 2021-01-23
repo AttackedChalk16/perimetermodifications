@@ -83,10 +83,15 @@ const onScroll = (store, ev, handlers): void => {
 
 const onMouseDown = (store, ev, handlers): void => {
   let canvas = document.getElementById('canvas');
+  // don't open the normal right-click menu
   if (canvas != null) {
-    // don't open the normal right-click menu
     canvas.addEventListener('contextmenu', (ev) => ev.preventDefault());
   }
+  let topBar = document.getElementById('topBar');
+  if (topBar != null) {
+    topBar.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  }
+
   const mouseData = validateMouse(store, ev);
   if (mouseData == null) return;
   const {gridPos, state, game} = mouseData;
@@ -126,7 +131,7 @@ const onMouseUp = (store, ev, handlers): void => {
       handlers.leftUp(state, dispatch, gridPos);
     }
   }
-  if (ev.button == 0) { // right click
+  if (ev.button == 2) { // right click
     dispatch({type: 'SET_MOUSE_DOWN', isLeft: false, isDown: false});
     if (handlers.rightUp != null) {
       handlers.rightUp(state, dispatch, gridPos);

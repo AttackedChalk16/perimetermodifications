@@ -112,6 +112,7 @@ const doTick = (game: Game): Game => {
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
   updateTowers(game);
+  updateBases(game);
   updateBallistics(game);
   updateFlammables(game);
   updateCoal(game);
@@ -376,7 +377,7 @@ const updateTowers = (game): void => {
 };
 
 //////////////////////////////////////////////////////////////////////////
-// Generators
+// Generators, Bases
 //////////////////////////////////////////////////////////////////////////
 
 const updateGenerators = (game: Game): void => {
@@ -413,6 +414,24 @@ const updateGenerators = (game: Game): void => {
   game.bases[game.playerID].powerMargin =
     game.bases[game.playerID].totalPowerGenerated
     - game.bases[game.playerID].totalPowerNeeded;
+};
+
+const updateBases = (game: Game): void => {
+  for (const id of game.BASE) {
+    const base = game.entities[id];
+    const collisions = collidesWith(game, base, Object.keys(Entities))
+      .filter(e => e.isCollectable);
+    for (const entity of collisions) {
+      if (!isActionTypeQueued(entity, 'DIE')) {
+        queueAction(game, entity, makeAction(game, entity, 'DIE'));
+        const type = entity.collectedAs;
+        if (game.bases[game.playerID].resources[type] == null) {
+          game.bases[game.playerID].resources[type] = 0;
+        }
+        game.bases[game.playerID].resources[type] += 1;
+      }
+    }
+  }
 };
 
 //////////////////////////////////////////////////////////////////////////

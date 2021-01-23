@@ -189,7 +189,12 @@ const getFrame = (game: Game, entity: Entity, index: number): number => {
   }
 
   // compute caste-specific overrides
-  const spriteOrder = config[actionType].spriteOrder;
+  let spriteOrder = 1;
+  if (config[actionType] != null) {
+    spriteOrder = config[actionType].spriteOrder;
+  } else {
+    console.error("no config for action", entity, actionType);
+  }
   const duration = getDuration(game, entity, actionType);
 
   const progress = index / duration;

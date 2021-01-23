@@ -24,6 +24,7 @@ const config = {
     'DOODAD', 'WORM',
     'TURRET', 'TURBINE',
     'IRON', 'STEEL', 'COAL',
+    'BASE',
   ],
 
   DIE: {

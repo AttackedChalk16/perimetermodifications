@@ -8,6 +8,7 @@ const {makeEntity} = require('./makeEntity');
 const config = {
   isTiled: true,
   isFlammable: true,
+  isCollectable: true,
   pheromoneEmitter: true,
   pheromoneType: 'HEAT',
   hp: 1,

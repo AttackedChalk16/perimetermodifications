@@ -33,6 +33,8 @@ const Entities = {
   DYNAMITE: require('./dynamite.js'),
   MISSILE: require('./missile.js'),
   BULLET: require('./bullet.js'),
+
+  BASE: require('./base.js'),
 };
 
 module.exports = {

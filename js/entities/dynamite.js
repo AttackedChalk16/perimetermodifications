@@ -32,12 +32,14 @@ const make = (
   game: Game,
   position: Vector,
   playerID,
+  explosionRadiusType,
 ): Dynamite => {
   return {
     ...makeEntity('DYNAMITE', position, config.width, config.height),
     ...config,
     playerID,
     actions: [],
+    explosionRadiusType,
   };
 };
 

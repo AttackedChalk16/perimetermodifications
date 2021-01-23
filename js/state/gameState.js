@@ -27,6 +27,7 @@ const initPlayer = (
       type,
     },
     base: {
+      resources: {},
       taskNeed: {},
     },
   }
@@ -56,7 +57,7 @@ const initBaseState = (
     timeSinceLastTick: 0,
 
     pheromoneDisplay: {
-      COLONY: true,
+      COLONY: false,
       ALERT: false,
       DIRT_DROP: false,
       MARKED_DIRT_PHER: false,
@@ -100,7 +101,8 @@ const initBaseState = (
     pheromoneWorker: new Worker('bin/pheromoneWorker.js'),
 
     keepMarquee: false,
-    marqueeMode: 'DRILL',
+    mouseMode: 'COLLECT',
+    placeType: null,
     mouse: {
       isLeftDown: false,
       isRightDown: false,
@@ -154,9 +156,9 @@ const initBaseState = (
   game.bases[1] = player.base;
 
   for (let i = 2; i < numPlayers; i++) {
-    const {player, colony} = initPlayer('COMPUTER', i, 'Enemy');
+    const {player, base} = initPlayer('COMPUTER', i, 'Enemy');
     game.players[player.id] = player;
-    game.bases[player.id] = colony;
+    game.bases[player.id] = base;
   }
 
   return game;

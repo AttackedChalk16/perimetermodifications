@@ -211,10 +211,14 @@ const tileDict = {
 };
 
 const getTileSprite = (game: Game, entity: Entity): Object => {
+  let entityType = entity.type;
+  if (entity.collectedAs != null) {
+    entityType = entity.collectedAs;
+  }
   let width = 16;
   let height = 16;
-  let spriteType = entity.type == 'STONE' ? entity.subType : entity.type;
-  spriteType = spriteType == null ? entity.type : spriteType;
+  let spriteType = entityType == 'STONE' ? entity.subType : entityType;
+  spriteType = spriteType == null ? entityType : spriteType;
   let img = game.sprites[spriteType];
   const obj = {
     img,
@@ -234,7 +238,7 @@ const getTileSprite = (game: Game, entity: Entity): Object => {
       obj.width = entity.dictWidth;
       obj.height = entity.dictHeight;
     } else {
-      if (Math.random() < 0.7 || entity.type == 'FOOD') {
+      if (Math.random() < 0.7 || entityType == 'FOOD') {
         obj.x = width;
         obj.y = height;
       } else {
