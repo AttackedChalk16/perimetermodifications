@@ -57,15 +57,17 @@ const initBaseState = (
     timeSinceLastTick: 0,
 
     pheromoneDisplay: {
-      COLONY: false,
+      COLONY: true,
       ALERT: false,
       DIRT_DROP: false,
       MARKED_DIRT_PHER: false,
       WATER: true,
       STEAM: true,
-      HEAT: false,
+      HEAT: true,
       MOLTEN_IRON: true,
       MOLTEN_STEEL: true,
+      SAND: true,
+      MOLTEN_SAND: true,
     },
     maxMinimap: false,
 
@@ -93,6 +95,8 @@ const initBaseState = (
     // entities treated specially
     focusedEntity: null,
     controlledEntity: null,
+
+    pauseMissiles: false,
 
     staleTiles: [],
     floodFillSources: [],

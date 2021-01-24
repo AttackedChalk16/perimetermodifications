@@ -29,10 +29,12 @@ const getQuantityForStalePos = (
   game: game, position: Vector,
   pheromoneType: PheromoneType, playerID: PlayerID,
 ): {position: Vector, quantity: number} => {
-  for (const entityID in game.PHEROMONE_EMITTER) {
-    const entity = game.entities[entityID];
-    if (entity.pheromoneType != pheromoneType) continue;
-    if (equals(entity.position, position)) {
+  const relevantEmitters = lookupInGrid(game.grid, position)
+    .map(id => game.entities[id])
+    .filter(e => e.pheromoneType == pheromoneType);
+  if (relevantEmitters.length > 0) {
+    const entity = relevantEmitters[0];
+    if (entity.quantity > 0) {
       return {
         position,
         quantity: entity.quantity,

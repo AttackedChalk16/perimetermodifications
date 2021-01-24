@@ -147,7 +147,9 @@ const startFloodFill = () => {
         game, source.position, source.pheromoneType, source.playerID,
       ).quantity;
     }
-    const positions = floodFillPheromone(game, source.pheromoneType, source.playerID, [source], {});
+    const positions = floodFillPheromone(
+      game, source.pheromoneType, source.playerID, [source], {},
+    );
     if (Object.keys(positions).length > 0) {
       result.push(positions);
     }
@@ -450,7 +452,11 @@ const updateDispersingPheromones = (game) => {
             .filter(e => config.blockingTypes.includes(e.type))
             .length > 0;
           if (!botLeftOccupied && !botRightOccupied) {
-            positionBelow = oneOf([botLeft, botRight]);
+            const leftPher = getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
+            const rightPher = getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
+            positionBelow = leftPher > rightPher ? botRight : botLeft;
+            positionBelow = leftPher == rightPher ? oneOf([botLeft, botRight]) : positionBelow;
+            // positionBelow = oneOf([botLeft, botRight]);
             occupied = false;
             diagonal = true;
           } else if (!botLeftOccupied) {
@@ -467,7 +473,7 @@ const updateDispersingPheromones = (game) => {
             getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
           pherBotRight =
             getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
-          if (pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1) {
+          if (pherBotLeft > config.quantity - 1 &&  pherBotRight > config.quantity - 1) {
             occupied = true;
           }
         }

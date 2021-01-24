@@ -46,13 +46,13 @@ function LevelEditor(props: Props): React.Node {
     gridWidth: game.gridHeight,
     gridHeight: game.gridWidth,
     playerID: 0,
-    paletteMode: 'CREATE ENTITIES',
+    paletteMode: 'MARQUEE',
 
     // entity creation mode
     deleteMode: false,
     entityType: 'MISSILE',
     subdividing: false,
-    pheromoneType: 'COLONY',
+    pheromoneType: 'HEAT',
     background: 'FLOOR_TILE',
     numSegments: 8,
     doodad: 'QUESTION',
@@ -347,10 +347,10 @@ function LevelEditor(props: Props): React.Node {
       </div>
       <div>
         <Checkbox
-          label="Show Food Marked for Pickup"
-          checked={!!state.game.showMarkedFood}
-          onChange={shouldShow => dispatch({
-            type: 'SHOW_DEBUG', shouldShow, showType: 'showMarkedFood',
+          label="Pause Missiles"
+          checked={!!state.game.pauseMissiles}
+          onChange={pauseMissiles => dispatch({
+            type: 'PAUSE_MISSILES', pauseMissiles,
           })}
         />
       </div>
@@ -672,6 +672,8 @@ function createEntities(game, dispatch, editor, rect): void {
     case 'IRON':
     case 'STEEL':
     case 'COAL':
+    case 'GLASS':
+    case 'SILICON':
       if (editor.subdividing) {
         args = [rect.width, rect.height];
       } else {
@@ -707,6 +709,9 @@ function createEntities(game, dispatch, editor, rect): void {
       args = [editor.playerID, editor.theta, editor.velocity];
       break;
     }
+    case 'BASIC_TURRET':
+      args = [editor.playerID];
+      break;
     case 'TURRET': {
       args = [editor.playerID, editor.projectileType, editor.fireRate];
       break;

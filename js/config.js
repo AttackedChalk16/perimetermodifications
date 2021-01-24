@@ -6,8 +6,8 @@ const config = {
   canvasWidth: 1200,
   canvasHeight: 1200,
 
-  viewWidth: 18,
-  viewHeight: 32,
+  viewWidth: 52,
+  viewHeight: 66,
   useFullScreen: true,
   cellWidth: 33,
   cellHeight: 25,
@@ -25,7 +25,7 @@ const nonMoltenPheromoneBlockingTypes = [
 ];
 const pheromoneBlockingTypes = [
   ...nonMoltenPheromoneBlockingTypes,
-  'STEEL', 'IRON',
+  'STEEL', 'IRON', 'SILICON', 'GLASS',
 ];
 
 const pheromones = {
@@ -36,14 +36,6 @@ const pheromones = {
     tileIndex: 0,
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
-  },
-  DIRT_DROP: {
-    quantity: 300,
-    decayAmount: 1,
-    color: 'rgb(210, 105, 30)',
-    tileIndex: 5,
-
-    blockingTypes: pheromoneBlockingTypes,
   },
   ALERT: {
     quantity: 60,
@@ -103,6 +95,46 @@ const pheromones = {
       horizontalLeftOver: 0.66,
     },
     isRising: true,
+  },
+  SAND: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 3,
+
+    blockingTypes: [...pheromoneBlockingTypes],
+    isDispersing: true,
+    heatPoint: 100,
+    heatsTo: 'MOLTEN_SAND',
+    heatRate: 1,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 1,
+    },
+    isFluid: true,
+  },
+  MOLTEN_SAND: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 2,
+
+    blockingTypes: [...pheromoneBlockingTypes],
+    isDispersing: true,
+    coolPoint: 5, // heat level to condense at
+    coolsTo: 'GLASS',
+    coolsToEntity: true,
+    coolRate: 1, // amount of yourself that condenses per step
+    coolConcentration: 120, // amount of yourself needed before condensation starts
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 0.8,
+    },
+    isFluid: true,
   },
   MOLTEN_IRON: {
     quantity: 120,

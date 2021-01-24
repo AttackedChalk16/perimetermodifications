@@ -6,65 +6,71 @@
 
 
 - - - - - - ISSUES - - - - - -
+  - tower not unpowering even though there's no power being produced
+  - coal:
+    - sometimes placing iron near hot coal leaves molten iron behind that doesn't
+      follow physics
+    - sometimes placing iron above hot coal produces iron and steel
+      - this is because it's firing again
+      - can I make it so it only fires one time?
+    - iron + coal can be iron-negative (ie produces less steel than iron that went in
+    - coal placed directly on molten iron deletes both and leaves heat
+  - sand
+    - appears to fade away to nothing upon melting to molten_sand
+    - molten sand cools to glass in wrong locations?
+    - collecting glass breaks pheromones
+  - don't render marquee when placing pheromone
   - placing resources
     - have placing dirt mark its neighbors as stale correctly
-    - resources that are available is not updating properly
   - resource collection
     - what about collecting entities with lower hp?
       - if they don't switch to agent, then they block pheromones
+      - same problem with coal and its fuel
+      - maybe everything should just accumulate/concentrate w/hp
     - removing dirt should also mark neighbors as stale
-  - bullets can shoot through 1-thick walls
-  - indicate whether individual turrets are powered or not
+  - visually indicate whether individual turrets are powered or not
   - turbines:
     - spin direction depends on left/right-hand side of turbine
     - acceleration may work better than speed for e.g. contradictory flows
     - reducing pherToGive doesn't actually slow down an array of turbines
+  - missiles coming from the right will be really hard to shoot down
 
 
 - - - - - - TODO - - - - - -
+  - add coolConcentration to HUDs
+  - show on position info card whether location is placeable/collectable
+  - laser turret that requires a lot of power
+  - make a level that combines all the resources
+  - shouldn't be able to place resources/buildings on background
   - steam
     - if steam cool rate is less than water heat rate then clouds might form
     - set higher threshold for steam before it condenses back to water
 
 
 - - - - - - BARE BONES - - - - - -
-  - god mode:
-    - coal should be lit or not
-    - select a building you have the resources for to place it
-      - buildings have costs
-      - costs are checked in thunk
-      - how to manage arguments for each type of building? (and resource?)
-    - UI for seeing what you have collected and selecting it
-    - HUDS
-      - grey-out cards you can't place
-      - have HUD border be green if it is affordable, else red
-      - have HUD border match the infocard border
-      - render the entity in the cards for the HUDS
-  - turrets
-    - basic turret that shoots slow and doesn't require power
-    - laser turret that requires a lot of power
-  - system for creating missiles
-    - allow for launching from either side of the screen
-  - explosives:
-    - pre-render what an explosion under the mouse would look like
-    - render horizontal/vertical explosions differently
+  - oil
+    - separate pheromone for oil on fire?
+      - how is heat produced from this?
+    - can be separated into sulphur?
 
 
 - - - - - - LATER - - - - - - - -
-  - sand
-    - pheromone with certain viscosity
-    - under heat turns to liquid sand
-      - which cools to glass
-      - which combines with coal into silicon
-  - oil
-    - how to catch it on fire?
-    - can be separated into sulphur?
+  - HUDS
+    - render the entity in the cards for the HUDS
+  - turrets
+    - missile turret that requires additional resources to fire
+  - explosives:
+    - pre-render what an explosion under the mouse would look like
+    - render horizontal/vertical explosions differently
   - sulphur
     - separated from oil somehow?
     - just mined like sand?
+  - uranium
+    - constantly produces heat
   - dynamite = coal + sulphur?
   - ice entity
     - getTemp helper function for heat calculations
+    - how to allow melting AND different water freezing on?
   - get a good average fps algorithm going
 
 
@@ -121,6 +127,9 @@
 
 
 - - - - - - - BUGS - - - - - - -
+  - after passing iron over hot coal breaks pheromones everywhere
+    - fixed for now by just not allowing this
+  - bullets can shoot through 1-thick walls
   - when pheromone emitters that are bigger than 1x1 dies, it doesn't clear the
     whole pheromone footprint
   - resetting the world after firing a bunch of missiles can cause error

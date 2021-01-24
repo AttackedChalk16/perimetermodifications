@@ -6,11 +6,9 @@ const {renderAgent} = require('../render/renderAgent');
 
 const config = {
   isTower: true,
-  isPowerConsumer: true,
-  powerConsumed: 1,
-  hp: 100,
-  width: 2,
-  height: 2,
+  hp: 30,
+  width: 1,
+  height: 1,
   damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
@@ -23,13 +21,14 @@ const config = {
     spriteOrder: [0],
   },
   SHOOT: {
-    duration: 150,
+    duration: 1000,
     spriteOrder: [0],
   },
 
   cost: {
-    STEEL: 16,
-  },
+    IRON: 4,
+  }
+
 };
 
 const make = (
@@ -49,13 +48,11 @@ const make = (
     }
   }
   return {
-    ...makeEntity('TURRET', position, config.width, config.height),
+    ...makeEntity('BASIC_TURRET', position, config.width, config.height),
     ...configCopy,
     playerID,
 
-    // power:
-    isPowered: false,
-    name: name != null ? name : 'Fast Turret',
+    name: name != null ? name : 'Basic Turret',
 
     // angle of the turret
     theta: theta != null ? theta : config.minTheta,
@@ -83,7 +80,7 @@ const render = (ctx, game, turret): void => {
   // barrel of turret
   ctx.save();
   ctx.fillStyle = "black";
-  const turretWidth = 2.5;
+  const turretWidth = 1.5;
   const turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
@@ -101,7 +98,31 @@ const render = (ctx, game, turret): void => {
   ctx.restore();
 };
 
+const turretConfigs = {
+  basic: {
+    name: 'Basic Turret',
+    fireRate: 1000,
+    projectileType: 'BULLET',
+    cost: {
+      IRON: 4,
+    },
+    isPowerConsumer: false,
+    powerConsumed: 0,
+  },
+
+  fast: {
+    name: 'Fast Turret',
+    fireRate: 150,
+    projectileType: 'BULLET',
+    cost: {
+      STEEL: 4,
+    },
+    isPowerConsumer: true,
+    powerConsumed: 1,
+  },
+}
+
 
 module.exports = {
-  make, render, config,
+  make, render, config, turretConfigs,
 };

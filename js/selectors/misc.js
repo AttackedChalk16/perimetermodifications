@@ -155,6 +155,16 @@ const getControlledEntityInteraction = (game: Game, agent: Agent): EntityAction 
   return makeAction(game, agent, 'PICKUP', {pickup: null, position: positionsInFront[0]});
 };
 
+const canAffordBuilding = (base: Base, cost: Cost): Boolean => {
+  const resources = base.resources;
+  for (const resource in cost) {
+    if (resources[resource] == null || resources[resource] < cost[resource]) {
+      return false;
+    }
+  }
+  return true;
+};
+
 
 module.exports = {
   onScreen,
@@ -163,4 +173,5 @@ module.exports = {
   isFacing,
   canDoMove,
   getControlledEntityInteraction,
+  canAffordBuilding,
 };

@@ -116,7 +116,11 @@ const agentSwitchTask = (game: Game, agent: Agent, task: Task): Game => {
 
 const agentDecideMove = (game: Game, agent: Agent): Game => {
   const config = agent;
-  const blockers = config.blockingTypes;
+  let blockers = config.blockingTypes;
+  if (!blockers) {
+    console.error("no blockers", agent);
+    blockers = [...Entities.AGENT.config.blockingTypes];
+  }
 
   let freeNeighbors = getFreeNeighborPositions(game, agent, blockers)
     .filter(pos => canDoMove(game, agent, pos).result);
@@ -244,42 +248,10 @@ const agentDecideAction = (game: Game, agent: Agent): void => {
   switch (agent.type) {
     case 'AGENT':
     case 'WORM':  {
-      // PUTDOWN
-      const holdingDirt = agent.holding != null && agent.holding.type == 'DIRT';
-      if (agent.holding != null) {
-        const possiblePutdownPositions = getNeighborPositions(game, agent, true /*external*/);
-        for (const putdownPos of possiblePutdownPositions) {
-          const putdownLoc = {position: putdownPos, playerID: agent.playerID};
-          const occupied = lookupInGrid(game.grid, putdownPos)
-            .map(id => game.entities[id])
-            .filter(e => !e.notBlockingPutdown)
-            .length > 0;
-          const nextTheta = vectorTheta(subtract(agent.position, putdownPos));
-
-          // if holding dirt and near putdown token, put it down
-          if (
-            (holdingDirt || agent.task == 'MOVE_DIRT')
-            && (
-              getPheromoneAtPosition(game, putdownPos, 'DIRT_DROP', agent.playerID) ==
-                globalConfig.pheromones.DIRT_DROP.quantity
-            )
-            && !occupied
-          ) {
-            if (!isFacing(agent, putdownPos)) {
-              queueAction(game, agent, makeAction(game, agent, 'TURN', nextTheta));
-            }
-            queueAction(game, agent, makeAction(game, agent, 'PUTDOWN'));
-            return;
-          }
-        }
-      }
-      break;
+      // MOVE
+      agentDecideMove(game, agent);
     }
-
   }
-
-  // MOVE
-  agentDecideMove(game, agent);
 
 };
 

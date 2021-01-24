@@ -5,9 +5,10 @@ const {Entities} = require('../entities/registry');
 const {getPheromoneAtPosition} = require('../selectors/pheromones');
 const {getNeighborPositions} = require('../selectors/neighbors');
 const {isDiagonalMove} = require('../utils/helpers');
+const {canAffordBuilding} = require('../selectors/misc');
 
 const handleCollect = (state, dispatch, gridPos) => {
-  if (!state.game.mouse.isLeftDown) return;
+  // if (!state.game.mouse.isLeftDown) return;
 
   const game = state.game;
 
@@ -27,7 +28,7 @@ const handleCollect = (state, dispatch, gridPos) => {
 }
 
 const handlePlace = (state, dispatch, gridPos) => {
-  if (!state.game.mouse.isRightDown) return;
+  // if (!state.game.mouse.isRightDown) return;
 
   const game = state.game;
 
@@ -36,14 +37,24 @@ const handlePlace = (state, dispatch, gridPos) => {
     return;
   }
 
-  const entityType = game.placeType;
+  let entityType = game.placeType;
+  if (game.placeType == 'HOT COAL') {
+    entityType = 'COAL';
+  }
   // can't place if there's no entity type selected
   if (entityType == null) return;
+
+  const config = Entities[entityType].config;
 
   const base = game.bases[game.playerID];
 
   // can't place a resource you don't have
-  if (base.resources[entityType] <= 0) return;
+  if (config.isCollectable && base.resources[entityType] <= 0) return;
+
+  // can't place buildings you can't afford
+  if (config.cost && !canAffordBuilding(base, config.cost)) {
+    return;
+  }
 
   // can't place on top of other resources
   const occupied = lookupInGrid(game.grid, gridPos)
@@ -52,9 +63,22 @@ const handlePlace = (state, dispatch, gridPos) => {
     .length > 0;
   if (occupied) return;
 
-  const entity = Entities[entityType].make(game, gridPos);
-  dispatch({type: 'CREATE_ENTITY', entity});
-  base.resources[entityType] -= 1;
+  // make the entity and update base resources for its cost
+  let entity = null;
+  if (config.isCollectable) {
+    dispatch({type: 'SUBTRACT_BASE_RESOURCES', subtractResources: {[entityType]: 1}});
+    entity = Entities[entityType].make(game, gridPos);
+  } else if (config.cost) {
+    dispatch({type: 'SUBTRACT_BASE_RESOURCES', subtractResources: {...config.cost}});
+    entity = Entities[entityType].make(game, gridPos, game.playerID);
+  }
+
+  if (entity != null) {
+    if (game.placeType == 'HOT COAL') {
+      entity.onFire = true;
+    }
+    dispatch({type: 'CREATE_ENTITY', entity});
+  }
 }
 
 

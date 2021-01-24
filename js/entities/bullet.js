@@ -16,8 +16,8 @@ const config = {
   isBallistic: true,
   damage: 10,
   hp: 1,
-  width: 1,
-  height: 2,
+  width: 2,
+  height: 1,
   velocity: 500,
   blockingTypes: [
     'DIRT', 'STONE', 'FOOD', 'AGENT',

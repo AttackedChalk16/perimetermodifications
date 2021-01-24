@@ -9,6 +9,11 @@ const config = {
   height: 3,
   pheromoneEmitter: true,
   pheromoneType: 'COLONY',
+
+  // need this for panning to focus on it
+  MOVE: {
+    duration: 10,
+  },
 };
 
 const make = (
@@ -16,12 +21,13 @@ const make = (
   position: Vector,
   playerID,
   quantity: ?number,
-): Token => {
+): Base => {
   return {
     ...makeEntity('BASE', position, config.width, config.height),
     ...config,
     playerID,
     quantity: quantity || globalConfig.pheromones[config.pheromoneType].quantity,
+    actions: [],
   };
 };
 

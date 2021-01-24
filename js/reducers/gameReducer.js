@@ -288,6 +288,13 @@ const gameReducer = (game: Game, action: Action): Game => {
       game.viewImage.allStale = true;
       return game;
     }
+    case 'SUBTRACT_BASE_RESOURCES': {
+      const {subtractResources} = action;
+      for (const resource in subtractResources) {
+        game.bases[game.playerID].resources[resource] -= subtractResources[resource];
+      }
+      return game;
+    }
     case 'SET_MOUSE_MODE': {
       const {mouseMode} = action;
       game.mouseMode = mouseMode;
@@ -296,6 +303,11 @@ const gameReducer = (game: Game, action: Action): Game => {
     case 'SET_KEEP_MARQUEE': {
       const {keepMarquee} = action;
       game.keepMarquee = keepMarquee;
+      return game;
+    }
+    case 'PAUSE_MISSILES': {
+      const {pauseMissiles} = action;
+      game.pauseMissiles = pauseMissiles;
       return game;
     }
     case 'SET_GAME_OVER': {

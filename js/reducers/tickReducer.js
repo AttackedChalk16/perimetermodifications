@@ -99,6 +99,13 @@ const doTick = (game: Game): Game => {
       PHEROMONE_EMITTER: game.PHEROMONE_EMITTER || {},
       TURBINE: game.TURBINE || [],
     });
+    const base = game.entities[game.BASE[0]];
+    if (base) {
+      game.focusedEntity = base;
+    }
+  }
+  if (game.time > 60) {
+    game.focusedEntity = null;
   }
 
   // game/frame timing
@@ -260,6 +267,7 @@ const updateFlammables = (game): void => {
     const flammable = game.entities[id];
     // if on fire, burn
     if (flammable.onFire) {
+      flammable.isCollectable = false;
       // check if you just caught on fire, and set quantity
       if (flammable.quantity == 0) {
         changePheromoneEmitterQuantity(game, flammable, flammable.heatQuantity);
@@ -273,6 +281,10 @@ const updateFlammables = (game): void => {
       const temp = getPheromoneAtPosition(game, flammable.position, 'HEAT', 0);
       if (temp >= flammable.combustionTemp) {
         flammable.onFire = true;
+        // don't let flaming things be collectable unless they're already going
+        if (flammable.type != 'AGENT') {
+          flammable.isCollectable = false;
+        }
       }
     }
   }
@@ -281,13 +293,23 @@ const updateFlammables = (game): void => {
 const updateCoal = (game): void => {
   for (const id of game.COAL) {
     const coal = game.entities[id];
+
+    // coal + iron = steel
     const moltenIron = getPheromoneAtPosition(game, coal.position, 'MOLTEN_IRON', 0);
     if (moltenIron > 0) {
       const position = {...coal.position};
       removeEntity(game, coal);
-      // setPheromone(game, position, 'MOLTEN_STEEL', moltenIron * 2, 0);
       fillPheromone(game, position, 'MOLTEN_STEEL', game.gaiaID, moltenIron * 2);
       setPheromone(game, position, 'MOLTEN_IRON', 0, game.gaiaID);
+    }
+
+    // coal + molten sand = silicon
+    const moltenSand = getPheromoneAtPosition(game, coal.position, 'MOLTEN_SAND', 0);
+    if (moltenSand > 0) {
+      const position = {...coal.position};
+      removeEntity(game, coal);
+      setPheromone(game, position, 'MOLTEN_SAND', 0, game.gaiaID);
+      addEntity(game, Entities.SILICON.make(game, coal.position));
     }
   }
 };
@@ -295,8 +317,16 @@ const updateCoal = (game): void => {
 const updateMeltables = (game): void => {
   for (const id in game.MELTABLE) {
     const meltable = game.entities[id];
+
     const temp = getPheromoneAtPosition(game, meltable.position, 'HEAT', 0);
     if (temp >= meltable.meltTemp) {
+      // if you're an agent then you're en route to being collected
+      if (meltable.type == 'AGENT') {
+        continue;
+        // meltable.isAgent = false;
+        // meltable.type = meltable.collectedAs;
+        // meltable.playerID = 0;
+      }
       const config = Entities[meltable.type].config;
       changePheromoneEmitterQuantity(
         game, meltable, meltable.heatQuantity * (meltable.hp / config.hp),
@@ -316,7 +346,7 @@ const updateTowers = (game): void => {
     const tower = game.entities[id];
     const config = Entities[tower.type].config;
     // don't do anything if unpowered
-    if (!tower.isPowered) continue;
+    if (tower.isPowerConsumer && !tower.isPowered) continue;
 
     // choose target if possible
     if (tower.targetID == null) {

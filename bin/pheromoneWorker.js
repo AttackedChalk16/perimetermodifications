@@ -9,8 +9,8 @@ var config = {
   canvasWidth: 1200,
   canvasHeight: 1200,
 
-  viewWidth: 18,
-  viewHeight: 32,
+  viewWidth: 52,
+  viewHeight: 66,
   useFullScreen: true,
   cellWidth: 33,
   cellHeight: 25,
@@ -22,7 +22,7 @@ var config = {
 };
 
 var nonMoltenPheromoneBlockingTypes = ['DIRT', 'STONE', 'DOODAD', 'TURRET'];
-var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['STEEL', 'IRON']);
+var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['STEEL', 'IRON', 'SILICON', 'GLASS']);
 
 var pheromones = {
   COLONY: {
@@ -32,14 +32,6 @@ var pheromones = {
     tileIndex: 0,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL'])
-  },
-  DIRT_DROP: {
-    quantity: 300,
-    decayAmount: 1,
-    color: 'rgb(210, 105, 30)',
-    tileIndex: 5,
-
-    blockingTypes: pheromoneBlockingTypes
   },
   ALERT: {
     quantity: 60,
@@ -99,6 +91,46 @@ var pheromones = {
       horizontalLeftOver: 0.66
     },
     isRising: true
+  },
+  SAND: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 3,
+
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    isDispersing: true,
+    heatPoint: 100,
+    heatsTo: 'MOLTEN_SAND',
+    heatRate: 1,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 1
+    },
+    isFluid: true
+  },
+  MOLTEN_SAND: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 2,
+
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    isDispersing: true,
+    coolPoint: 5, // heat level to condense at
+    coolsTo: 'GLASS',
+    coolsToEntity: true,
+    coolRate: 1, // amount of yourself that condenses per step
+    coolConcentration: 120, // amount of yourself needed before condensation starts
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 0.8
+    },
+    isFluid: true
   },
   MOLTEN_IRON: {
     quantity: 120,
@@ -298,7 +330,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":22,"../selectors/sprites":29,"../utils/vectors":36,"./makeEntity":12}],3:[function(require,module,exports){
+},{"../render/renderAgent":25,"../selectors/sprites":32,"../utils/vectors":39,"./makeEntity":14}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -333,7 +365,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],4:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -348,13 +380,19 @@ var config = {
   width: 3,
   height: 3,
   pheromoneEmitter: true,
-  pheromoneType: 'COLONY'
+  pheromoneType: 'COLONY',
+
+  // need this for panning to focus on it
+  MOVE: {
+    duration: 10
+  }
 };
 
 var make = function make(game, position, playerID, quantity) {
   return _extends({}, makeEntity('BASE', position, config.width, config.height), config, {
     playerID: playerID,
-    quantity: quantity || globalConfig.pheromones[config.pheromoneType].quantity
+    quantity: quantity || globalConfig.pheromones[config.pheromoneType].quantity,
+    actions: []
   });
 };
 
@@ -373,7 +411,135 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":12}],5:[function(require,module,exports){
+},{"../config":1,"./makeEntity":14}],5:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity.js'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../utils/vectors'),
+    add = _require2.add,
+    subtract = _require2.subtract,
+    equals = _require2.equals,
+    makeVector = _require2.makeVector,
+    vectorTheta = _require2.vectorTheta;
+
+var _require3 = require('../render/renderAgent'),
+    renderAgent = _require3.renderAgent;
+
+var config = {
+  isTower: true,
+  hp: 30,
+  width: 1,
+  height: 1,
+  damage: 10,
+  thetaAccel: 0.00005,
+  minTheta: 0.2,
+  maxTheta: Math.PI - 0.2,
+  maxThetaSpeed: 0.04,
+
+  // action overrides
+  DIE: {
+    duration: 2,
+    spriteOrder: [0]
+  },
+  SHOOT: {
+    duration: 1000,
+    spriteOrder: [0]
+  },
+
+  cost: {
+    IRON: 4
+  }
+
+};
+
+var make = function make(game, position, playerID, projectileType, fireRate, name, theta) {
+  var configCopy = _extends({}, config);
+  if (fireRate != null) {
+    configCopy.SHOOT = _extends({}, configCopy.SHOOT, {
+      duration: fireRate
+    });
+  }
+  return _extends({}, makeEntity('BASIC_TURRET', position, config.width, config.height), configCopy, {
+    playerID: playerID,
+
+    name: name != null ? name : 'Basic Turret',
+
+    // angle of the turret
+    theta: theta != null ? theta : config.minTheta,
+    thetaSpeed: 0,
+    thetaAccel: 0,
+
+    // what the tower wants to aim at
+    targetID: null,
+
+    projectileType: projectileType != null ? projectileType : 'BULLET',
+
+    actions: []
+
+  });
+};
+
+var render = function render(ctx, game, turret) {
+  var position = turret.position,
+      width = turret.width,
+      height = turret.height,
+      theta = turret.theta;
+
+  ctx.save();
+  ctx.translate(position.x, position.y);
+
+  // barrel of turret
+  ctx.save();
+  ctx.fillStyle = "black";
+  var turretWidth = 1.5;
+  var turretHeight = 0.3;
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(theta);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.restore();
+
+  // base of turret
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
+  ctx.restore();
+};
+
+var turretConfigs = {
+  basic: {
+    name: 'Basic Turret',
+    fireRate: 1000,
+    projectileType: 'BULLET',
+    cost: {
+      IRON: 4
+    },
+    isPowerConsumer: false,
+    powerConsumed: 0
+  },
+
+  fast: {
+    name: 'Fast Turret',
+    fireRate: 150,
+    projectileType: 'BULLET',
+    cost: {
+      STEEL: 4
+    },
+    isPowerConsumer: true,
+    powerConsumed: 1
+  }
+};
+
+module.exports = {
+  make: make, render: render, config: config, turretConfigs: turretConfigs
+};
+},{"../render/renderAgent":25,"../utils/vectors":39,"./makeEntity.js":14}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -402,8 +568,8 @@ var config = {
   isBallistic: true,
   damage: 10,
   hp: 1,
-  width: 1,
-  height: 2,
+  width: 2,
+  height: 1,
   velocity: 500,
   blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
 
@@ -456,7 +622,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":29,"../simulation/actionQueue":30,"../utils/vectors":36,"./makeEntity":12}],6:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":14}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -473,7 +639,7 @@ var config = {
   isCollectable: true,
   pheromoneEmitter: true,
   pheromoneType: 'HEAT',
-  hp: 1,
+  hp: 10,
   combustionTemp: 100, // temperature at which you catch on fire
   fuel: 3 * 60 * 1000, // ms of burn time
   heatQuantity: 120 // amount of heat produced when on fire
@@ -509,7 +675,7 @@ var render = function render(ctx, game, coal) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],7:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -549,7 +715,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],8:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],9:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -580,7 +746,7 @@ var render = function render(ctx, game, doodad) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"./makeEntity":12}],9:[function(require,module,exports){
+},{"./makeEntity":14}],10:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -653,7 +819,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":29,"../simulation/actionQueue":30,"./makeEntity":12}],10:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"./makeEntity":14}],11:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -694,7 +860,55 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],11:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],12:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isMeltable: true,
+  isCollectable: true,
+  pheromoneEmitter: true,
+  pheromoneType: 'MOLTEN_SAND',
+  hp: 10,
+  meltTemp: 100, // temperature at which you catch on fire
+  heatQuantity: 120 // amount of glass produced when melted
+};
+
+var make = function make(game, position, width, height, hp) {
+  return _extends({}, makeEntity('GLASS', position, width || 1, height || 1), config, {
+    dictIndexStr: '',
+    hp: hp || config.hp,
+    playerID: 0, // gaia
+    quantity: 0 // amount of pheromone emitted
+  });
+};
+
+var render = function render(ctx, game, glass) {
+  // const obj = getTileSprite(game, glass);
+  // if (obj == null || obj.img == null) return;
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   glass.position.x, glass.position.y, glass.width, glass.height,
+  // );
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = "lightgray";
+  ctx.fillRect(glass.position.x, glass.position.y, glass.width, glass.height);
+  ctx.globalAlpha = 1;
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":32,"./makeEntity":14}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -741,7 +955,7 @@ var render = function render(ctx, game, iron) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],12:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],14:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -760,7 +974,7 @@ var makeEntity = function makeEntity(type, position, width, height) {
 module.exports = {
 	makeEntity: makeEntity
 };
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -854,7 +1068,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":29,"../simulation/actionQueue":30,"../utils/vectors":36,"./makeEntity":12}],14:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":14}],16:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -873,16 +1087,20 @@ var Entities = {
   BACKGROUND: require('./background.js'),
   DOODAD: require('./doodad.js'),
 
-  STONE: require('./stone.js'),
   DIRT: require('./dirt.js'),
+  STONE: require('./stone.js'),
+  COAL: require('./coal.js'),
   IRON: require('./iron.js'),
   STEEL: require('./steel.js'),
+  GLASS: require('./glass.js'),
+  SILICON: require('./silicon.js'),
 
-  COAL: require('./coal.js'),
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
+
+  BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
   TURRET: require('./turret.js'),
 
@@ -896,7 +1114,54 @@ var Entities = {
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./bullet.js":5,"./coal.js":6,"./dirt.js":7,"./doodad.js":8,"./dynamite.js":9,"./food.js":10,"./iron.js":11,"./missile.js":13,"./steel.js":15,"./stone.js":16,"./token.js":17,"./turbine.js":18,"./turret.js":19,"./worm.js":20}],15:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./iron.js":13,"./missile.js":15,"./silicon.js":17,"./steel.js":18,"./stone.js":19,"./token.js":20,"./turbine.js":21,"./turret.js":22,"./worm.js":23}],17:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isMeltable: true,
+  isCollectable: true,
+  pheromoneEmitter: true,
+  pheromoneType: 'MOLTEN_SAND',
+  hp: 10,
+  meltTemp: 100, // temperature at which you melt
+  heatQuantity: 120 // amount of glass produced when melted
+};
+
+var make = function make(game, position, width, height, hp) {
+  return _extends({}, makeEntity('SILICON', position, width || 1, height || 1), config, {
+    dictIndexStr: '',
+    hp: hp || config.hp,
+    playerID: 0, // gaia
+    quantity: 0 // amount of pheromone emitted
+  });
+};
+
+var render = function render(ctx, game, silicon) {
+  // const obj = getTileSprite(game, silicon);
+  // if (obj == null || obj.img == null) return;
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   silicon.position.x, silicon.position.y, silicon.width, silicon.height,
+  // );
+
+  ctx.fillStyle = "#006400";
+  ctx.fillRect(silicon.position.x, silicon.position.y, silicon.width, silicon.height);
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":32,"./makeEntity":14}],18:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -943,7 +1208,7 @@ var render = function render(ctx, game, steel) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],16:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -977,7 +1242,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":29,"./makeEntity":12}],17:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":14}],20:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1014,7 +1279,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":12}],18:[function(require,module,exports){
+},{"../config":1,"./makeEntity":14}],21:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1091,7 +1356,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":22,"../utils/vectors":36,"./makeEntity.js":12}],19:[function(require,module,exports){
+},{"../render/renderAgent":25,"../utils/vectors":39,"./makeEntity.js":14}],22:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1113,9 +1378,9 @@ var config = {
   isTower: true,
   isPowerConsumer: true,
   powerConsumed: 1,
-  hp: 3,
-  width: 1,
-  height: 1,
+  hp: 100,
+  width: 2,
+  height: 2,
   damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
@@ -1133,11 +1398,11 @@ var config = {
   },
 
   cost: {
-    STEEL: 4
+    STEEL: 16
   }
 };
 
-var make = function make(game, position, playerID, projectileType, fireRate, theta) {
+var make = function make(game, position, playerID, projectileType, fireRate, name, theta) {
   var configCopy = _extends({}, config);
   if (fireRate != null) {
     configCopy.SHOOT = _extends({}, configCopy.SHOOT, {
@@ -1149,6 +1414,7 @@ var make = function make(game, position, playerID, projectileType, fireRate, the
 
     // power:
     isPowered: false,
+    name: name != null ? name : 'Fast Turret',
 
     // angle of the turret
     theta: theta != null ? theta : config.minTheta,
@@ -1158,7 +1424,7 @@ var make = function make(game, position, playerID, projectileType, fireRate, the
     // what the tower wants to aim at
     targetID: null,
 
-    projectileType: projectileType,
+    projectileType: projectileType != null ? projectileType : 'BULLET',
 
     actions: []
 
@@ -1177,7 +1443,7 @@ var render = function render(ctx, game, turret) {
   // barrel of turret
   ctx.save();
   ctx.fillStyle = "black";
-  var turretWidth = 1.5;
+  var turretWidth = 2.5;
   var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
@@ -1197,7 +1463,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":22,"../utils/vectors":36,"./makeEntity.js":12}],20:[function(require,module,exports){
+},{"../render/renderAgent":25,"../utils/vectors":39,"./makeEntity.js":14}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1310,7 +1576,7 @@ var render = function render(ctx, game, entity) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":22,"../render/renderSegmented":24,"../utils/vectors":36,"./agent.js":2}],21:[function(require,module,exports){
+},{"../render/renderAgent":25,"../render/renderSegmented":27,"../utils/vectors":39,"./agent.js":2}],24:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1909,7 +2175,11 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
             return config.blockingTypes.includes(e.type);
           }).length > 0;
           if (!botLeftOccupied && !botRightOccupied) {
-            positionBelow = oneOf([botLeft, botRight]);
+            var leftPher = getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
+            var rightPher = getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
+            positionBelow = leftPher > rightPher ? botRight : botLeft;
+            positionBelow = leftPher == rightPher ? oneOf([botLeft, botRight]) : positionBelow;
+            // positionBelow = oneOf([botLeft, botRight]);
             occupied = false;
             diagonal = true;
           } else if (!botLeftOccupied) {
@@ -1924,7 +2194,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           // else check the pheromone values at the diagonal
           pherBotLeft = getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
           pherBotRight = getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
-          if (pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1) {
+          if (pherBotLeft > config.quantity - 1 && pherBotRight > config.quantity - 1) {
             occupied = true;
           }
         }
@@ -1943,10 +2213,10 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
             return config.blockingTypes.includes(e.type);
           }).length > 0;
           if (!leftOccupied && !rightOccupied) {
-            var leftPher = getPheromoneAtPosition(game, left, pheromoneType, playerID);
-            var rightPher = getPheromoneAtPosition(game, right, pheromoneType, playerID);
-            positionBelow = leftPher > rightPher ? right : left;
-            positionBelow = leftPher == rightPher ? oneOf([left, right]) : positionBelow;
+            var _leftPher = getPheromoneAtPosition(game, left, pheromoneType, playerID);
+            var _rightPher = getPheromoneAtPosition(game, right, pheromoneType, playerID);
+            positionBelow = _leftPher > _rightPher ? right : left;
+            positionBelow = _leftPher == _rightPher ? oneOf([left, right]) : positionBelow;
             // positionBelow = oneOf([left, right]);
             occupied = false;
             leftOrRight = true;
@@ -2153,7 +2423,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   return nextDispersingPheromones;
 };
 
-},{"./config":1,"./selectors/neighbors":27,"./selectors/pheromones":28,"./simulation/entityOperations":31,"./simulation/pheromones":32,"./utils/gridHelpers":33,"./utils/helpers":34,"./utils/stochastic":35,"./utils/vectors":36}],22:[function(require,module,exports){
+},{"./config":1,"./selectors/neighbors":30,"./selectors/pheromones":31,"./simulation/entityOperations":34,"./simulation/pheromones":35,"./utils/gridHelpers":36,"./utils/helpers":37,"./utils/stochastic":38,"./utils/vectors":39}],25:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2382,7 +2652,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":26,"../utils/gridHelpers":33,"../utils/helpers":34,"../utils/vectors":36,"./renderHealthBar":23}],23:[function(require,module,exports){
+},{"../selectors/misc":29,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39,"./renderHealthBar":26}],26:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2424,7 +2694,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":33,"../utils/vectors":36}],24:[function(require,module,exports){
+},{"../utils/gridHelpers":36,"../utils/vectors":39}],27:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -2572,7 +2842,7 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":26,"../selectors/sprites":29,"../utils/vectors":36,"./renderHealthBar":23}],25:[function(require,module,exports){
+},{"../selectors/misc":29,"../selectors/sprites":32,"../utils/vectors":39,"./renderHealthBar":26}],28:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -2639,7 +2909,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":33}],26:[function(require,module,exports){
+},{"../utils/gridHelpers":36}],29:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2824,15 +3094,26 @@ var getControlledEntityInteraction = function getControlledEntityInteraction(gam
   return makeAction(game, agent, 'PICKUP', { pickup: null, position: positionsInFront[0] });
 };
 
+var canAffordBuilding = function canAffordBuilding(base, cost) {
+  var resources = base.resources;
+  for (var resource in cost) {
+    if (resources[resource] == null || resources[resource] < cost[resource]) {
+      return false;
+    }
+  }
+  return true;
+};
+
 module.exports = {
   onScreen: onScreen,
   getPositionsInFront: getPositionsInFront,
   getPositionsBehind: getPositionsBehind,
   isFacing: isFacing,
   canDoMove: canDoMove,
-  getControlledEntityInteraction: getControlledEntityInteraction
+  getControlledEntityInteraction: getControlledEntityInteraction,
+  canAffordBuilding: canAffordBuilding
 };
-},{"../selectors/collisions":25,"../selectors/neighbors":27,"../simulation/actionQueue":30,"../utils/gridHelpers":33,"../utils/helpers":34,"../utils/vectors":36}],27:[function(require,module,exports){
+},{"../selectors/collisions":28,"../selectors/neighbors":30,"../simulation/actionQueue":33,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],30:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -3099,7 +3380,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":25,"../utils/gridHelpers":33,"../utils/vectors":36}],28:[function(require,module,exports){
+},{"../selectors/collisions":28,"../utils/gridHelpers":36,"../utils/vectors":39}],31:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3140,10 +3421,14 @@ var getPheromoneAtPosition = function getPheromoneAtPosition(game, position, typ
  * token radius) then just return that value
  */
 var getQuantityForStalePos = function getQuantityForStalePos(game, position, pheromoneType, playerID) {
-  for (var entityID in game.PHEROMONE_EMITTER) {
-    var entity = game.entities[entityID];
-    if (entity.pheromoneType != pheromoneType) continue;
-    if (equals(entity.position, position)) {
+  var relevantEmitters = lookupInGrid(game.grid, position).map(function (id) {
+    return game.entities[id];
+  }).filter(function (e) {
+    return e.pheromoneType == pheromoneType;
+  });
+  if (relevantEmitters.length > 0) {
+    var entity = relevantEmitters[0];
+    if (entity.quantity > 0) {
       return {
         position: position,
         quantity: entity.quantity
@@ -3238,7 +3523,7 @@ module.exports = {
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":27,"../utils/gridHelpers":33,"../utils/helpers":34,"../utils/vectors":36}],29:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":30,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],32:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3686,7 +3971,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":26,"../selectors/neighbors":27,"../simulation/actionQueue":30,"../utils/gridHelpers":33,"../utils/helpers":34,"../utils/vectors":36}],30:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":29,"../selectors/neighbors":30,"../simulation/actionQueue":33,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],33:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3918,7 +4203,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":28,"../utils/helpers":34,"../utils/vectors":36}],31:[function(require,module,exports){
+},{"../selectors/pheromones":31,"../utils/helpers":37,"../utils/vectors":39}],34:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4020,22 +4305,20 @@ var insertEntityInGrid = function insertEntityInGrid(game, entity) {
     entity.segments = nextSegments;
   } else {
     for (var x = 0; x < entity.width; x++) {
-      var _loop = function _loop(y) {
-        var pos = { x: x, y: y };
-        if (dir == 'left' || dir == 'right') {
-          pos = { x: y, y: x };
-        }
-        var gridPos = add(entity.position, pos);
-        insertInCell(game.grid, gridPos, entity.id);
-        if (globalConfig.pheromones.DIRT_DROP.blockingTypes.includes(entity.type) && game.pheromoneWorker) {
-          game.dirtPutdownPositions = game.dirtPutdownPositions.filter(function (p) {
-            return !equals(p, gridPos);
-          });
-        }
-      };
-
       for (var y = 0; y < entity.height; y++) {
-        _loop(y);
+        var _pos = { x: x, y: y };
+        if (dir == 'left' || dir == 'right') {
+          _pos = { x: y, y: x };
+        }
+        var gridPos = add(entity.position, _pos);
+        insertInCell(game.grid, gridPos, entity.id);
+        // if (
+        //   globalConfig.pheromones.DIRT_DROP.blockingTypes.includes(entity.type) &&
+        //   game.pheromoneWorker
+        // ) {
+        //   game.dirtPutdownPositions = game.dirtPutdownPositions
+        //     .filter(p => !equals(p, gridPos));
+        // }
       }
     }
   }
@@ -4064,6 +4347,7 @@ var insertEntityInGrid = function insertEntityInGrid(game, entity) {
   }
 
   if (game.time < 1) return;
+
   // pheromone updating:
   var pherSources = getEntityPheromoneSources(game, entity);
   if (pherSources.length > 0) {
@@ -4073,62 +4357,62 @@ var insertEntityInGrid = function insertEntityInGrid(game, entity) {
     // game.reverseFloodFillSources = game.reverseFloodFillSources
     //   .filter(s => s.id != entity.id);
     (_game$floodFillSource = game.floodFillSources).push.apply(_game$floodFillSource, _toConsumableArray(pherSources));
-  } else {
-    var _loop2 = function _loop2(pheromoneType) {
-      if (!globalConfig.pheromones[pheromoneType].blockingTypes.includes(entity.type)) return 'continue';
-      game.floodFillSources = game.floodFillSources.filter(function (s) {
-        return s.id != entity.id || s.pheromoneType != pheromoneType;
-      });
-      var neighborPositions = getNeighborPositions(game, entity, true /* external */);
+  }
 
-      for (var playerID in game.players) {
-        // NOTE: dispersing pheromones never reverseFloodFill
-        if (globalConfig.pheromones[pheromoneType].isDispersing) {
-          setPheromone(game, entity.position, pheromoneType, 0, playerID);
-          continue;
-        }
+  var _loop = function _loop(pheromoneType) {
+    if (!globalConfig.pheromones[pheromoneType].blockingTypes.includes(entity.type)) return 'continue';
+    game.floodFillSources = game.floodFillSources.filter(function (s) {
+      return s.id != entity.id || s.pheromoneType != pheromoneType;
+    });
+    var neighborPositions = getNeighborPositions(game, entity, true /* external */);
+
+    for (var playerID in game.players) {
+      // NOTE: dispersing pheromones never reverseFloodFill
+      if (globalConfig.pheromones[pheromoneType].isDispersing) {
         setPheromone(game, entity.position, pheromoneType, 0, playerID);
-        var maxAmount = globalConfig.pheromones[pheromoneType].quantity;
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        continue;
+      }
+      setPheromone(game, entity.position, pheromoneType, 0, playerID);
+      var maxAmount = globalConfig.pheromones[pheromoneType].quantity;
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-        try {
-          for (var _iterator = neighborPositions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var neighbor = _step.value;
+      try {
+        for (var _iterator = neighborPositions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var neighbor = _step.value;
 
-            var quantity = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
-            if (quantity < maxAmount) {
-              game.reverseFloodFillSources.push({
-                id: entity.id,
-                position: neighbor,
-                pheromoneType: pheromoneType,
-                playerID: playerID
-              });
-            }
+          var quantity = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
+          if (quantity < maxAmount) {
+            game.reverseFloodFillSources.push({
+              id: entity.id,
+              position: neighbor,
+              pheromoneType: pheromoneType,
+              playerID: playerID
+            });
           }
-        } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
         } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-              _iterator.return();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
+          if (_didIteratorError) {
+            throw _iteratorError;
           }
         }
       }
-    };
-
-    for (var pheromoneType in globalConfig.pheromones) {
-      var _ret2 = _loop2(pheromoneType);
-
-      if (_ret2 === 'continue') continue;
     }
+  };
+
+  for (var pheromoneType in globalConfig.pheromones) {
+    var _ret = _loop(pheromoneType);
+
+    if (_ret === 'continue') continue;
   }
 };
 
@@ -4169,8 +4453,8 @@ var removeEntityFromGrid = function removeEntityFromGrid(game, entity) {
         if (dir == 'left' || dir == 'right') {
           pos = { x: y, y: x };
         }
-        var _gridPos = add(entity.position, pos);
-        deleteFromCell(game.grid, _gridPos, entity.id);
+        var gridPos = add(entity.position, pos);
+        deleteFromCell(game.grid, gridPos, entity.id);
       }
     }
   }
@@ -4204,77 +4488,76 @@ var removeEntityFromGrid = function removeEntityFromGrid(game, entity) {
   // pheromone updating:
   var pherSources = getEntityPheromoneSources(game, entity);
   if (pherSources.length > 0) {
-    var _game$reverseFloodFil;
-
     var pheromoneType = pherSources[0].pheromoneType;
     // NOTE: dispersing pheromones never reverseFloodFill
-    if (globalConfig.pheromones[pheromoneType].isDispersing) {
-      return;
-    }
-    var playerID = pherSources[0].playerID;
-    // If you are added as a fill source AND removed from the grid on the same tick,
-    // then the pheromone will stay behind because reverse fills are done before flood fills
-    // So check if you are in the floodFill queue and just remove it:
-    var _iteratorNormalCompletion3 = true;
-    var _didIteratorError3 = false;
-    var _iteratorError3 = undefined;
+    if (!globalConfig.pheromones[pheromoneType].isDispersing) {
+      var _game$reverseFloodFil;
 
-    try {
-      var _loop3 = function _loop3() {
-        var source = _step3.value;
+      var playerID = pherSources[0].playerID;
+      // If you are added as a fill source AND removed from the grid on the same tick,
+      // then the pheromone will stay behind because reverse fills are done before flood fills
+      // So check if you are in the floodFill queue and just remove it:
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
-        game.floodFillSources = game.floodFillSources.filter(function (s) {
-          return !(s.pheromoneType == source.pheromoneType && s.playerID == source.playerID && equals(s.position, source.position));
-        });
-      };
-
-      for (var _iterator3 = pherSources[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-        _loop3();
-      }
-
-      // by adding 1, we force this position to be bigger than all its neighbors, which is how the
-      // reverse flooding checks if a position is stale and should be set to 0
-    } catch (err) {
-      _didIteratorError3 = true;
-      _iteratorError3 = err;
-    } finally {
       try {
-        if (!_iteratorNormalCompletion3 && _iterator3.return) {
-          _iterator3.return();
+        var _loop2 = function _loop2() {
+          var source = _step3.value;
+
+          game.floodFillSources = game.floodFillSources.filter(function (s) {
+            return !(s.pheromoneType == source.pheromoneType && s.playerID == source.playerID && equals(s.position, source.position));
+          });
+        };
+
+        for (var _iterator3 = pherSources[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          _loop2();
         }
+
+        // by adding 1, we force this position to be bigger than all its neighbors, which is how the
+        // reverse flooding checks if a position is stale and should be set to 0
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
-        if (_didIteratorError3) {
-          throw _iteratorError3;
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
         }
       }
-    }
 
-    var _iteratorNormalCompletion4 = true;
-    var _didIteratorError4 = false;
-    var _iteratorError4 = undefined;
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
 
-    try {
-      for (var _iterator4 = pherSources[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-        var _source = _step4.value;
-
-        setPheromone(game, _source.position, pheromoneType, _source.quantity + 1, playerID);
-      }
-    } catch (err) {
-      _didIteratorError4 = true;
-      _iteratorError4 = err;
-    } finally {
       try {
-        if (!_iteratorNormalCompletion4 && _iterator4.return) {
-          _iterator4.return();
+        for (var _iterator4 = pherSources[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var _source = _step4.value;
+
+          setPheromone(game, _source.position, pheromoneType, _source.quantity + 1, playerID);
         }
+      } catch (err) {
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
       } finally {
-        if (_didIteratorError4) {
-          throw _iteratorError4;
+        try {
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
+          }
+        } finally {
+          if (_didIteratorError4) {
+            throw _iteratorError4;
+          }
         }
       }
-    }
 
-    (_game$reverseFloodFil = game.reverseFloodFillSources).push.apply(_game$reverseFloodFil, _toConsumableArray(pherSources));
+      (_game$reverseFloodFil = game.reverseFloodFillSources).push.apply(_game$reverseFloodFil, _toConsumableArray(pherSources));
+    }
   }
 
   for (var _pheromoneType in globalConfig.pheromones) {
@@ -4456,7 +4739,7 @@ var moveEntity = function moveEntity(game, entity, nextPos) {
 
   // only rotate if you have to, so as not to blow away prevTheta
   var nextTheta = vectorTheta(subtract(entity.prevPosition, entity.position));
-  if (!closeTo(nextTheta, entity.theta)) {
+  if (!closeTo(nextTheta, entity.theta) && !entity.type == 'BULLET') {
     rotateEntity(game, entity, nextTheta);
   }
   return game;
@@ -4680,7 +4963,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":12,"../entities/registry":14,"../selectors/neighbors":27,"../selectors/pheromones":28,"../simulation/pheromones":32,"../utils/gridHelpers":33,"../utils/helpers":34,"../utils/vectors":36}],32:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":14,"../entities/registry":16,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/pheromones":35,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],35:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5040,7 +5323,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":27,"../selectors/pheromones":28,"../utils/gridHelpers":33,"../utils/helpers":34,"../utils/vectors":36}],33:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":30,"../selectors/pheromones":31,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],36:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -5176,7 +5459,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":34,"../utils/vectors":36}],34:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":37,"../utils/vectors":39}],37:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -5287,7 +5570,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":36}],35:[function(require,module,exports){
+},{"./vectors":39}],38:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -5342,7 +5625,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5541,4 +5824,4 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}]},{},[21]);
+},{}]},{},[24]);

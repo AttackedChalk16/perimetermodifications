@@ -6,8 +6,9 @@ const InfoCard = (props): React.Node => {
   return (
     <div
       style={{
-        border: '1px solid black',
+        border: props.border != null ? props.border : '1px solid black',
         backgroundColor: 'white',
+        opacity: props.opacity != null ? props.opacity : 1,
         // width: 200,
         // height: 148,
         verticalAlign: 'top',

@@ -89,13 +89,13 @@ const insertEntityInGrid = (game: Game, entity: Entity): void => {
         }
         const gridPos = add(entity.position, pos);
         insertInCell(game.grid, gridPos, entity.id);
-        if (
-          globalConfig.pheromones.DIRT_DROP.blockingTypes.includes(entity.type) &&
-          game.pheromoneWorker
-        ) {
-          game.dirtPutdownPositions = game.dirtPutdownPositions
-            .filter(p => !equals(p, gridPos));
-        }
+        // if (
+        //   globalConfig.pheromones.DIRT_DROP.blockingTypes.includes(entity.type) &&
+        //   game.pheromoneWorker
+        // ) {
+        //   game.dirtPutdownPositions = game.dirtPutdownPositions
+        //     .filter(p => !equals(p, gridPos));
+        // }
       }
     }
   }
@@ -120,6 +120,7 @@ const insertEntityInGrid = (game: Game, entity: Entity): void => {
   }
 
   if (game.time < 1) return;
+
   // pheromone updating:
   const pherSources = getEntityPheromoneSources(game, entity);
   if (pherSources.length > 0) {
@@ -127,36 +128,36 @@ const insertEntityInGrid = (game: Game, entity: Entity): void => {
     // game.reverseFloodFillSources = game.reverseFloodFillSources
     //   .filter(s => s.id != entity.id);
     game.floodFillSources.push(...pherSources);
-  } else {
-    for (const pheromoneType in globalConfig.pheromones) {
-      if (!globalConfig.pheromones[pheromoneType].blockingTypes.includes(entity.type)) continue;
-      game.floodFillSources = game.floodFillSources
-        .filter(s => s.id != entity.id || s.pheromoneType != pheromoneType);
-      const neighborPositions = getNeighborPositions(game, entity, true /* external */);
+  }
 
-      for (const playerID in game.players) {
-        // NOTE: dispersing pheromones never reverseFloodFill
-        if (globalConfig.pheromones[pheromoneType].isDispersing) {
-          setPheromone(game, entity.position, pheromoneType, 0, playerID);
-          continue;
-        }
+  for (const pheromoneType in globalConfig.pheromones) {
+    if (!globalConfig.pheromones[pheromoneType].blockingTypes.includes(entity.type)) continue;
+    game.floodFillSources = game.floodFillSources
+      .filter(s => s.id != entity.id || s.pheromoneType != pheromoneType);
+    const neighborPositions = getNeighborPositions(game, entity, true /* external */);
+
+    for (const playerID in game.players) {
+      // NOTE: dispersing pheromones never reverseFloodFill
+      if (globalConfig.pheromones[pheromoneType].isDispersing) {
         setPheromone(game, entity.position, pheromoneType, 0, playerID);
-        const maxAmount = globalConfig.pheromones[pheromoneType].quantity;
-        for (const neighbor of neighborPositions) {
-          const quantity = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
-          if (quantity < maxAmount) {
-            game.reverseFloodFillSources.push({
-              id: entity.id,
-              position: neighbor,
-              pheromoneType,
-              playerID,
-            });
-          }
+        continue;
+      }
+      setPheromone(game, entity.position, pheromoneType, 0, playerID);
+      const maxAmount = globalConfig.pheromones[pheromoneType].quantity;
+      for (const neighbor of neighborPositions) {
+        const quantity = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
+        if (quantity < maxAmount) {
+          game.reverseFloodFillSources.push({
+            id: entity.id,
+            position: neighbor,
+            pheromoneType,
+            playerID,
+          });
         }
       }
     }
-
   }
+
 }
 
 
@@ -206,29 +207,28 @@ const removeEntityFromGrid = (game: Game, entity: Entity): void => {
   if (pherSources.length > 0) {
     const pheromoneType = pherSources[0].pheromoneType;
     // NOTE: dispersing pheromones never reverseFloodFill
-    if (globalConfig.pheromones[pheromoneType].isDispersing) {
-      return;
-    }
-    const playerID = pherSources[0].playerID;
-    // If you are added as a fill source AND removed from the grid on the same tick,
-    // then the pheromone will stay behind because reverse fills are done before flood fills
-    // So check if you are in the floodFill queue and just remove it:
-    for (const source of pherSources) {
-      game.floodFillSources = game.floodFillSources.filter(s => {
-        return !(
-          s.pheromoneType == source.pheromoneType
-          && s.playerID == source.playerID
-          && equals(s.position, source.position)
-        );
-      });
-    }
+    if (!globalConfig.pheromones[pheromoneType].isDispersing) {
+      const playerID = pherSources[0].playerID;
+      // If you are added as a fill source AND removed from the grid on the same tick,
+      // then the pheromone will stay behind because reverse fills are done before flood fills
+      // So check if you are in the floodFill queue and just remove it:
+      for (const source of pherSources) {
+        game.floodFillSources = game.floodFillSources.filter(s => {
+          return !(
+            s.pheromoneType == source.pheromoneType
+            && s.playerID == source.playerID
+            && equals(s.position, source.position)
+          );
+        });
+      }
 
-    // by adding 1, we force this position to be bigger than all its neighbors, which is how the
-    // reverse flooding checks if a position is stale and should be set to 0
-    for (const source of pherSources) {
-      setPheromone(game, source.position, pheromoneType, source.quantity + 1, playerID);
+      // by adding 1, we force this position to be bigger than all its neighbors, which is how the
+      // reverse flooding checks if a position is stale and should be set to 0
+      for (const source of pherSources) {
+        setPheromone(game, source.position, pheromoneType, source.quantity + 1, playerID);
+      }
+      game.reverseFloodFillSources.push(...pherSources);
     }
-    game.reverseFloodFillSources.push(...pherSources);
   }
 
   for (const pheromoneType in globalConfig.pheromones) {
@@ -390,7 +390,7 @@ const moveEntity = (game: Game, entity: Entity, nextPos: Vector): Game => {
 
   // only rotate if you have to, so as not to blow away prevTheta
   const nextTheta = vectorTheta(subtract(entity.prevPosition, entity.position));
-  if (!closeTo(nextTheta, entity.theta)) {
+  if (!closeTo(nextTheta, entity.theta) && !entity.type == 'BULLET') {
     rotateEntity(
       game, entity, nextTheta,
     );

@@ -156,13 +156,19 @@ function registerHotkeys(dispatch) {
 }
 
 function configureMouseHandlers(game) {
-  const handlers = {};
-  handlers.mouseMove = (state, dispatch, gridPos) => {
-    if (state.game.mouse.isLeftDown) {
-      handleCollect(state, dispatch, gridPos);
-    } else if (state.game.mouse.isRightDown) {
-      handlePlace(state, dispatch, gridPos);
-    }
+  const handlers = {
+    mouseMove: (state, dispatch, gridPos) => {
+      if (state.game.mouse.isLeftDown) {
+        handleCollect(state, dispatch, gridPos);
+      } else if (state.game.mouse.isRightDown) {
+        handlePlace(state, dispatch, gridPos);
+      }
+    },
+    leftDown: handleCollect,
+    rightDown: handlePlace,
+    scroll: (state, dispatch, zoom) => {
+      dispatch({type: 'INCREMENT_ZOOM', zoom});
+    },
   }
   return handlers;
 }

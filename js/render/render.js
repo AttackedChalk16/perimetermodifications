@@ -498,6 +498,9 @@ const renderPheromones = (ctx, game): void => {
           if (quantity <= 0) {
             continue;
           }
+          if (pheromoneType == 'COLONY') {
+            alpha /= 3;
+          }
           ctx.globalAlpha = alpha;
           ctx.fillStyle = config[pheromoneType].color;
           if (game.showPheromoneValues) {

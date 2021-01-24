@@ -17,16 +17,20 @@ const Entities = {
   BACKGROUND: require('./background.js'),
   DOODAD: require('./doodad.js'),
 
-  STONE: require('./stone.js'),
   DIRT: require('./dirt.js'),
+  STONE: require('./stone.js'),
+  COAL: require('./coal.js'),
   IRON: require('./iron.js'),
   STEEL: require('./steel.js'),
+  GLASS: require('./glass.js'),
+  SILICON: require('./silicon.js'),
 
-  COAL: require('./coal.js'),
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
+
+  BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
   TURRET: require('./turret.js'),
 
