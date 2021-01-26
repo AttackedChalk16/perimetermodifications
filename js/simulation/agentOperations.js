@@ -211,29 +211,7 @@ const agentDecideTask = (game, agent, nextPos): void => {
 
   const pherAtCell = getPheromonesInCell(game.grid, nextPos, agent.playerID);
 
-  // go to dirt if on pheromone cell
-  if (
-    pherAtCell.MARKED_DIRT_PHER > 0 && agent.holding == null
-    && (agent.task == 'WANDER' || agent.task == 'RETURN')
-    && game.bases[agent.playerID].taskNeed['GO_TO_DIRT'] > 0
-  ) {
-    agentSwitchTask(game, agent, 'GO_TO_DIRT');
-    return;
-  }
-
-  if (holdingDirt && agent.task != 'MOVE_DIRT') {
-    agentSwitchTask(game, agent, 'MOVE_DIRT');
-  }
-
-  // if going to dirt, but no more dirt pheromone, switch to Return
-  if (
-    pherAtCell.MARKED_DIRT_PHER == 0 && !holdingDirt &&
-    agent.task == 'GO_TO_DIRT'
-  ) {
-    agentSwitchTask(game, agent, 'RETURN');
-    return;
-  }
-
+  return agent.task;
 }
 
 // ----------------------------------------------------------------------

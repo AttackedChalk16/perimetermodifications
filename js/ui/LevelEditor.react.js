@@ -96,7 +96,7 @@ function LevelEditor(props: Props): React.Node {
     } else if (editor.paletteMode == 'PHEROMONES') {
       dispatch({type: 'SET_MOUSE_MODE', mouseMode: 'NONE'});
       handlers.mouseMove = () => {}; // placeholder
-      handlers.leftDown = (state, dispatch, gridPos) => {
+      handlers.leftUp = (state, dispatch, gridPos) => {
         dispatch({
           type: 'FILL_PHEROMONE',
           gridPos,

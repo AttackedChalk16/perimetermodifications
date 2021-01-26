@@ -5,4 +5,5 @@ module.exports = {
   smallBallisticsLevel: require('./smallBallisticsLevel'),
   mediumBallisticsLevel: require('./mediumBallisticsLevel'),
   smallPhaseChangeLevel: require('./smallPhaseChangeTestLevel'),
+  mediumDemoLevel: require('./mediumDemoLevel'),
 }

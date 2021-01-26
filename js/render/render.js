@@ -180,11 +180,11 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
     for (const id of game[entityType]) {
       const entity = game.entities[id];
       if (!entity) {
-        console.log(
-          "tried to render a null entity from grid",
-          entityType,
-          id,
-        );
+        // console.log(
+        //   "tried to render a null entity from grid",
+        //   entityType,
+        //   id,
+        // );
         continue;
       }
       if (entity.notAnimated) break;
@@ -281,6 +281,9 @@ const refreshStaleImage = (game, dims): void => {
   );
   ctx.lineWidth = px;
 
+  // the image might remain stale based on asynchronousness of rendering
+  let isStale = false;
+
   if (game.viewImage.allStale) {
     // background
     ctx.fillStyle = 'rgba(186, 175, 137, 1)';
@@ -309,6 +312,9 @@ const refreshStaleImage = (game, dims): void => {
     }
   } else {
     const staleEntities = {};
+    // because of rendering's asynchronousness, positions can be unmarked
+    // as stale before their tileDict is updated
+    const nextStalePositions = {};
     for (const posKey in game.viewImage.stalePositions) {
       const pos = game.viewImage.stalePositions[posKey];
       // background
@@ -327,10 +333,14 @@ const refreshStaleImage = (game, dims): void => {
       for (const entityID of lookupInGrid(game.grid, pos)) {
         const entity = game.entities[entityID];
         if (!entity) {
-          console.log("tried to render a null entity from grid", pos, entityID);
+          // console.log("tried to render a null entity from grid", pos, entityID);
           continue;
         }
         if (!entity.notAnimated) continue;
+        if (game.staleTiles.includes(entityID)) {
+          isStale = true;
+          nextStalePositions[posKey] = pos;
+        }
         if (staleEntities[entity.type] == null) {
           staleEntities[entity.type] = {};
         }
@@ -342,11 +352,11 @@ const refreshStaleImage = (game, dims): void => {
         renderEntity(ctx, game, game.entities[entityID], Entities[entityType].render);
       }
     }
-    game.viewImage.stalePositions = {};
+    game.viewImage.stalePositions = nextStalePositions;
   }
 
   ctx.restore();
-  game.viewImage.isStale = false;
+  game.viewImage.isStale = isStale;
   game.viewImage.allStale = false;
 };
 

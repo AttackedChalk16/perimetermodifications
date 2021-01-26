@@ -7,13 +7,12 @@ const {makeEntity} = require('./makeEntity');
 
 const config = {
   isTiled: true,
-  isMeltable: true,
   isCollectable: true,
-  pheromoneEmitter: true,
-  pheromoneType: 'MOLTEN_SAND',
   hp: 10,
-  meltTemp: 100, // temperature at which you melt
-  heatQuantity: 120, // amount of glass produced when melted
+  pheromoneEmitter: true,
+  // pheromoneType: 'MOLTEN_SAND',
+  // meltTemp: 100, // temperature at which you melt
+  // heatQuantity: 120, // amount of glass produced when melted
 };
 
 const make = (

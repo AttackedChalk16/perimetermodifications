@@ -43,15 +43,6 @@ var pheromones = {
     blockingTypes: pheromoneBlockingTypes,
     isDispersing: true
   },
-  MARKED_DIRT_PHER: {
-    quantity: 45,
-    decayAmount: 1,
-    color: 'rgb(210, 105, 30)',
-    tileIndex: 5,
-
-    blockingTypes: pheromoneBlockingTypes,
-    canInhabitBlocker: true
-  },
   WATER: {
     quantity: 120,
     decayAmount: 120,
@@ -832,7 +823,7 @@ var _require2 = require('./makeEntity'),
 
 var config = {
   isTiled: true,
-  hp: 1
+  hp: 120
 };
 
 var make = function make(game, position, width, height) {
@@ -1006,7 +997,7 @@ var config = {
   width: 1,
   height: 2,
   velocity: 50,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'BASE'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'BASIC_TURRET', 'BASE'],
 
   DIE: {
     duration: 1,
@@ -1127,13 +1118,12 @@ var _require2 = require('./makeEntity'),
 
 var config = {
   isTiled: true,
-  isMeltable: true,
   isCollectable: true,
-  pheromoneEmitter: true,
-  pheromoneType: 'MOLTEN_SAND',
   hp: 10,
-  meltTemp: 100, // temperature at which you melt
-  heatQuantity: 120 // amount of glass produced when melted
+  pheromoneEmitter: true
+  // pheromoneType: 'MOLTEN_SAND',
+  // meltTemp: 100, // temperature at which you melt
+  // heatQuantity: 120, // amount of glass produced when melted
 };
 
 var make = function make(game, position, width, height, hp) {
@@ -1782,6 +1772,13 @@ var startFloodFill = function startFloodFill() {
       if (source.stale) {
         source.quantity = getQuantityForStalePos(game, source.position, source.pheromoneType, source.playerID).quantity;
       }
+      if (globalConfig.pheromones[source.pheromoneType] == null) {
+        console.log("no pheromone config", source.pheromoneType, source);
+      }
+      if (source.quantity > globalConfig.pheromones[source.pheromoneType].quantity) {
+        console.log("big quantity", source.quantity, source.pheromoneType, source);
+        source.quantity = globalConfig.pheromones[source.pheromoneType].quantity;
+      }
       var positions = floodFillPheromone(game, source.pheromoneType, source.playerID, [source], {});
       if (Object.keys(positions).length > 0) {
         result.push(positions);
@@ -2305,7 +2302,11 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
                 var dir = dirTheta > 0 ? 1 : -1;
 
                 // decrease amount of pheromone travelling in this direction
-                pherToGive = pherToGive - pherToGive * 0.2;
+                if (pherToGive > 1) {
+                  pherToGive = pherToGive - pherToGive * 0.2;
+                } else {
+                  dir = 0;
+                }
                 nextTurbines[turbineID] += dir * pherToGive / maxQuantity * turbine.maxThetaSpeed;
               }
             } catch (err) {

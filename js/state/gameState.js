@@ -57,10 +57,8 @@ const initBaseState = (
     timeSinceLastTick: 0,
 
     pheromoneDisplay: {
-      COLONY: true,
+      COLONY: false,
       ALERT: false,
-      DIRT_DROP: false,
-      MARKED_DIRT_PHER: false,
       WATER: true,
       STEAM: true,
       HEAT: true,

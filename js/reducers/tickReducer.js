@@ -180,6 +180,10 @@ const updateActors = (game): void => {
 const updateAgents = (game): void => {
 	for (const id of game.AGENT) {
     const agent = game.entities[id];
+    if (agent == null) {
+      console.log("no agent with id", id);
+      continue;
+    }
     agent.age += game.timeSinceLastTick;
     agent.timeOnTask += game.timeSinceLastTick;
     agent.prevHPAge += game.timeSinceLastTick;
@@ -280,9 +284,8 @@ const updateFlammables = (game): void => {
     } else {
       const temp = getPheromoneAtPosition(game, flammable.position, 'HEAT', 0);
       if (temp >= flammable.combustionTemp) {
-        flammable.onFire = true;
-        // don't let flaming things be collectable unless they're already going
         if (flammable.type != 'AGENT') {
+          flammable.onFire = true;
           flammable.isCollectable = false;
         }
       }
@@ -320,14 +323,13 @@ const updateMeltables = (game): void => {
 
     const temp = getPheromoneAtPosition(game, meltable.position, 'HEAT', 0);
     if (temp >= meltable.meltTemp) {
-      // if you're an agent then you're en route to being collected
-      if (meltable.type == 'AGENT') {
-        continue;
-        // meltable.isAgent = false;
-        // meltable.type = meltable.collectedAs;
-        // meltable.playerID = 0;
+      // if you're an agent (or food!) then you're en route to being collected
+      let config = Entities[meltable.type].config;
+      if (!config.isMeltable) {
+        meltable.type = meltable.collectedAs;
+        meltable.playerID = 0;
+        config = Entities[meltable.type].config;
       }
-      const config = Entities[meltable.type].config;
       changePheromoneEmitterQuantity(
         game, meltable, meltable.heatQuantity * (meltable.hp / config.hp),
       );
@@ -421,6 +423,9 @@ const updateGenerators = (game: Game): void => {
     // Handle turbines
     if (generator.type == 'TURBINE') {
       generator.theta = (generator.theta + generator.thetaSpeed) % (2 * Math.PI);
+      if (generator.thetaSpeed < 0.001) {
+        generator.thetaSpeed = 0;
+      }
       powerGenerated *= generator.thetaSpeed / generator.maxThetaSpeed;
       generator.powerGenerated = powerGenerated;
     }
@@ -434,6 +439,7 @@ const updateGenerators = (game: Game): void => {
   // distribute consumed power
   for (const id in game.CONSUMER) {
     const consumer = game.entities[id];
+    consumer.isPowered = false;
     game.bases[game.playerID].totalPowerNeeded += consumer.powerConsumed;
     if (totalPowerGenerated >= consumer.powerConsumed) {
       consumer.isPowered = true;

@@ -7,7 +7,7 @@ const {makeEntity} = require('./makeEntity');
 
 const config = {
   isTiled: true,
-  hp: 1,
+  hp: 120,
 };
 
 const make = (

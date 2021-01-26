@@ -47,15 +47,6 @@ const pheromones = {
     blockingTypes: pheromoneBlockingTypes,
     isDispersing: true,
   },
-  MARKED_DIRT_PHER: {
-    quantity: 45,
-    decayAmount: 1,
-    color: 'rgb(210, 105, 30)',
-    tileIndex: 5,
-
-    blockingTypes: pheromoneBlockingTypes,
-    canInhabitBlocker: true,
-  },
   WATER: {
     quantity: 120,
     decayAmount: 120,

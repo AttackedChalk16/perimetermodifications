@@ -1,5 +1,6 @@
 // @flow
 
+const {equals} = require('../utils/vectors');
 const {lookupInGrid} = require('../utils/gridHelpers');
 const {Entities} = require('../entities/registry');
 const {getPheromoneAtPosition} = require('../selectors/pheromones');
@@ -8,9 +9,13 @@ const {isDiagonalMove} = require('../utils/helpers');
 const {canAffordBuilding} = require('../selectors/misc');
 
 const handleCollect = (state, dispatch, gridPos) => {
+  const game = state.game;
   // if (!state.game.mouse.isLeftDown) return;
 
-  const game = state.game;
+  // don't interact with the same position twice
+  if (game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
+    return;
+  }
 
   // only can collect entities that are connected to the colony
   if (!isNeighboringColonyPher(game, gridPos)) {
@@ -19,18 +24,22 @@ const handleCollect = (state, dispatch, gridPos) => {
 
   const entities = lookupInGrid(game.grid, gridPos)
     .map(id => game.entities[id])
-    .filter(e => e.isCollectable && e.task == null)
+    .filter(e => e.isCollectable && e.type != 'AGENT'); // && e.task == null)
   // NOTE: for some reason using this as the check causes pheromones
   // to not spread???
   //&& e.type != 'AGENT');
 
-  dispatch({type: 'COLLECT_ENTITIES', entities});
+  dispatch({type: 'COLLECT_ENTITIES', entities, position: gridPos});
 }
 
 const handlePlace = (state, dispatch, gridPos) => {
+  const game = state.game;
   // if (!state.game.mouse.isRightDown) return;
 
-  const game = state.game;
+  // don't interact with the same position twice
+  if (game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
+    return;
+  }
 
   // only can place entities that are connected to the colony
   if (!isNeighboringColonyPher(game, gridPos)) {
@@ -77,7 +86,7 @@ const handlePlace = (state, dispatch, gridPos) => {
     if (game.placeType == 'HOT COAL') {
       entity.onFire = true;
     }
-    dispatch({type: 'CREATE_ENTITY', entity});
+    dispatch({type: 'CREATE_ENTITY', entity, position: gridPos});
   }
 }
 

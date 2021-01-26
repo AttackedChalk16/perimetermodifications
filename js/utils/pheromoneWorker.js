@@ -147,6 +147,13 @@ const startFloodFill = () => {
         game, source.position, source.pheromoneType, source.playerID,
       ).quantity;
     }
+    if (globalConfig.pheromones[source.pheromoneType] == null) {
+      console.log("no pheromone config", source.pheromoneType, source);
+    }
+    if (source.quantity > globalConfig.pheromones[source.pheromoneType].quantity) {
+      console.log("big quantity", source.quantity, source.pheromoneType, source);
+      source.quantity = globalConfig.pheromones[source.pheromoneType].quantity;
+    }
     const positions = floodFillPheromone(
       game, source.pheromoneType, source.playerID, [source], {},
     );
@@ -558,10 +565,14 @@ const updateDispersingPheromones = (game) => {
 
               if (!nextTurbines[turbineID]) nextTurbines[turbineID] = 0;
               const dirTheta = vectorTheta(subtract(source.position, positionBelow));
-              const dir = dirTheta > 0 ? 1 : -1;
+              let dir = dirTheta > 0 ? 1 : -1;
 
               // decrease amount of pheromone travelling in this direction
-              pherToGive = pherToGive - (pherToGive * 0.2);
+              if (pherToGive > 1) {
+                pherToGive = pherToGive - (pherToGive * 0.2);
+              } else {
+                dir = 0;
+              }
               nextTurbines[turbineID] += dir * pherToGive / maxQuantity * turbine.maxThetaSpeed;
             }
           }

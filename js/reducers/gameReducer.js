@@ -66,7 +66,10 @@ const gameReducer = (game: Game, action: Action): Game => {
       return game;
     }
     case 'CREATE_ENTITY': {
-      const {entity} = action;
+      const {entity, position} = action;
+      if (position != null) {
+        game.prevInteractPosition = position;
+      }
       return addEntity(game, entity);
     }
     case 'DELETE_ENTITY': {
@@ -246,7 +249,10 @@ const gameReducer = (game: Game, action: Action): Game => {
       return game;
     }
     case 'COLLECT_ENTITIES': {
-      const {entities} = action;
+      const {entities, position} = action;
+      if (position != null) {
+        game.prevInteractPosition = position;
+      }
       for (const entity of entities) {
         entity.collectedAs = entity.type;
         changeEntityType(game, entity, entity.type, 'AGENT');

@@ -6,34 +6,34 @@
 
 
 - - - - - - ISSUES - - - - - -
-  - tower not unpowering even though there's no power being produced
   - coal:
-    - sometimes placing iron near hot coal leaves molten iron behind that doesn't
-      follow physics
     - sometimes placing iron above hot coal produces iron and steel
       - this is because it's firing again
       - can I make it so it only fires one time?
     - iron + coal can be iron-negative (ie produces less steel than iron that went in
     - coal placed directly on molten iron deletes both and leaves heat
+    - coal that catches on fire en route to collection never collects
+    - coal can delete heat somehow?
   - sand
-    - appears to fade away to nothing upon melting to molten_sand
     - molten sand cools to glass in wrong locations?
-    - collecting glass breaks pheromones
-  - don't render marquee when placing pheromone
-  - placing resources
-    - have placing dirt mark its neighbors as stale correctly
+    - placing coal on top of sand can turn the whole pile to glass?
+    - placing hot coal on top of sand can break the whole game
+  - pheromone placement
+    - allow placing many pheromones via marquee
   - resource collection
     - what about collecting entities with lower hp?
       - if they don't switch to agent, then they block pheromones
       - same problem with coal and its fuel
       - maybe everything should just accumulate/concentrate w/hp
-    - removing dirt should also mark neighbors as stale
   - visually indicate whether individual turrets are powered or not
   - turbines:
     - spin direction depends on left/right-hand side of turbine
     - acceleration may work better than speed for e.g. contradictory flows
     - reducing pherToGive doesn't actually slow down an array of turbines
   - missiles coming from the right will be really hard to shoot down
+  - basic turrets are too good
+    - perhaps increase cost of buildings each time you place one?
+  - base takes more damage than you would expect because of its size
 
 
 - - - - - - TODO - - - - - -

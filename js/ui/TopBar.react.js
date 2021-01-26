@@ -97,6 +97,8 @@ function TopBar(props) {
       <div
         style={{
           // left: leftPadding,
+          width: 200,
+          marginLeft: 10,
           display: 'inline-block',
           // position: 'absolute',
         }}

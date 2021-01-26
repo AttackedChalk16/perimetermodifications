@@ -24,10 +24,10 @@ const initMissileAttackSystem = (store) => {
       freq = 1;
       let altProb = 0.05;
     } else if (game.time > (60 * 60 * 6)) {
-      freq = 0.5;
+      freq = 0.25;
       let altProb = 0.1;
     } else if (game.time > (60 * 60 * 9)) {
-      freq = 0.5;
+      freq = 0.1;
       let altProb = 0.15;
     }
     let alternateSide = Math.random() < altProb;

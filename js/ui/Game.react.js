@@ -64,7 +64,9 @@ function Game(props: Props): React.Node {
   }, [gameID]);
 
   useEffect(() => {
-    initMouseControlsSystem(store, configureMouseHandlers(state.game));
+    if (state.game.mouseMode != 'NONE') {
+      initMouseControlsSystem(store, configureMouseHandlers(state.game));
+    }
   }, [state.game.mouseMode]);
 
 
