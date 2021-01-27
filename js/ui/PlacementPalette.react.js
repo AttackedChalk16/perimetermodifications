@@ -3,10 +3,12 @@
 const React = require('react');
 const InfoCard = require('../ui/Components/InfoCard.react');
 const {Entities} = require('../entities/registry');
-const {canAffordBuilding} = require('../selectors/misc');
+const {
+  canAffordBuilding, getModifiedCost,
+} = require('../selectors/buildings');
 
 function PlacementPalette(props): React.Node {
-  const {dispatch, base, placeType} = props;
+  const {dispatch, game, base, placeType} = props;
 
   const placeEntityCards = []
   for (const entityType in Entities) {
@@ -40,7 +42,7 @@ function PlacementPalette(props): React.Node {
         dispatch={dispatch}
         base={base}
         entityType={entityType}
-        cost={config.cost}
+        cost={getModifiedCost(game, entityType)}
         isSelected={entityType == placeType}
       />
     );
@@ -68,7 +70,7 @@ function PlaceEntityCard(props) {
         opacity={quantity != null && quantity > 0 ? null : 0.5}
       >
         <div><b>{entityType}</b></div>
-        <div>{quantity}</div>
+        <div>{quantity.toFixed(1)}</div>
       </InfoCard>
     </div>
   );

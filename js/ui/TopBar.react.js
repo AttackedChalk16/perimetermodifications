@@ -23,6 +23,7 @@ function TopBar(props) {
     totalPowerNeeded,
     base,
     placeType,
+    game,
   } = props;
 
   if (isExperimental && tickInterval == null) {
@@ -112,6 +113,7 @@ function TopBar(props) {
         }}
       >
         <PlacementPalette
+          game={game}
           dispatch={dispatch}
           base={base}
           placeType={placeType}

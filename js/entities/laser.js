@@ -6,48 +6,37 @@ const {getInterpolatedIndex} = require('../selectors/sprites');
 const {getDuration} = require('../simulation/actionQueue');
 const globalConfig = require('../config');
 
-/**
- *  Explosives explode when they die. They can be killed by
- *  running out of hp or by having an age (in ms) greater than their timer
- *  time (set timer to null if you don't want it to do this).
- */
 
 const config = {
   isBallistic: true,
   damage: 10,
-  hp: 10,
-  width: 1,
-  height: 2,
-  velocity: 50,
+  hp: 1,
+  width: 2,
+  height: 1,
+  velocity: 1000,
   blockingTypes: [
     'DIRT', 'STONE', 'FOOD', 'AGENT',
-    'DOODAD', 'WORM',
-    'FAST_TURRET', 'TURBINE',
-    'IRON', 'STEEL', 'COAL',
-    'BASIC_TURRET', 'LASER_TURRET',
-    'BASE',
+    'DOODAD', 'WORM', 'MISSILE',
+    'TURBINE', 'IRON', 'STEEL', 'COAL',
   ],
 
   DIE: {
     duration: 1,
     spriteOrder: [0],
-  }
+  },
+  missRate: 0.1,
 };
 
 const make = (
   game: Game,
   position: Vector,
   playerID: PlayerID,
-  warhead: ?Entity,
   theta: Radians,
   velocity: ?number,
-): Missile => {
+): Bullet => {
   return {
-    ...makeEntity('MISSILE', position, config.width, config.height),
+    ...makeEntity('LASER', position, config.width, config.height),
     ...config,
-    holding: null,
-    holdingIDs: [],
-    warhead,
     playerID,
 
     // required for ballistics
@@ -59,28 +48,17 @@ const make = (
     ballisticPosition: {...position},
     ballisticTheta: theta,
     initialTheta: theta,
-
-    prevPositions: [add(position, {x: config.width / 2, y: config.height / 2})],
   };
 };
 
-const render = (ctx, game, missile): void => {
+const render = (ctx, game, bullet): void => {
   ctx.save();
   const {
     width, height, theta,
     ballisticTheta,
     ballisticPosition, prevPositions,
-  } = missile;
+  } = bullet;
   const position = ballisticPosition;
-
-  // trace out the trajectory
-  ctx.strokeStyle = 'black';
-  ctx.beginPath();
-  ctx.moveTo(position.x + width / 2, position.y + height / 2);
-  for (let i = prevPositions.length - 1; i >= 0; i--) {
-    ctx.lineTo(prevPositions[i].x, prevPositions[i].y);
-  }
-  ctx.stroke();
 
   ctx.translate(
     position.x + width / 2,
@@ -89,10 +67,17 @@ const render = (ctx, game, missile): void => {
   ctx.rotate(ballisticTheta + Math.PI / 2);
   ctx.translate(-width / 2, -height / 2);
 
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, missile.width, missile.height);
-  ctx.strokeRect(0, 0, missile.width, missile.height);
+  ctx.fillStyle = 'red';
+  ctx.strokeStyle = 'red';
+  const bulletWidth = 0.2;
+  ctx.fillRect(
+    bullet.width / 2 - bulletWidth / 2, 0,
+    bulletWidth, bullet.height * 4,
+  );
+  ctx.strokeRect(
+    bullet.width / 2 - bulletWidth / 2, 0,
+    bulletWidth, bullet.height * 4,
+  );
 
   ctx.restore();
 };

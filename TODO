@@ -7,41 +7,26 @@
 
 - - - - - - ISSUES - - - - - -
   - coal:
-    - sometimes placing iron above hot coal produces iron and steel
-      - this is because it's firing again
-      - can I make it so it only fires one time?
-    - iron + coal can be iron-negative (ie produces less steel than iron that went in
     - coal placed directly on molten iron deletes both and leaves heat
     - coal that catches on fire en route to collection never collects
     - coal can delete heat somehow?
+    - can strand molten pheromones that don't interact with anything
   - sand
-    - molten sand cools to glass in wrong locations?
     - placing coal on top of sand can turn the whole pile to glass?
     - placing hot coal on top of sand can break the whole game
-  - pheromone placement
-    - allow placing many pheromones via marquee
-  - resource collection
-    - what about collecting entities with lower hp?
-      - if they don't switch to agent, then they block pheromones
-      - same problem with coal and its fuel
-      - maybe everything should just accumulate/concentrate w/hp
-  - visually indicate whether individual turrets are powered or not
   - turbines:
     - spin direction depends on left/right-hand side of turbine
     - acceleration may work better than speed for e.g. contradictory flows
     - reducing pherToGive doesn't actually slow down an array of turbines
-  - missiles coming from the right will be really hard to shoot down
-  - basic turrets are too good
-    - perhaps increase cost of buildings each time you place one?
+  - missiles:
+    - missiles are spawning more slowly than expected in the 6, 9+ minute mark
   - base takes more damage than you would expect because of its size
 
 
 - - - - - - TODO - - - - - -
+  - visually indicate whether individual turrets are powered or not
   - add coolConcentration to HUDs
   - show on position info card whether location is placeable/collectable
-  - laser turret that requires a lot of power
-  - make a level that combines all the resources
-  - shouldn't be able to place resources/buildings on background
   - steam
     - if steam cool rate is less than water heat rate then clouds might form
     - set higher threshold for steam before it condenses back to water

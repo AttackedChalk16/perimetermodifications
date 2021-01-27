@@ -6,11 +6,6 @@ const {getInterpolatedIndex} = require('../selectors/sprites');
 const {getDuration} = require('../simulation/actionQueue');
 const globalConfig = require('../config');
 
-/**
- *  Explosives explode when they die. They can be killed by
- *  running out of hp or by having an age (in ms) greater than their timer
- *  time (set timer to null if you don't want it to do this).
- */
 
 const config = {
   isBallistic: true,
@@ -74,7 +69,6 @@ const render = (ctx, game, bullet): void => {
 
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'black';
-  ctx.lineWidth
   const bulletWidth = 0.2;
   ctx.fillRect(
     bullet.width / 2 - bulletWidth / 2, 0,

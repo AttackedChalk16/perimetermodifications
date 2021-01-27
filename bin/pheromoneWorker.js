@@ -321,7 +321,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":25,"../selectors/sprites":32,"../utils/vectors":39,"./makeEntity":14}],3:[function(require,module,exports){
+},{"../render/renderAgent":26,"../selectors/sprites":32,"../utils/vectors":39,"./makeEntity":16}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -356,7 +356,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],4:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -402,7 +402,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":14}],5:[function(require,module,exports){
+},{"../config":1,"./makeEntity":16}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -530,7 +530,7 @@ var turretConfigs = {
 module.exports = {
   make: make, render: render, config: config, turretConfigs: turretConfigs
 };
-},{"../render/renderAgent":25,"../utils/vectors":39,"./makeEntity.js":14}],6:[function(require,module,exports){
+},{"../render/renderAgent":26,"../utils/vectors":39,"./makeEntity.js":16}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -548,12 +548,6 @@ var _require4 = require('../simulation/actionQueue'),
     getDuration = _require4.getDuration;
 
 var globalConfig = require('../config');
-
-/**
- *  Explosives explode when they die. They can be killed by
- *  running out of hp or by having an age (in ms) greater than their timer
- *  time (set timer to null if you don't want it to do this).
- */
 
 var config = {
   isBallistic: true,
@@ -604,7 +598,6 @@ var render = function render(ctx, game, bullet) {
 
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'black';
-  ctx.lineWidth;
   var bulletWidth = 0.2;
   ctx.fillRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
   ctx.strokeRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height);
@@ -613,7 +606,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":14}],7:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":16}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -666,7 +659,7 @@ var render = function render(ctx, game, coal) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],8:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -706,7 +699,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],9:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],9:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -737,7 +730,7 @@ var render = function render(ctx, game, doodad) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"./makeEntity":14}],10:[function(require,module,exports){
+},{"./makeEntity":16}],10:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -810,7 +803,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"./makeEntity":14}],11:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"./makeEntity":16}],11:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -851,7 +844,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],12:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -899,7 +892,7 @@ var render = function render(ctx, game, glass) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],13:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -946,7 +939,200 @@ var render = function render(ctx, game, iron) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],14:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],14:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../utils/vectors'),
+    add = _require.add;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var _require3 = require('../selectors/sprites'),
+    getInterpolatedIndex = _require3.getInterpolatedIndex;
+
+var _require4 = require('../simulation/actionQueue'),
+    getDuration = _require4.getDuration;
+
+var globalConfig = require('../config');
+
+var config = {
+  isBallistic: true,
+  damage: 10,
+  hp: 1,
+  width: 2,
+  height: 1,
+  velocity: 1000,
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
+
+  DIE: {
+    duration: 1,
+    spriteOrder: [0]
+  },
+  missRate: 0.1
+};
+
+var make = function make(game, position, playerID, theta, velocity) {
+  return _extends({}, makeEntity('LASER', position, config.width, config.height), config, {
+    playerID: playerID,
+
+    // required for ballistics
+    age: 0,
+    actions: [],
+    theta: theta,
+    velocity: velocity != null ? velocity : config.velocity,
+    initialPosition: _extends({}, position),
+    ballisticPosition: _extends({}, position),
+    ballisticTheta: theta,
+    initialTheta: theta
+  });
+};
+
+var render = function render(ctx, game, bullet) {
+  ctx.save();
+  var width = bullet.width,
+      height = bullet.height,
+      theta = bullet.theta,
+      ballisticTheta = bullet.ballisticTheta,
+      ballisticPosition = bullet.ballisticPosition,
+      prevPositions = bullet.prevPositions;
+
+  var position = ballisticPosition;
+
+  ctx.translate(position.x + width / 2, position.y + height / 2);
+  ctx.rotate(ballisticTheta + Math.PI / 2);
+  ctx.translate(-width / 2, -height / 2);
+
+  ctx.fillStyle = 'red';
+  ctx.strokeStyle = 'red';
+  var bulletWidth = 0.2;
+  ctx.fillRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height * 4);
+  ctx.strokeRect(bullet.width / 2 - bulletWidth / 2, 0, bulletWidth, bullet.height * 4);
+
+  ctx.restore();
+};
+
+module.exports = { config: config, make: make, render: render };
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":16}],15:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity.js'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../utils/vectors'),
+    add = _require2.add,
+    subtract = _require2.subtract,
+    equals = _require2.equals,
+    makeVector = _require2.makeVector,
+    vectorTheta = _require2.vectorTheta;
+
+var _require3 = require('../render/renderAgent'),
+    renderAgent = _require3.renderAgent;
+
+var config = {
+  isTower: true,
+  // isPowerConsumer: true,
+  powerConsumed: 4,
+  hp: 120,
+  width: 3,
+  height: 3,
+  damage: 10,
+  thetaAccel: 0.00005,
+  minTheta: 0.2,
+  maxTheta: Math.PI - 0.2,
+  maxThetaSpeed: 0.04,
+
+  needsCooldown: true,
+  shotsTillCooldown: 40,
+
+  // action overrides
+  DIE: {
+    duration: 2,
+    spriteOrder: [0]
+  },
+  SHOOT: {
+    duration: 1,
+    spriteOrder: [0]
+  },
+  COOLDOWN: {
+    duration: 1800,
+    spriteOrder: [0]
+  },
+
+  cost: {
+    STEEL: 16,
+    GLASS: 16,
+    SILICON: 8
+  }
+};
+
+var make = function make(game, position, playerID, projectileType, fireRate, name, theta) {
+  var configCopy = _extends({}, config);
+  if (fireRate != null) {
+    configCopy.SHOOT = _extends({}, configCopy.SHOOT, {
+      duration: fireRate
+    });
+  }
+  return _extends({}, makeEntity('LASER_TURRET', position, config.width, config.height), configCopy, {
+    playerID: playerID,
+
+    // power:
+    isPowered: false,
+    name: name != null ? name : 'Laser Turret',
+    shotsSinceCooldown: 0,
+
+    // angle of the turret
+    theta: theta != null ? theta : config.minTheta,
+    thetaSpeed: 0,
+    thetaAccel: 0,
+
+    // what the tower wants to aim at
+    targetID: null,
+
+    projectileType: projectileType != null ? projectileType : 'LASER',
+
+    actions: []
+
+  });
+};
+
+var render = function render(ctx, game, turret) {
+  var position = turret.position,
+      width = turret.width,
+      height = turret.height,
+      theta = turret.theta;
+
+  ctx.save();
+  ctx.translate(position.x, position.y);
+
+  // barrel of turret
+  ctx.save();
+  ctx.fillStyle = "black";
+  var turretWidth = 3;
+  var turretHeight = 0.3;
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(theta);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.restore();
+
+  // base of turret
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
+  ctx.restore();
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../render/renderAgent":26,"../utils/vectors":39,"./makeEntity.js":16}],16:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -965,7 +1151,7 @@ var makeEntity = function makeEntity(type, position, width, height) {
 module.exports = {
 	makeEntity: makeEntity
 };
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -997,7 +1183,7 @@ var config = {
   width: 1,
   height: 2,
   velocity: 50,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'BASIC_TURRET', 'BASE'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'FAST_TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'BASIC_TURRET', 'LASER_TURRET', 'BASE'],
 
   DIE: {
     duration: 1,
@@ -1059,7 +1245,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":14}],16:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":32,"../simulation/actionQueue":33,"../utils/vectors":39,"./makeEntity":16}],18:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -1088,16 +1274,17 @@ var Entities = {
 
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
-  WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
 
   BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
-  TURRET: require('./turret.js'),
+  FAST_TURRET: require('./turret.js'),
+  LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),
   MISSILE: require('./missile.js'),
   BULLET: require('./bullet.js'),
+  LASER: require('./laser.js'),
 
   BASE: require('./base.js')
 };
@@ -1105,7 +1292,7 @@ var Entities = {
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./iron.js":13,"./missile.js":15,"./silicon.js":17,"./steel.js":18,"./stone.js":19,"./token.js":20,"./turbine.js":21,"./turret.js":22,"./worm.js":23}],17:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./iron.js":13,"./laser.js":14,"./laserTurret.js":15,"./missile.js":17,"./silicon.js":19,"./steel.js":20,"./stone.js":21,"./token.js":22,"./turbine.js":23,"./turret.js":24}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1151,7 +1338,7 @@ var render = function render(ctx, game, silicon) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],18:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],20:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1198,7 +1385,7 @@ var render = function render(ctx, game, steel) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],19:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],21:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1232,7 +1419,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":32,"./makeEntity":14}],20:[function(require,module,exports){
+},{"../selectors/sprites":32,"./makeEntity":16}],22:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1269,7 +1456,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":14}],21:[function(require,module,exports){
+},{"../config":1,"./makeEntity":16}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1346,7 +1533,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":25,"../utils/vectors":39,"./makeEntity.js":14}],22:[function(require,module,exports){
+},{"../render/renderAgent":26,"../utils/vectors":39,"./makeEntity.js":16}],24:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1399,7 +1586,7 @@ var make = function make(game, position, playerID, projectileType, fireRate, nam
       duration: fireRate
     });
   }
-  return _extends({}, makeEntity('TURRET', position, config.width, config.height), configCopy, {
+  return _extends({}, makeEntity('FAST_TURRET', position, config.width, config.height), configCopy, {
     playerID: playerID,
 
     // power:
@@ -1453,120 +1640,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":25,"../utils/vectors":39,"./makeEntity.js":14}],23:[function(require,module,exports){
-'use strict';
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var Agent = require('./agent.js');
-
-var _require = require('../utils/vectors'),
-    add = _require.add,
-    subtract = _require.subtract,
-    equals = _require.equals,
-    makeVector = _require.makeVector,
-    vectorTheta = _require.vectorTheta;
-
-var _require2 = require('../render/renderAgent'),
-    renderAgent = _require2.renderAgent;
-
-var _require3 = require('../render/renderSegmented'),
-    renderSegmented = _require3.renderSegmented;
-
-var config = _extends({}, Agent.config, {
-
-  hp: 50,
-  damage: 0,
-  width: 1,
-  height: 1,
-  segmented: true,
-  maxSegments: 16,
-
-  // action overrides
-  MOVE: {
-    duration: 41 * 10,
-    spriteOrder: [2, 3, 4, 5, 6] // for 180, 90 = +6
-  },
-  DIE: {
-    duration: 41 * 2,
-    spriteOrder: [6]
-  },
-  TURN: {
-    duration: 41 * 12,
-    spriteOrder: [0]
-  },
-
-  // task-specific overrides
-  WANDER: {
-    base: 1,
-    forwardMovementBonus: 0,
-    ALERT: 500,
-    COLONY: 0
-  }
-});
-
-var make = function make(game, position, segmentPositions, playerID) {
-  var segments = [];
-  var prevPos = position;
-  for (var i = 0; i < segmentPositions.length - 1; i++) {
-    var pos = segmentPositions[i];
-    var nextPos = segmentPositions[i + 1];
-
-    var segmentType = 'corner';
-    var theta = 0;
-    var beforeVec = subtract(prevPos, pos);
-    var afterVec = subtract(pos, nextPos);
-    if (beforeVec.x == 0 && afterVec.x == 0) {
-      segmentType = 'straight';
-      theta = beforeVec.y > afterVec.y ? Math.PI / 2 : 3 * Math.PI / 2;
-    } else if (beforeVec.y == 0 && afterVec.y == 0) {
-      segmentType = 'straight';
-      theta = beforeVec.x > afterVec.x ? 2 * Math.PI : 0;
-    } else {
-      segmentType = 'corner';
-      if (beforeVec.x > afterVec.x && beforeVec.y > afterVec.y) {
-        theta = Math.PI;
-      } else if (beforeVec.x < afterVec.x && beforeVec.y < afterVec.y) {
-        theta = 0;
-      } else if (beforeVec.x < afterVec.x && beforeVec.y > afterVec.y) {
-        theta = 3 * Math.PI / 2;
-      } else {
-        theta = Math.PI / 2;
-      }
-    }
-
-    segments.push({
-      position: pos,
-      theta: theta,
-      segmentType: segmentType
-    });
-    prevPos = pos;
-  }
-  var segBeforeTailPos = segmentPositions.length > 1 ? segmentPositions[segmentPositions.length - 2] : position;
-  var tailPos = segmentPositions[segmentPositions.length - 1];
-  segments.push({
-    position: tailPos,
-    theta: vectorTheta(subtract(segBeforeTailPos, tailPos))
-  });
-
-  return _extends({}, Agent.make(game, position, playerID), config, {
-    type: 'WORM',
-    segmented: true,
-    segments: segments,
-    prevHP: config.hp,
-    prevHPAge: 0,
-    actions: []
-  });
-};
-
-var render = function render(ctx, game, entity) {
-  renderAgent(ctx, game, entity, renderSegmented);
-};
-
-module.exports = {
-  make: make, render: render, config: config
-};
-},{"../render/renderAgent":25,"../render/renderSegmented":27,"../utils/vectors":39,"./agent.js":2}],24:[function(require,module,exports){
+},{"../render/renderAgent":26,"../utils/vectors":39,"./makeEntity.js":16}],25:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2424,7 +2498,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   return nextDispersingPheromones;
 };
 
-},{"./config":1,"./selectors/neighbors":30,"./selectors/pheromones":31,"./simulation/entityOperations":34,"./simulation/pheromones":35,"./utils/gridHelpers":36,"./utils/helpers":37,"./utils/stochastic":38,"./utils/vectors":39}],25:[function(require,module,exports){
+},{"./config":1,"./selectors/neighbors":30,"./selectors/pheromones":31,"./simulation/entityOperations":34,"./simulation/pheromones":35,"./utils/gridHelpers":36,"./utils/helpers":37,"./utils/stochastic":38,"./utils/vectors":39}],26:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2441,15 +2515,11 @@ var _require2 = require('../utils/gridHelpers'),
     getEntityPositions = _require2.getEntityPositions,
     getPheromonesInCell = _require2.getPheromonesInCell;
 
-var _require3 = require('../selectors/misc'),
-    onScreen = _require3.onScreen,
-    getPositionsInFront = _require3.getPositionsInFront;
+var _require3 = require('./renderHealthBar'),
+    renderHealthBar = _require3.renderHealthBar;
 
-var _require4 = require('./renderHealthBar'),
-    renderHealthBar = _require4.renderHealthBar;
-
-var _require5 = require('../utils/helpers'),
-    thetaToDir = _require5.thetaToDir;
+var _require4 = require('../utils/helpers'),
+    thetaToDir = _require4.thetaToDir;
 
 var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
   ctx.save();
@@ -2479,21 +2549,28 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 
   ctx.restore();
 
-  // render positions in front
-  if (game.showPositionsInFront) {
-    var positionsInFront = getPositionsInFront(game, agent);
+  if (game.showAgentDecision && agent.decisions != null) {
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
     var _iteratorError = undefined;
 
     try {
-      for (var _iterator = positionsInFront[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var pos = _step.value;
-        var x = pos.x,
-            y = pos.y;
+      for (var _iterator = agent.decisions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var decision = _step.value;
+        var position = decision.position,
+            score = decision.score,
+            chosen = decision.chosen;
+        var x = position.x,
+            y = position.y;
 
-        ctx.strokeStyle = 'red';
-        ctx.strokeRect(x, y, 1, 1);
+        if (chosen) {
+          ctx.strokeStyle = 'red';
+          ctx.strokeRect(x, y, 1, 1);
+        }
+        ctx.strokeStyle = 'black';
+        ctx.fillStyle = 'black';
+        ctx.font = '1px sans serif';
+        ctx.fillText(parseInt(score), x, y + 1, 1);
       }
     } catch (err) {
       _didIteratorError = true;
@@ -2510,150 +2587,10 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
       }
     }
   }
-
-  // render true position
-  if (game.showTruePositions) {
-    ctx.fillStyle = 'rgba(200, 0, 0, 0.4)';
-    ctx.fillRect(agent.position.x, agent.position.y, 1, 1);
-  }
-
-  // render hitbox
-  if (game.showHitboxes) {
-    var _positionsInFront = getEntityPositions(game, agent);
-    var _iteratorNormalCompletion2 = true;
-    var _didIteratorError2 = false;
-    var _iteratorError2 = undefined;
-
-    try {
-      for (var _iterator2 = _positionsInFront[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-        var _pos = _step2.value;
-        var x = _pos.x,
-            y = _pos.y;
-
-        ctx.strokeStyle = 'red';
-        ctx.strokeRect(x, y, 1, 1);
-      }
-    } catch (err) {
-      _didIteratorError2 = true;
-      _iteratorError2 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion2 && _iterator2.return) {
-          _iterator2.return();
-        }
-      } finally {
-        if (_didIteratorError2) {
-          throw _iteratorError2;
-        }
-      }
-    }
-  }
-
-  // render true hitbox
-  if (game.showTrueHitboxes) {
-    var entityPositions = [];
-    for (var x = 0; x < game.gridWidth; x++) {
-      for (var y = 0; y < game.gridHeight; y++) {
-        var entitiesAtPos = lookupInGrid(game.grid, { x: x, y: y });
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
-
-        try {
-          for (var _iterator3 = entitiesAtPos[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var id = _step3.value;
-
-            if (id == agent.id) {
-              entityPositions.push({ x: x, y: y });
-            }
-          }
-        } catch (err) {
-          _didIteratorError3 = true;
-          _iteratorError3 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion3 && _iterator3.return) {
-              _iterator3.return();
-            }
-          } finally {
-            if (_didIteratorError3) {
-              throw _iteratorError3;
-            }
-          }
-        }
-      }
-    }
-    var _iteratorNormalCompletion4 = true;
-    var _didIteratorError4 = false;
-    var _iteratorError4 = undefined;
-
-    try {
-      for (var _iterator4 = entityPositions[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-        var _pos2 = _step4.value;
-        var _x = _pos2.x,
-            _y = _pos2.y;
-
-        ctx.strokeStyle = 'red';
-        ctx.strokeRect(_x, _y, 1, 1);
-      }
-    } catch (err) {
-      _didIteratorError4 = true;
-      _iteratorError4 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion4 && _iterator4.return) {
-          _iterator4.return();
-        }
-      } finally {
-        if (_didIteratorError4) {
-          throw _iteratorError4;
-        }
-      }
-    }
-  }
-
-  if (game.showAgentDecision && agent.decisions != null) {
-    var _iteratorNormalCompletion5 = true;
-    var _didIteratorError5 = false;
-    var _iteratorError5 = undefined;
-
-    try {
-      for (var _iterator5 = agent.decisions[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-        var decision = _step5.value;
-        var position = decision.position,
-            score = decision.score,
-            chosen = decision.chosen;
-        var _x2 = position.x,
-            _y2 = position.y;
-
-        if (chosen) {
-          ctx.strokeStyle = 'red';
-          ctx.strokeRect(_x2, _y2, 1, 1);
-        }
-        ctx.strokeStyle = 'black';
-        ctx.fillStyle = 'black';
-        ctx.font = '1px sans serif';
-        ctx.fillText(parseInt(score), _x2, _y2 + 1, 1);
-      }
-    } catch (err) {
-      _didIteratorError5 = true;
-      _iteratorError5 = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion5 && _iterator5.return) {
-          _iterator5.return();
-        }
-      } finally {
-        if (_didIteratorError5) {
-          throw _iteratorError5;
-        }
-      }
-    }
-  }
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../selectors/misc":29,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39,"./renderHealthBar":26}],26:[function(require,module,exports){
+},{"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39,"./renderHealthBar":27}],27:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -2695,155 +2632,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":36,"../utils/vectors":39}],27:[function(require,module,exports){
-'use strict';
-
-var _require = require('../selectors/sprites'),
-    getSegmentSprite = _require.getSegmentSprite,
-    getSegmentHead = _require.getSegmentHead,
-    getSegmentTail = _require.getSegmentTail,
-    getDeadSegmentSprite = _require.getDeadSegmentSprite,
-    getDeadSegmentHead = _require.getDeadSegmentHead,
-    getDeadSegmentTail = _require.getDeadSegmentTail;
-
-var _require2 = require('./renderHealthBar'),
-    renderHealthBar = _require2.renderHealthBar;
-
-var _require3 = require('../utils/vectors'),
-    subtract = _require3.subtract,
-    add = _require3.add,
-    makeVector = _require3.makeVector,
-    vectorTheta = _require3.vectorTheta;
-
-var _require4 = require('../selectors/misc'),
-    onScreen = _require4.onScreen;
-
-var renderSegmented = function renderSegmented(ctx, game, entity) {
-  ctx.save();
-
-  // render head:
-  var headObj = getSegmentHead(game, entity);
-  ctx.drawImage(headObj.img, headObj.x, headObj.y, headObj.width, headObj.height, 0, 0, 1, 1);
-
-  // undo the rotation so the segments end up in the right place
-  var width = 1;
-  var height = 1;
-  ctx.translate(width / 2, height / 2);
-  ctx.rotate(-1 * (entity.theta - Math.PI / 2));
-  ctx.translate(-width / 2, -height / 2);
-
-  // render segments:
-  for (var i = 0; i < entity.segments.length - 1; i++) {
-    var segment = entity.segments[i];
-    if (!onScreen(game, { position: segment.position, width: 1, height: 1 })) continue;
-    var obj = getSegmentSprite(game, entity, segment);
-    var segPos = subtract(segment.position, entity.position);
-    ctx.save();
-    ctx.translate(segPos.x + 0.5, segPos.y + 0.5);
-    ctx.rotate(segment.theta + Math.PI / 2);
-    ctx.translate(-0.5, -0.5);
-    ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, 1, 1);
-    ctx.restore();
-  }
-
-  // render tail segment:
-  var tail = entity.segments[entity.segments.length - 1];
-  var tailObj = getSegmentTail(game, entity, tail);
-  var tailPos = subtract(tail.position, entity.position);
-  ctx.save();
-  ctx.translate(tailPos.x + 0.5, tailPos.y + 0.5);
-  ctx.rotate(tail.theta - Math.PI / 2);
-  ctx.translate(-0.5, -0.5);
-  ctx.drawImage(tailObj.img, tailObj.x, tailObj.y, tailObj.width, tailObj.height, 0, 0, 1, 1);
-  ctx.restore();
-
-  // health bar
-  // ctx.save();
-  // ctx.translate(
-  //   entity.position.x + 0.5,
-  //   entity.position.y + 0.5,
-  // );
-  // ctx.rotate(entity.theta - Math.PI / 2);
-  // ctx.translate(-0.5, -0.5);
-  // ctx.restore();
-
-  ctx.restore();
-};
-
-////////////////////////////////////////////////////////////////
-// Canvas
-////////////////////////////////////////////////////////////////
-
-var renderWormCanvas = function renderWormCanvas(ctx, game, dims, entity) {
-  ctx.save();
-  ctx.translate(entity.position.x, entity.position.y);
-  ctx.fillStyle = 'pink';
-  if (entity.type == 'CENTIPEDE') {
-    ctx.fillStyle = 'white';
-  }
-  // head
-  var nextSegment = entity.segments[0];
-  var headDir = vectorTheta(subtract(entity.position, nextSegment.position));
-  ctx.save();
-  ctx.translate(0.5, 0.5);
-  ctx.rotate(headDir - Math.PI / 2);
-  ctx.translate(-0.5, -0.5);
-  if (onMinimapSmall(dims, entity)) {
-    ctx.fillRect(0, 0, 1, 0.5);
-    ctx.beginPath();
-    ctx.arc(0.5, 0.5, 0.5, 0, Math.PI);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
-  // body
-  for (var i = 0; i < entity.segments.length - 1; i++) {
-    var segment = entity.segments[i];
-    var _relPos = subtract(segment.position, entity.position);
-    if (onMinimapSmall(dims, { position: segment.position, width: 1, height: 1 })) {
-      ctx.fillRect(_relPos.x, _relPos.y, 1, 1);
-    }
-  }
-  // tail
-  var tail = entity.segments[entity.segments.length - 1];
-  var relPos = subtract(tail.position, entity.position);
-  var prevTail = entity.segments[entity.segments.length - 2];
-  var tailDir = vectorTheta(subtract(tail.position, prevTail.position));
-  ctx.save();
-  ctx.translate(relPos.x + 0.5, relPos.y + 0.5);
-  ctx.rotate(tailDir - Math.PI / 2);
-  ctx.translate(-1 * (relPos.x + 0.5), -1 * (relPos.y + 0.5));
-  if (onMinimapSmall(dims, { position: tail.position, width: 1, height: 1 })) {
-    ctx.fillRect(relPos.x, relPos.y, 1, 0.5);
-    ctx.beginPath();
-    ctx.arc(relPos.x + 0.5, relPos.y + 0.5, 0.5, 0, Math.PI);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
-
-  ctx.restore();
-};
-
-var onMinimapSmall = function onMinimapSmall(dims, entity) {
-  var viewPos = dims.viewPos,
-      viewWidth = dims.viewWidth,
-      viewHeight = dims.viewHeight;
-  var position = entity.position,
-      width = entity.width,
-      height = entity.height;
-  var x = position.x,
-      y = position.y;
-
-
-  return x >= viewPos.x && y >= viewPos.y && x + width <= viewWidth + viewPos.x && y + height <= viewHeight + viewPos.y;
-};
-
-module.exports = {
-  renderSegmented: renderSegmented,
-  renderWormCanvas: renderWormCanvas
-};
-},{"../selectors/misc":29,"../selectors/sprites":32,"../utils/vectors":39,"./renderHealthBar":26}],28:[function(require,module,exports){
+},{"../utils/gridHelpers":36,"../utils/vectors":39}],28:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -2891,6 +2680,7 @@ var collidesWith = function collidesWith(game, entity, blockingTypes) {
 
 // use special logic to see what is considered a collision at a given space
 var collisionsAtSpace = function collisionsAtSpace(game, entity, blockingTypes, pos, neighbor) {
+  if (entity == null) return [];
   var collisions = lookupInGrid(game.grid, pos).map(function (id) {
     return game.entities[id];
   })
@@ -3095,24 +2885,13 @@ var getControlledEntityInteraction = function getControlledEntityInteraction(gam
   return makeAction(game, agent, 'PICKUP', { pickup: null, position: positionsInFront[0] });
 };
 
-var canAffordBuilding = function canAffordBuilding(base, cost) {
-  var resources = base.resources;
-  for (var resource in cost) {
-    if (resources[resource] == null || resources[resource] < cost[resource]) {
-      return false;
-    }
-  }
-  return true;
-};
-
 module.exports = {
   onScreen: onScreen,
   getPositionsInFront: getPositionsInFront,
   getPositionsBehind: getPositionsBehind,
   isFacing: isFacing,
   canDoMove: canDoMove,
-  getControlledEntityInteraction: getControlledEntityInteraction,
-  canAffordBuilding: canAffordBuilding
+  getControlledEntityInteraction: getControlledEntityInteraction
 };
 },{"../selectors/collisions":28,"../selectors/neighbors":30,"../simulation/actionQueue":33,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],30:[function(require,module,exports){
 'use strict';
@@ -4964,7 +4743,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":14,"../entities/registry":16,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/pheromones":35,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],35:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":16,"../entities/registry":18,"../selectors/neighbors":30,"../selectors/pheromones":31,"../simulation/pheromones":35,"../utils/gridHelpers":36,"../utils/helpers":37,"../utils/vectors":39}],35:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5825,4 +5604,4 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}]},{},[24]);
+},{}]},{},[25]);

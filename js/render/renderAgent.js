@@ -6,7 +6,6 @@ const {
 const {
   lookupInGrid, getEntityPositions, getPheromonesInCell,
 } = require('../utils/gridHelpers');
-const {onScreen, getPositionsInFront} = require('../selectors/misc');
 const {renderHealthBar} = require('./renderHealthBar');
 const {thetaToDir} = require('../utils/helpers');
 
@@ -40,52 +39,6 @@ const renderAgent = (ctx, game, agent: Agent, spriteRenderFn: () => {}): void =>
   // }
 
   ctx.restore();
-
-  // render positions in front
-  if (game.showPositionsInFront) {
-    const positionsInFront = getPositionsInFront(game, agent);
-    for (const pos of positionsInFront) {
-      const {x, y} = pos;
-      ctx.strokeStyle = 'red';
-      ctx.strokeRect(x, y, 1, 1);
-    }
-  }
-
-  // render true position
-  if (game.showTruePositions) {
-    ctx.fillStyle = 'rgba(200, 0, 0, 0.4)';
-    ctx.fillRect(agent.position.x, agent.position.y, 1, 1);
-  }
-
-  // render hitbox
-  if (game.showHitboxes) {
-    const positionsInFront = getEntityPositions(game, agent);
-    for (const pos of positionsInFront) {
-      const {x, y} = pos;
-      ctx.strokeStyle = 'red';
-      ctx.strokeRect(x, y, 1, 1);
-    }
-  }
-
-  // render true hitbox
-  if (game.showTrueHitboxes) {
-    const entityPositions = [];
-    for (let x = 0; x < game.gridWidth; x++) {
-      for (let y = 0; y < game.gridHeight; y++) {
-        const entitiesAtPos = lookupInGrid(game.grid, {x, y});
-        for (const id of entitiesAtPos) {
-          if (id == agent.id) {
-            entityPositions.push({x, y});
-          }
-        }
-      }
-    }
-    for (const pos of entityPositions) {
-      const {x, y} = pos;
-      ctx.strokeStyle = 'red';
-      ctx.strokeRect(x, y, 1, 1);
-    }
-  }
 
   if (game.showAgentDecision && agent.decisions != null) {
     for (const decision of agent.decisions) {

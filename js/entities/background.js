@@ -4,7 +4,7 @@ const {getBackgroundSprite} = require('../selectors/sprites');
 const {makeEntity} = require('./makeEntity');
 
 const config = {
-  notOccupying: true, // when creating entities w/marquee, they can go on top of this
+  // notOccupying: true, // when creating entities w/marquee, they can go on top of this
   // notBlockingPutdown: true, // when putting down entities, they can go on top of this
   notAnimated: true,
 };

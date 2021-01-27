@@ -135,8 +135,18 @@ const gameReducer = (game: Game, action: Action): Game => {
       return game;
     }
     case 'FILL_PHEROMONE': {
-      const {gridPos, pheromoneType, playerID, quantity} = action;
-      fillPheromone(game, gridPos, pheromoneType, playerID, quantity);
+      const {gridPos, pheromoneType, playerID, quantity, rect} = action;
+      if (rect != null) {
+        const {position, width, height} = rect;
+          for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+              const pos = add(position, {x, y});
+              fillPheromone(game, pos, pheromoneType, playerID, quantity);
+            }
+          }
+      } else if (gridPos != null) {
+        fillPheromone(game, gridPos, pheromoneType, playerID, quantity);
+      }
       return game;
     }
     case 'UPDATE_ALL_PHEROMONES': {
@@ -189,63 +199,6 @@ const gameReducer = (game: Game, action: Action): Game => {
     case 'SET_IS_RAINING': {
       const {rainTicks} = action;
       game.rainTicks = rainTicks;
-      return game;
-    }
-
-    case 'MARK_FOR_DRILLING': {
-      const {playerID, entityIDs} = action;
-
-      return game;
-    }
-    case 'MARK_FOR_PICKUP': {
-      return game;
-    }
-    case 'MARK_FOR_PUTDOWN': {
-      return game;
-    }
-    case 'MARK_BLUEPRINT': {
-      return game;
-    }
-
-    case 'MARK_DIRT': {
-      const {playerID, dirtIDs} = action;
-      let taskNeed = 0;
-      const pherSources = [];
-      for (const id of dirtIDs) {
-        const dirt = game.entities[id];
-        if (dirt.marked == null && dirt.position != null) {
-          taskNeed++;
-          game.markedDirtIDs.push(id);
-        }
-        dirt.marked = playerID;
-        fillPheromone(game, dirt.position, 'MARKED_DIRT_PHER', playerID);
-        markEntityAsStale(game, dirt);
-      }
-      game.bases[playerID].taskNeed['GO_TO_DIRT'] += taskNeed;
-      return game;
-    }
-    case 'MARK_DIRT_PUTDOWN': {
-      const {playerID, emptyPositions} = action;
-      for (const pos of emptyPositions) {
-        let alreadyAdded = false;
-        for (const p of game.dirtPutdownPositions) {
-          if (equals(p, pos)) {
-            alreadyAdded = true;
-            break;
-          }
-        }
-        if (alreadyAdded) {
-          continue;
-        } else {
-          game.dirtPutdownPositions.push(pos);
-          game.floodFillSources.push({
-            playerID,
-            pheromoneType: 'DIRT_DROP',
-            position: pos,
-            quantity: globalConfig.pheromones.DIRT_DROP.quantity,
-          });
-        }
-      }
       return game;
     }
     case 'COLLECT_ENTITIES': {

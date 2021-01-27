@@ -27,16 +27,17 @@ const Entities = {
 
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
-  WORM: require('./worm.js'),
   TOKEN: require('./token.js'),
 
   BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
-  TURRET: require('./turret.js'),
+  FAST_TURRET: require('./turret.js'),
+  LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),
   MISSILE: require('./missile.js'),
   BULLET: require('./bullet.js'),
+  LASER: require('./laser.js'),
 
   BASE: require('./base.js'),
 };

@@ -62,7 +62,7 @@ function LevelEditor(props: Props): React.Node {
     theta: -0.6,
     velocity: 70,
     warheadType: 'DYNAMITE',
-    fireRate: Entities.TURRET.config.SHOOT.duration,
+    fireRate: Entities.FAST_TURRET.config.SHOOT.duration,
     projectileType: 'BULLET',
     explosionRadiusType: 'CIRCULAR',
 
@@ -97,9 +97,11 @@ function LevelEditor(props: Props): React.Node {
       dispatch({type: 'SET_MOUSE_MODE', mouseMode: 'NONE'});
       handlers.mouseMove = () => {}; // placeholder
       handlers.leftUp = (state, dispatch, gridPos) => {
+        const rect = toRect(state.game.mouse.downPos, gridPos);
         dispatch({
           type: 'FILL_PHEROMONE',
           gridPos,
+          rect,
           pheromoneType: editor.selectedPheromone,
           playerID: editor.playerID,
           quantity: editor.pheromoneQuantity,
@@ -709,10 +711,11 @@ function createEntities(game, dispatch, editor, rect): void {
       args = [editor.playerID, editor.theta, editor.velocity];
       break;
     }
+    case 'LASER_TURRET':
     case 'BASIC_TURRET':
       args = [editor.playerID];
       break;
-    case 'TURRET': {
+    case 'FAST_TURRET': {
       args = [editor.playerID, editor.projectileType, editor.fireRate];
       break;
     }
@@ -807,7 +810,7 @@ function createEntityOptions(game, editor, setEditor): React.Node {
         />
       </span>);
       break;
-    case 'TURRET': {
+    case 'FAST_TURRET': {
       const projectileTypes = [];
       for (const entityType in Entities) {
         if (Entities[entityType].config.isBallistic) {

@@ -121,6 +121,7 @@ function Game(props: Props): React.Node {
         base={game.bases[game.playerID]}
         placeType={game.placeType}
         tick={game.time}
+        game={game}
       />
       <BottomBar dispatch={dispatch}
         game={game}

@@ -396,6 +396,17 @@ const updateTowers = (game): void => {
 
     // shoot at target
     if (tower.targetID != null && !isActionTypeQueued(tower, 'SHOOT')) {
+      if (tower.needsCooldown) {
+        tower.shotsSinceCooldown += 1;
+        if (tower.shotsSinceCooldown > tower.shotsTillCooldown) {
+          console.log("in cooldown");
+          tower.shotsSinceCooldown = 0;
+          queueAction(
+            game, tower,
+            makeAction(game, tower, 'COOLDOWN', null),
+          );
+        }
+      }
       queueAction(
         game, tower,
         makeAction(
@@ -464,7 +475,9 @@ const updateBases = (game: Game): void => {
         if (game.bases[game.playerID].resources[type] == null) {
           game.bases[game.playerID].resources[type] = 0;
         }
-        game.bases[game.playerID].resources[type] += 1;
+        // pro-rate quantity based on hp
+        let quantity = Math.ceil(entity.hp) / Entities[type].config.hp;
+        game.bases[game.playerID].resources[type] += quantity;
       }
     }
   }
