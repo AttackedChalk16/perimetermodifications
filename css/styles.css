@@ -32,14 +32,14 @@ body {
 
 h1 {
   font-size: 7em;
-  color: #8FBC8F;
+  color: steelblue;
   margin-bottom: 0;
   margin-top: 18px;
 }
 
 h3 {
   margin-top: 0;
-  color: #8FBC8F;
+  color: steelblue;
 }
 
 .displayOnHover:hover .hidden {
@@ -54,7 +54,7 @@ button {
 }
 
 #PLAY_button {
-  background-color: #8FBC8F;
+  background-color: steelblue;
 }
 #PLAY_button:hover {
   background-color: #568f56;
@@ -62,7 +62,7 @@ button {
 }
 
 #benhub {
-  color: #8FBC8F;
+  color: steelblue;
 }
 #benhub:hover {
   color: #568f56;

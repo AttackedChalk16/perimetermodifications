@@ -9,7 +9,6 @@ const config = {
   isTiled: true,
   isCollectable: true,
   hp: 10,
-  pheromoneEmitter: true,
   // pheromoneType: 'MOLTEN_SAND',
   // meltTemp: 100, // temperature at which you melt
   // heatQuantity: 120, // amount of glass produced when melted
@@ -28,7 +27,6 @@ const make = (
     dictIndexStr: '',
     hp: hp || config.hp,
     playerID: 0, // gaia
-    quantity: 0, // amount of pheromone emitted
   };
 };
 

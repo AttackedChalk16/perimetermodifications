@@ -6,21 +6,15 @@
 
 
 - - - - - - ISSUES - - - - - -
+  - sand:
+    - condenses hugely when you put hot coal on it, so you can only get
+      very little silicon
   - coal:
-    - coal placed directly on molten iron deletes both and leaves heat
-    - coal that catches on fire en route to collection never collects
-    - coal can delete heat somehow?
     - can strand molten pheromones that don't interact with anything
-  - sand
-    - placing coal on top of sand can turn the whole pile to glass?
-    - placing hot coal on top of sand can break the whole game
   - turbines:
     - spin direction depends on left/right-hand side of turbine
     - acceleration may work better than speed for e.g. contradictory flows
     - reducing pherToGive doesn't actually slow down an array of turbines
-  - missiles:
-    - missiles are spawning more slowly than expected in the 6, 9+ minute mark
-  - base takes more damage than you would expect because of its size
 
 
 - - - - - - TODO - - - - - -
@@ -30,6 +24,9 @@
   - steam
     - if steam cool rate is less than water heat rate then clouds might form
     - set higher threshold for steam before it condenses back to water
+  - procedurally generate level:
+    - need to guarantee at least one pocket of each resource
+    - random seed
 
 
 - - - - - - BARE BONES - - - - - -
@@ -37,9 +34,13 @@
     - separate pheromone for oil on fire?
       - how is heat produced from this?
     - can be separated into sulphur?
+    - should give off some gas
+    - limit on phase change if there's already a certain concentration
+      where you are?
 
 
 - - - - - - LATER - - - - - - - -
+  - cause game loss when base is killed
   - HUDS
     - render the entity in the cards for the HUDS
   - turrets
@@ -60,40 +61,14 @@
 
 
 - - - - - - - TO THINK ABOUT - - - - - - -
-  - "god" mode instead of agents:
-    - configurable explosives for clearing areas
-    - "base" where resources are accumulated
-    - mouse interactions:
-      - what about pheromones like water/oil/sand?
-      - palette for each type of resource to place in the world
-        - basic resources:
-          - dirt, stone, coal, iron, steel, sand, glass, silicon
-        - structures
-          - explosives, turbines, turrets
-      - collecting resources
-        - only collecting resources that are "connected" to the base?
-        - including dirt that you can just click
-        - could animate it being sucked into the base
-      - fire starter of some sort (lighter, explosives?)
-    - how are resources delivered to the base?
-      - trains?
-        - how do you load stuff onto a train?
-      - if there's a path to the base you can just click it to collect it?
-        - how to visualize this path to make it understandable?
   - ways to have additional interaction with terrain/environment
     - water wears away dirt over time
-    - explosives as a base building mechanic
+    - oil that can be separated into gases?
+    - how to separate sand and water?
+    - other forms of heat?
   - crafting
-    - towers
-    - turbines
     - how to convey crafting recipes
       - e.g. tower comes from steel (and?), where does steel come from
-  - agent roles
-    - drill
-    - train
-    - miner/digger/furnace shoveller
-    - engineer
-    - demolitions expert
 
 
 - - - - - - - TO DRAW - - - - - -
@@ -109,6 +84,7 @@
   - later
     - drill
     - train engine + cars
+  - melting animation to replace food
 
 
 - - - - - - - BUGS - - - - - - -
@@ -128,31 +104,6 @@
   - molten iron isn't preserving its quantity when condensing
     (when viscosity > 0)
     - it ends up creating an additional entity underneath
-
-
-- - - - - - AGENT-BASED MECHANICS - - - - - -
-  - HUDs
-    - infoHUD
-      - should also say what agents are holding
-    - HUD for selecting marquee type
-      - marqueeMode property
-        - needs to override handlers from levelEditor
-        - checking for handlers in mouseControlsSystem doesn't work
-        - dropDown UI in HUD
-      - mark for drilling
-      - mark for pickup
-      - mark for putdown
-      - mark for blueprint
-      - marked dirt should be a pheromoneSource
-        - by changing quantity from 0
-  - drilling agent
-    - attacks marked entities
-    - marked entities should switch to pheromone emitters dynamically?
-      or can they always be pheromone emitters?
-  - engineer agent(s)
-    - marking pickup/putdown
-    - marking blueprints to construction things
-      - and marking building materials?
 
 
 - - - - - - - REFACTORS - - - - - - -

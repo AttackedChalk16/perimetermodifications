@@ -37,6 +37,7 @@ const triggerExplosion = (game, explosive, precompute): Array<Vector> => {
   }
 
   let positionsCleared = [];
+  let alreadyDamaged = {};
   for (const quadrant of quadrantThetas) {
     for (let i = 0; i < numRays; i++) {
       let damage = explosive.damage;
@@ -51,6 +52,8 @@ const triggerExplosion = (game, explosive, precompute): Array<Vector> => {
           .map(id => game.entities[id])
           .forEach(e => {
             if (e == null || damage <= 0) return;
+            if (alreadyDamaged[e.id]) return;
+            alreadyDamaged[e.id] = true;
             if (e.hp > damage) {
               if (!precompute) {
                 dealDamageToEntity(game, e, damage);

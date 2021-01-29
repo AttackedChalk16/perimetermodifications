@@ -90,7 +90,7 @@ var pheromones = {
     color: 'rgb(255, 255, 255)',
     tileIndex: 3,
 
-    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'MOLTEN_SAND',
@@ -115,7 +115,7 @@ var pheromones = {
     coolsTo: 'GLASS',
     coolsToEntity: true,
     coolRate: 1, // amount of yourself that condenses per step
-    coolConcentration: 120, // amount of yourself needed before condensation starts
+    coolConcentration: 10, // amount of yourself needed before condensation starts
     viscosity: {
       verticalLeftOver: 0,
       diagonalLeftOver: 0.5,
@@ -333,7 +333,7 @@ var _require2 = require('./makeEntity'),
     makeEntity = _require2.makeEntity;
 
 var config = {
-  notOccupying: true, // when creating entities w/marquee, they can go on top of this
+  // notOccupying: true, // when creating entities w/marquee, they can go on top of this
   // notBlockingPutdown: true, // when putting down entities, they can go on top of this
   notAnimated: true
 };
@@ -367,7 +367,7 @@ var _require = require('./makeEntity'),
 var globalConfig = require('../config');
 
 var config = {
-  hp: 300,
+  hp: 150,
   width: 3,
   height: 3,
   pheromoneEmitter: true,
@@ -1035,7 +1035,7 @@ var _require3 = require('../render/renderAgent'),
 
 var config = {
   isTower: true,
-  // isPowerConsumer: true,
+  isPowerConsumer: true,
   powerConsumed: 4,
   hp: 120,
   width: 3,
@@ -1065,8 +1065,8 @@ var config = {
 
   cost: {
     STEEL: 16,
-    GLASS: 16,
-    SILICON: 8
+    GLASS: 8,
+    SILICON: 4
   }
 };
 
@@ -1306,8 +1306,7 @@ var _require2 = require('./makeEntity'),
 var config = {
   isTiled: true,
   isCollectable: true,
-  hp: 10,
-  pheromoneEmitter: true
+  hp: 10
   // pheromoneType: 'MOLTEN_SAND',
   // meltTemp: 100, // temperature at which you melt
   // heatQuantity: 120, // amount of glass produced when melted
@@ -1317,8 +1316,7 @@ var make = function make(game, position, width, height, hp) {
   return _extends({}, makeEntity('SILICON', position, width || 1, height || 1), config, {
     dictIndexStr: '',
     hp: hp || config.hp,
-    playerID: 0, // gaia
-    quantity: 0 // amount of pheromone emitted
+    playerID: 0 // gaia
   });
 };
 
@@ -1482,7 +1480,7 @@ var config = {
   height: 2,
   maxThetaSpeed: 0.4,
   cost: {
-    STEEL: 4
+    STEEL: 1
   }
 };
 
@@ -5372,7 +5370,7 @@ var shamefulGaussian = function shamefulGaussian() {
   return (rand() + rand() + rand() + rand() + rand() + rand() - 3) / 3;
 };
 var normalIn = function normalIn(min, max) {
-  var gaussian = shamefulGaussian();
+  var gaussian = (shamefulGaussian() + 1) / 2;
   return floor(min + gaussian * (max - min + 1));
 };
 

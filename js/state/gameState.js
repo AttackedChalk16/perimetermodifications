@@ -105,6 +105,7 @@ const initBaseState = (
     keepMarquee: false,
     mouseMode: 'COLLECT',
     placeType: null,
+    prevInteractPosition: null,
     mouse: {
       isLeftDown: false,
       isRightDown: false,

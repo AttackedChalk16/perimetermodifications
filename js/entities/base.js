@@ -4,7 +4,7 @@ const {makeEntity} = require('./makeEntity');
 const globalConfig = require('../config');
 
 const config = {
-  hp: 300,
+  hp: 150,
   width: 3,
   height: 3,
   pheromoneEmitter: true,

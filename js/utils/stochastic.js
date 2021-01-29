@@ -8,7 +8,7 @@ const randomIn = (min, max) => floor(min + rand() * (max - min + 1));
 
 const shamefulGaussian = () => (rand() + rand() + rand() + rand() + rand() + rand() - 3) / 3;
 const normalIn = (min, max) => {
-  const gaussian = shamefulGaussian();
+  const gaussian = (shamefulGaussian() + 1) / 2;
   return floor(min + gaussian * (max - min + 1));
 };
 

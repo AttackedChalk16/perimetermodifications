@@ -19,23 +19,26 @@ const initMissileAttackSystem = (store) => {
     let freq = 5; // time in seconds
     let altProb = 0;
     if (game.time > (60 * 60 * 1)) {
+      freq = 5;
+    }
+    if (game.time > (60 * 60 * 5)) {
       freq = 2;
-    } else if (game.time > (60 * 60 * 3)) {
-      freq = 1;
       altProb = 0.05;
-    } else if (game.time > (60 * 60 * 6)) {
-      freq = 0.25;
+    }
+    if (game.time > (60 * 60 * 10)) {
+      freq = 1;
       altProb = 0.1;
-    } else if (game.time > (60 * 60 * 9)) {
-      freq = 0.1;
+    }
+    if (game.time > (60 * 60 * 12)) {
+      freq = 0.5;
       altProb = 0.15;
     }
     let alternateSide = Math.random() < altProb;
     if (time > 1 && time % (freq * 60) == 0) {
       const playerID = 2;
-      let pos = {x: normalIn(2, 5), y: normalIn(25, 45)};
-      let theta = -1 * normalIn(30, 75) / 100;
-      const velocity = normalIn(55, 90);
+      let pos = {x: randomIn(2, 5), y: randomIn(25, 45)};
+      let theta = -1 * randomIn(25, 75) / 100;
+      const velocity = randomIn(30, 90);
 
       if (alternateSide) {
         pos.x = game.gridWidth - pos.x - 1;

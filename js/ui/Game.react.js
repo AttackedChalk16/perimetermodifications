@@ -156,6 +156,50 @@ function registerHotkeys(dispatch) {
       });
     }
   });
+  dispatch({
+    type: 'SET_HOTKEY', press: 'onKeyDown',
+    key: 'up',
+    fn: (s) => {
+      const game = s.getState().game;
+      let moveAmount = Math.round(Math.max(1, game.gridHeight / 10));
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: 0, y: moveAmount}),
+      });
+    }
+  });
+  dispatch({
+    type: 'SET_HOTKEY', press: 'onKeyDown',
+    key: 'down',
+    fn: (s) => {
+      const game = s.getState().game;
+      let moveAmount = Math.round(Math.max(1, game.gridHeight / 10));
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: 0, y: -1 * moveAmount}),
+      });
+    }
+  });
+  dispatch({
+    type: 'SET_HOTKEY', press: 'onKeyDown',
+    key: 'left',
+    fn: (s) => {
+      const game = s.getState().game;
+      let moveAmount = Math.round(Math.max(1, game.gridWidth / 10));
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: -1 * moveAmount, y: 0}),
+      });
+    }
+  });
+  dispatch({
+    type: 'SET_HOTKEY', press: 'onKeyDown',
+    key: 'right',
+    fn: (s) => {
+      const game = s.getState().game;
+      let moveAmount = Math.round(Math.max(1, game.gridWidth / 10));
+      dispatch({
+        type: 'SET_VIEW_POS', viewPos: add(game.viewPos, {x: moveAmount, y: 0}),
+      });
+    }
+  });
 }
 
 function configureMouseHandlers(game) {
@@ -167,8 +211,12 @@ function configureMouseHandlers(game) {
         handlePlace(state, dispatch, gridPos);
       }
     },
-    leftDown: handleCollect,
-    rightDown: handlePlace,
+    leftDown: (state, dispatch, gridPos) => {
+      handleCollect(state, dispatch, gridPos, true /* ignore prevPos */);
+    },
+    rightDown: (state, dispatch, gridPos) => {
+      handlePlace(state, dispatch, gridPos, true /* ignore prevPos */);
+    },
     scroll: (state, dispatch, zoom) => {
       dispatch({type: 'INCREMENT_ZOOM', zoom});
     },

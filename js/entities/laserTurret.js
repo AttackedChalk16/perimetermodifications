@@ -6,7 +6,7 @@ const {renderAgent} = require('../render/renderAgent');
 
 const config = {
   isTower: true,
-  // isPowerConsumer: true,
+  isPowerConsumer: true,
   powerConsumed: 4,
   hp: 120,
   width: 3,
@@ -36,8 +36,8 @@ const config = {
 
   cost: {
     STEEL: 16,
-    GLASS: 16,
-    SILICON: 8,
+    GLASS: 8,
+    SILICON: 4,
   },
 };
 

@@ -94,7 +94,7 @@ const pheromones = {
     color: 'rgb(255, 255, 255)',
     tileIndex: 3,
 
-    blockingTypes: [...pheromoneBlockingTypes],
+    blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'MOLTEN_SAND',
@@ -119,7 +119,7 @@ const pheromones = {
     coolsTo: 'GLASS',
     coolsToEntity: true,
     coolRate: 1, // amount of yourself that condenses per step
-    coolConcentration: 120, // amount of yourself needed before condensation starts
+    coolConcentration: 10, // amount of yourself needed before condensation starts
     viscosity: {
       verticalLeftOver: 0,
       diagonalLeftOver: 0.5,

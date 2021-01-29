@@ -1,6 +1,7 @@
 // @flow
 
 const levels = require('../levels/levels');
+const {getProceduralLevel} = require('../utils/proceduralLevel');
 
 /**
  * Levels can have their own upgrades, but these should be npc-specific
@@ -11,7 +12,10 @@ const levels = require('../levels/levels');
  */
 function loadLevel(store, levelName, additionalUpgrades): void {
   const {dispatch} = store;
-  const level = levels[levelName];
+  let level = levels[levelName];
+  if (levelName == 'proceduralLevel') {
+    level = getProceduralLevel();
+  }
 
   dispatch({type: 'SET_CURRENT_LEVEL_NAME', levelName});
   dispatch({type: 'SET_LEVEL', level});

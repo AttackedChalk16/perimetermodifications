@@ -26,7 +26,7 @@ function Lobby(props: Props): React.Node {
   const {dispatch, store} = props;
   const state = store.getState();
 
-  const [level, setLevel] = useState('test');
+  const [level, setLevel] = useState('procedural');
   const [loading, setLoading] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -51,7 +51,7 @@ function Lobby(props: Props): React.Node {
       if (state.game != null) {
         progress = state.game.loadingProgress;
       }
-      let title = 'MAD'
+      let title = 'perimeter'
       let body = '';
       if (isMobile()) {
         title = '~~Experimental~~ Mobile Mode';
@@ -113,7 +113,7 @@ function Lobby(props: Props): React.Node {
           fontFamily: '"Courier New", sans-serif',
         }}
       >
-        <h1>MAD</h1>
+        <h1>perimeter</h1>
         <h3>~Alpha~</h3>
         <Button
           style={{

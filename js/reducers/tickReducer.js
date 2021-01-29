@@ -104,7 +104,7 @@ const doTick = (game: Game): Game => {
       game.focusedEntity = base;
     }
   }
-  if (game.time > 60) {
+  if (game.time > 45) {
     game.focusedEntity = null;
   }
 
@@ -224,7 +224,12 @@ const updateBallistics = (game): void => {
       if (ballistic.missRate == null ||
         (ballistic.missRate != null && Math.random() > ballistic.missRate)
       ) {
-        collisions.forEach(e => dealDamageToEntity(game, e, ballistic.damage));
+        const alreadyDamaged = {};
+        collisions.forEach(e => {
+          if (alreadyDamaged[e.id]) return;
+          alreadyDamaged[e.id] = true;
+          dealDamageToEntity(game, e, ballistic.damage);
+        });
         queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
         continue;
       }
@@ -399,7 +404,6 @@ const updateTowers = (game): void => {
       if (tower.needsCooldown) {
         tower.shotsSinceCooldown += 1;
         if (tower.shotsSinceCooldown > tower.shotsTillCooldown) {
-          console.log("in cooldown");
           tower.shotsSinceCooldown = 0;
           queueAction(
             game, tower,

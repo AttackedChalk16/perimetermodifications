@@ -12,7 +12,7 @@ const config = {
   height: 2,
   maxThetaSpeed: 0.4,
   cost: {
-    STEEL: 4,
+    STEEL: 1,
   },
 };
 

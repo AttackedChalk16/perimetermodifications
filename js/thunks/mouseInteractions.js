@@ -10,12 +10,16 @@ const {
   canAffordBuilding, getModifiedCost,
 } = require('../selectors/buildings');
 
-const handleCollect = (state, dispatch, gridPos) => {
+const handleCollect = (state, dispatch, gridPos, ignorePrevPos) => {
   const game = state.game;
   // if (!state.game.mouse.isLeftDown) return;
 
   // don't interact with the same position twice
-  if (game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
+  if (
+    !ignorePrevPos &&
+    game.prevInteractPosition != null &&
+    equals(game.prevInteractPosition, gridPos)
+  ) {
     return;
   }
 
@@ -34,12 +38,16 @@ const handleCollect = (state, dispatch, gridPos) => {
   dispatch({type: 'COLLECT_ENTITIES', entities, position: gridPos});
 }
 
-const handlePlace = (state, dispatch, gridPos) => {
+const handlePlace = (state, dispatch, gridPos, ignorePrevPos) => {
   const game = state.game;
   // if (!state.game.mouse.isRightDown) return;
 
   // don't interact with the same position twice
-  if (game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
+  if (
+    !ignorePrevPos &&
+    game.prevInteractPosition != null &&
+    equals(game.prevInteractPosition, gridPos)
+  ) {
     return;
   }
 
