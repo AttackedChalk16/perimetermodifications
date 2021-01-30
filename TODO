@@ -6,6 +6,11 @@
 
 
 - - - - - - ISSUES - - - - - -
+  - need to be able to right click through the bottom bar, especially on laptops
+  - highlight the square under the cursor
+  - zoom:
+    - start a little more zoomed out
+    - set a zoom limit to before the aspect ratio messes up
   - missile turret:
     - your own bullets hit your missiles
   - pheromones:
@@ -27,34 +32,35 @@
 
 
 - - - - - - SIMULATION - - - - - -
+  - plants
+    - leaves + stalks
+    - catch on fire at a lower temperature and turn to coal?
+    - age and die as oil?
   - oil
     - needs a separate tileIndex sprite
     - separate pheromone for oil on fire?
       - how is heat produced from this?
   - procedurally generate level:
-    - need to guarantee at least one pocket of each resource
-      - instead of numPockets, make X pockets for each resource
-      - pocket size and frequency bounds per resource type
     - random seed
     - randomize pocket shape a little more
 
 
 - - - - - - TODO - - - - - -
-  - flicker resources when you spend them
+  - HUDS
+    - flicker resources when you spend them
+    - render the entity in the cards for the HUDS
+    - hovercard for recipes above placement selectors?
+    - add coolConcentration to HUDs
+    - show on position info card whether location is placeable/collectable
+    - count of missiles survived
 
 
 - - - - - - LATER - - - - - - - -
   - mode with no missiles
-  - plants
-    -
   - visually indicate whether individual turrets are powered or not
-  - add coolConcentration to HUDs
-  - show on position info card whether location is placeable/collectable
   - cause game loss when base is killed
   - steam
     - if steam cool rate is less than water heat rate then clouds might form
-  - HUDS
-    - render the entity in the cards for the HUDS
   - explosives:
     - pre-render what an explosion under the mouse would look like
     - render horizontal/vertical explosions differently
@@ -66,8 +72,6 @@
 - - - - - - - TO THINK ABOUT - - - - - - -
   - ways to have additional interaction with terrain/environment
     - water wears away dirt over time
-    - oil that can be separated into gases?
-    - how to separate sand and water?
     - other forms of heat?
   - crafting
     - how to convey crafting recipes
