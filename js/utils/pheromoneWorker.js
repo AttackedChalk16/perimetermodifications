@@ -15,7 +15,7 @@ const {
   lookupInGrid, getEntityPositions,
 } = require('./utils/gridHelpers');
 const {
-  getPheromoneAtPosition, getQuantityForStalePos,
+  getPheromoneAtPosition, getQuantityForStalePos, getTemperature,
 } = require('./selectors/pheromones');
 const {
   encodePosition, decodePosition, clamp,
@@ -133,7 +133,33 @@ onmessage = function(ev) {
     case 'SET_EMITTER_QUANTITY': {
       const {entityID, quantity} = action;
       if (!game) break;
+      const entity = game.entities[entityID];
       game.entities[entityID].quantity = quantity;
+      if (quantity == 0) {
+        const revQuantity = globalConfig.pheromones[entity.pheromoneType].quantity;
+        setPheromone(
+          game, entity.position, entity.pheromoneType, revQuantity + 1, entity.playerID || 0,
+        );
+        game.reverseFloodFillQueue.push({
+          id: entity.id,
+          playerID: entity.playerID || 0,
+          pheromoneType: entity.pheromoneType,
+          position: entity.position,
+          quantity: revQuantity,
+        });
+        startReverseFloodFill();
+      } else {
+        // game.floodFillQueue.push({
+        //
+        // });
+        // startFloodFill();
+      }
+      break;
+    }
+    case 'CHANGE_EMITTER_TYPE': {
+      const {entityID, pheromoneType} = action;
+      if (!game) break;
+      game.entities[entityID].pheromoneType = pheromoneType;
       break;
     }
   }
@@ -153,6 +179,10 @@ const startFloodFill = () => {
     if (source.quantity > globalConfig.pheromones[source.pheromoneType].quantity) {
       console.log("big quantity", source.quantity, source.pheromoneType, source);
       source.quantity = globalConfig.pheromones[source.pheromoneType].quantity;
+    }
+    if (source.pheromoneType == 'COLONY' && source.playerID == 0 && source.quantity > 0) {
+      console.log("got nonzero colony", source);
+      source.playerID = 0;
     }
     const positions = floodFillPheromone(
       game, source.pheromoneType, source.playerID, [source], {},
@@ -340,10 +370,11 @@ const updateDispersingPheromones = (game) => {
 
       //////////////////////////////////////////////////////////////////////////////
       // check for phase change
-      const heat = getPheromoneAtPosition(game, position, 'HEAT', playerID);
+      const heat = getTemperature(game, position);
       let sendToOtherPhase = 0;
       let phaseChangeTo = null;
       let changedPhase = false;
+      let cooled = false;
       const originalPosition = {...source.position};
       if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
         phaseChangeTo = config.heatsTo;
@@ -363,12 +394,13 @@ const updateDispersingPheromones = (game) => {
             sendToOtherPhase = config.coolRate * pheromoneQuantity;
           }
           changedPhase = true;
+          cooled = true;
         }
       }
       // set the value of this square to the amount sent to the other phase
       // OR if it's an entity, create it
       if (changedPhase) {
-        if (config.coolsToEntity) {
+        if (config.coolsToEntity && cooled) {
           if (sendToOtherPhase > 0) {
             nextEntities[encodePosition(source.position)] = {
               type: phaseChangeTo,

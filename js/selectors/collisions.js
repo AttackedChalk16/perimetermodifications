@@ -32,12 +32,7 @@ const collisionsAtSpace = (
   if (entity == null) return [];
   const collisions = lookupInGrid(game.grid, pos)
     .map(id => game.entities[id])
-    // regular entities do not block themselves, but segmented entities do
-    // BUT only when we are considering what neighboring spaces are free to move to,
-    // NOT whether a move we've made collides with ourself
-    .filter(e => {
-      return e != null && entity.segmented && neighbor ? true : e.id != entity.id;
-    })
+    .filter(e => {return e != null && e.id != entity.id})
     .filter(e => {
       return blockingTypes.includes(e.type);
     });

@@ -19,6 +19,13 @@ const getPheromoneAtPosition = (
   return grid[x][y][playerID][type] || 0;
 };
 
+const getTemperature = (game: Game, position: Vector): number => {
+  return (
+    getPheromoneAtPosition(game, position, 'HEAT', 0) -
+    getPheromoneAtPosition(game, position, 'COLD', 0)
+  );
+};
+
 /**
  * When a position is opened up, get candidate {pos, quantity} based on the
  * pheromone value of the greatest neighbor OR
@@ -93,12 +100,6 @@ const getEntityPheromoneSources = (
 const getSourcesOfPheromoneType = (
   game: Game, pheromoneType: PheromoneType, playerID: PlayerID,
 ): Array<Entity> => {
-  if (pheromoneType == 'MARKED_DIRT_PHER') {
-    return game.markedDirtIDs
-      .map(id => game.entities[id])
-      .filter(dirt => dirt.marked == playerID);
-  }
-
   let sources = [];
   for (const entityID in game.PHEROMONE_EMITTER) {
     const entity = game.entities[entityID];
@@ -112,6 +113,7 @@ const getSourcesOfPheromoneType = (
 
 module.exports = {
   getPheromoneAtPosition,
+  getTemperature,
   getSourcesOfPheromoneType,
   getEntityPheromoneSources,
   getQuantityForStalePos,

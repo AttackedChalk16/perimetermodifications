@@ -357,6 +357,15 @@ function LevelEditor(props: Props): React.Node {
         />
       </div>
       <div>
+        <Checkbox
+          label="Pause Power Consumption"
+          checked={!!state.game.pausePowerConsumption}
+          onChange={pausePowerConsumption => dispatch({
+            type: 'PAUSE_POWER_CONSUMPTION', pausePowerConsumption,
+          })}
+        />
+      </div>
+      <div>
         <Button
           label='Reset View'
           onClick={() => {
@@ -628,6 +637,8 @@ function createEntities(game, dispatch, editor, rect): void {
     case 'COAL':
     case 'GLASS':
     case 'SILICON':
+    case 'ICE':
+    case 'SULPHUR':
       if (editor.subdividing) {
         args = [rect.width, rect.height];
       } else {
@@ -665,6 +676,7 @@ function createEntities(game, dispatch, editor, rect): void {
     }
     case 'LASER_TURRET':
     case 'BASIC_TURRET':
+    case 'MISSILE_TURRET':
       args = [editor.playerID];
       break;
     case 'FAST_TURRET': {

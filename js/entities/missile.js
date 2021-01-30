@@ -31,7 +31,7 @@ const config = {
   DIE: {
     duration: 1,
     spriteOrder: [0],
-  }
+  },
 };
 
 const make = (
@@ -41,6 +41,7 @@ const make = (
   warhead: ?Entity,
   theta: Radians,
   velocity: ?number,
+  targetID: ?EntityID,
 ): Missile => {
   return {
     ...makeEntity('MISSILE', position, config.width, config.height),
@@ -59,6 +60,8 @@ const make = (
     ballisticPosition: {...position},
     ballisticTheta: theta,
     initialTheta: theta,
+
+    targetID,
 
     prevPositions: [add(position, {x: config.width / 2, y: config.height / 2})],
   };

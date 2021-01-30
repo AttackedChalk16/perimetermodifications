@@ -214,7 +214,7 @@ const gameReducer = (game: Game, action: Action): Game => {
         entity.isAgent = true;
         entity.blockingTypes = [...Entities.AGENT.config.blockingTypes];
         entity.actions = [];
-        entity.playerID = game.playerID;
+        // entity.playerID = entity.playerID != null ? entity.playerID : game.playerID;
         entity.MOVE = {
           duration: 4,
           spriteOrder: [1],
@@ -267,6 +267,11 @@ const gameReducer = (game: Game, action: Action): Game => {
     case 'PAUSE_MISSILES': {
       const {pauseMissiles} = action;
       game.pauseMissiles = pauseMissiles;
+      return game;
+    }
+    case 'PAUSE_POWER_CONSUMPTION': {
+      const {pausePowerConsumption} = action;
+      game.pausePowerConsumption = pausePowerConsumption;
       return game;
     }
     case 'SET_GAME_OVER': {

@@ -26,6 +26,7 @@ const {dealDamageToEntity} = require('../simulation/miscOperations');
  * damage or when the ray reaches the end of its radius then it stops
  */
 const triggerExplosion = (game, explosive, precompute): Array<Vector> => {
+  if (explosive == null) return;
   let quadrantThetas = [0, Math.PI/2, Math.PI, 3 * Math.PI /2];
   let numRays = explosive.explosionRadius;
   if (explosive.explosionRadiusType == 'HORIZONTAL') {

@@ -12,9 +12,9 @@ const config = {
   pheromoneEmitter: true,
   pheromoneType: 'HEAT',
   hp: 10,
-  combustionTemp: 100, // temperature at which you catch on fire
+  combustionTemp: 125, // temperature at which you catch on fire
   fuel: 3 * 60 * 1000, // ms of burn time
-  heatQuantity: 120, // amount of heat produced when on fire
+  heatQuantity: 150, // amount of heat produced when on fire
 };
 
 const make = (

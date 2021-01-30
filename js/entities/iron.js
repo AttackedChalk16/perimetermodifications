@@ -12,7 +12,7 @@ const config = {
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_IRON',
   hp: 120,
-  meltTemp: 100, // temperature at which you melt
+  meltTemp: 125, // temperature at which you melt
   heatQuantity: 120, // amount of iron produced when melted
 };
 

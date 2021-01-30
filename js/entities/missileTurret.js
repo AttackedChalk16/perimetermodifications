@@ -6,10 +6,12 @@ const {renderAgent} = require('../render/renderAgent');
 
 const config = {
   isTower: true,
-  hp: 30,
-  width: 1,
-  height: 1,
-  damage: 10,
+  // isPowerConsumer: true,
+  // powerConsumed: 1,
+  hp: 120,
+  width: 3,
+  height: 3,
+  damage: 40,
   thetaAccel: 0.00005,
   minTheta: 0.2,
   maxTheta: Math.PI - 0.2,
@@ -21,14 +23,19 @@ const config = {
     spriteOrder: [0],
   },
   SHOOT: {
-    duration: 1000,
+    duration: 4000,
     spriteOrder: [0],
   },
 
   cost: {
-    IRON: 4,
+    IRON: 16,
+    STEEL: 8,
   },
-
+  launchCost: {
+    IRON: 0.1,
+    COAL: 0.1,
+    SULPHUR: 0.1,
+  },
 };
 
 const make = (
@@ -48,11 +55,13 @@ const make = (
     }
   }
   return {
-    ...makeEntity('BASIC_TURRET', position, config.width, config.height),
+    ...makeEntity('MISSILE_TURRET', position, config.width, config.height),
     ...configCopy,
     playerID,
 
-    name: name != null ? name : 'Basic Turret',
+    // power:
+    isPowered: false,
+    name: name != null ? name : 'Missile Turret',
 
     // angle of the turret
     theta: theta != null ? theta : config.minTheta,
@@ -62,7 +71,7 @@ const make = (
     // what the tower wants to aim at
     targetID: null,
 
-    projectileType: projectileType != null ? projectileType : 'BULLET',
+    projectileType: projectileType != null ? projectileType : 'MISSILE',
 
     actions: [],
 
@@ -80,7 +89,7 @@ const render = (ctx, game, turret): void => {
   // barrel of turret
   ctx.save();
   ctx.fillStyle = "black";
-  const turretWidth = 1.5;
+  const turretWidth = 3;
   const turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
@@ -98,31 +107,7 @@ const render = (ctx, game, turret): void => {
   ctx.restore();
 };
 
-const turretConfigs = {
-  basic: {
-    name: 'Basic Turret',
-    fireRate: 1000,
-    projectileType: 'BULLET',
-    cost: {
-      IRON: 4,
-    },
-    isPowerConsumer: false,
-    powerConsumed: 0,
-  },
-
-  fast: {
-    name: 'Fast Turret',
-    fireRate: 150,
-    projectileType: 'BULLET',
-    cost: {
-      STEEL: 4,
-    },
-    isPowerConsumer: true,
-    powerConsumed: 1,
-  },
-}
-
 
 module.exports = {
-  make, render, config, turretConfigs,
+  make, render, config,
 };

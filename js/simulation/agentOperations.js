@@ -138,7 +138,7 @@ const agentDecideMove = (game: Game, agent: Agent): Game => {
       taskConfig[pherType] = 0;
     }
   }
-  const playerID = agent.playerID;
+  const playerID = game.playerID;
   const baseScore = taskConfig.base;
 
   const basePher = getPheromonesInCell(game.grid, agent.position, playerID);

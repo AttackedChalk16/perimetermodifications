@@ -26,6 +26,7 @@ const {collides, collidesWith} = require('../selectors/collisions');
 const {
   add, equals, subtract, magnitude, scale,
   makeVector, vectorTheta, floor, round,
+  abs, dist,
 } = require('../utils/vectors');
 const {
   clamp, closeTo, encodePosition, decodePosition,
@@ -37,11 +38,12 @@ const {
 const {agentDecideAction} = require('../simulation/agentOperations');
 const {getFreeNeighborPositions, areNeighbors} = require('../selectors/neighbors');
 const {
-  getPheromoneAtPosition,
+  getPheromoneAtPosition, getTemperature,
 } = require('../selectors/pheromones');
 const globalConfig = require('../config');
 const {dealDamageToEntity} = require('../simulation/miscOperations');
 const {Entities} = require('../entities/registry');
+const {canAffordBuilding} = require('../selectors/buildings');
 
 import type {
   Game, Entity, Action, Ant,
@@ -219,8 +221,19 @@ const updateBallistics = (game): void => {
     if (ballistic == null || ballistic.position == null) continue;
     ballistic.age += game.timeSinceLastTick;
     // if it has collided with something, deal damage to it and die
+    // OR if it is within Radius of target, die
     const collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
-    if (collisions.length > 0) {
+    let inRadius = false;
+    if (ballistic.targetID != null && ballistic.warhead != null) {
+      const target = game.entities[ballistic.targetID];
+      if (target != null) {
+        if (Math.abs(dist(ballistic.position, target.position)) <= 4) {
+          inRadius = true;
+        }
+      }
+    }
+
+    if (collisions.length > 0 || inRadius) {
       if (ballistic.missRate == null ||
         (ballistic.missRate != null && Math.random() > ballistic.missRate)
       ) {
@@ -287,7 +300,7 @@ const updateFlammables = (game): void => {
       }
     // if not on fire, check if it should catch on fire
     } else {
-      const temp = getPheromoneAtPosition(game, flammable.position, 'HEAT', 0);
+      const temp = getTemperature(game, flammable.position);
       if (temp >= flammable.combustionTemp) {
         if (flammable.type != 'AGENT') {
           flammable.onFire = true;
@@ -326,7 +339,7 @@ const updateMeltables = (game): void => {
   for (const id in game.MELTABLE) {
     const meltable = game.entities[id];
 
-    const temp = getPheromoneAtPosition(game, meltable.position, 'HEAT', 0);
+    const temp = getTemperature(game, meltable.position);
     if (temp >= meltable.meltTemp) {
       // if you're an agent (or food!) then you're en route to being collected
       let config = Entities[meltable.type].config;
@@ -334,6 +347,18 @@ const updateMeltables = (game): void => {
         meltable.type = meltable.collectedAs;
         meltable.playerID = 0;
         config = Entities[meltable.type].config;
+      }
+
+      // if it produces a different pheromone than what it melts to, e.g. ICE,
+      // then need to remove that, then melt
+      if (meltable.meltType) {
+        changePheromoneEmitterQuantity(game, meltable, 0);
+        meltable.pheromoneType = meltable.meltType;
+        game.pheromoneWorker.postMessage({
+          type: 'CHANGE_EMITTER_TYPE',
+          entityID: meltable.id,
+          pheromoneType: meltable.pheromoneType,
+        });
       }
       changePheromoneEmitterQuantity(
         game, meltable, meltable.heatQuantity * (meltable.hp / config.hp),
@@ -353,7 +378,11 @@ const updateTowers = (game): void => {
     const tower = game.entities[id];
     const config = Entities[tower.type].config;
     // don't do anything if unpowered
-    if (tower.isPowerConsumer && !tower.isPowered) continue;
+    if (
+      tower.isPowerConsumer &&
+      !tower.isPowered &&
+      !game.pausePowerConsumption
+    ) continue;
 
     // choose target if possible
     if (tower.targetID == null) {
@@ -380,9 +409,17 @@ const updateTowers = (game): void => {
         const targetPos = game.entities[tower.targetID].position;
         targetTheta = vectorTheta(subtract(targetPos, tower.position)) % (Math.PI / 2);
         targetTheta = clamp(targetTheta, config.minTheta, config.maxTheta);
+        if (targetPos.y >= tower.position.y) {
+          targetTheta = config.minTheta;
+        }
       }
     }
-    if (closeTo(tower.theta, targetTheta)) {
+
+    // treat missile turrets as a special case
+    if (tower.type == 'MISSILE_TURRET') {
+      tower.thetaAccel = 0;
+      tower.theta = clamp(targetTheta, config.minTheta, config.maxTheta);
+    } else if (closeTo(tower.theta, targetTheta)) {
       tower.thetaAccel /= -2;
     } else if (tower.theta < targetTheta) {
       tower.thetaAccel = config.thetaAccel;
@@ -411,13 +448,26 @@ const updateTowers = (game): void => {
           );
         }
       }
-      queueAction(
-        game, tower,
-        makeAction(
-          game, tower, 'SHOOT',
-          {theta: tower.theta, projectileType: tower.projectileType}
-        ),
-      );
+
+      let canAfford = true;
+      if (tower.launchCost) {
+        canAfford = canAffordBuilding(game.bases[game.playerID], tower.launchCost);
+        if (canAfford) {
+          for (const resource in tower.launchCost) {
+            game.bases[game.playerID].resources[resource] -= tower.launchCost[resource];
+          }
+        }
+      }
+
+      if (canAfford) {
+        queueAction(
+          game, tower,
+          makeAction(
+            game, tower, 'SHOOT',
+            {theta: tower.theta, projectileType: tower.projectileType}
+          ),
+        );
+      }
     }
 
   }
@@ -475,7 +525,8 @@ const updateBases = (game: Game): void => {
     for (const entity of collisions) {
       if (!isActionTypeQueued(entity, 'DIE')) {
         queueAction(game, entity, makeAction(game, entity, 'DIE'));
-        const type = entity.collectedAs;
+        const type = entity.collectedAs ? entity.collectedAs : entity.type;
+        if (!entity.isCollectable) continue;
         if (game.bases[game.playerID].resources[type] == null) {
           game.bases[game.playerID].resources[type] = 0;
         }

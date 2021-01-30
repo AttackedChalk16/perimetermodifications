@@ -25,6 +25,9 @@ const initPheromoneWorkerSystem = (store) => {
         for (const encodedPosition in entities) {
           const pos = decodePosition(encodedPosition);
           const {type, quantity} = entities[encodedPosition];
+          if (!Entities[type]) {
+            console.log('no entity of type', type);
+          }
           const config = Entities[type].config;
           let leftoverQuantity = quantity;
           for (const id of game[type]) {

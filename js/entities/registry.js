@@ -24,6 +24,8 @@ const Entities = {
   STEEL: require('./steel.js'),
   GLASS: require('./glass.js'),
   SILICON: require('./silicon.js'),
+  SULPHUR: require('./sulphur.js'),
+  ICE: require('./ice.js'),
 
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
@@ -32,6 +34,7 @@ const Entities = {
   BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
   FAST_TURRET: require('./turret.js'),
+  MISSILE_TURRET: require('./missileTurret.js'),
   LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),

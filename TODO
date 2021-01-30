@@ -6,9 +6,18 @@
 
 
 - - - - - - ISSUES - - - - - -
+  - missile turret:
+    - your own bullets hit your missiles
+  - pheromones:
+    - colony pheromone is getting injected into playerID 0 somehow
+      - when ice is formed or melted
+    - remove playerID concept from pheromones?
+    - should just render via canvas
   - sand:
-    - condenses hugely when you put hot coal on it, so you can only get
-      very little silicon
+    - pheromones need to be able to block each other so that molten sand can
+      live on top of regular sand
+      - config for which pheromones you block
+      - helper function for sorting isOccupied
   - coal:
     - can strand molten pheromones that don't interact with anything
   - turbines:
@@ -17,46 +26,40 @@
     - reducing pherToGive doesn't actually slow down an array of turbines
 
 
-- - - - - - TODO - - - - - -
-  - visually indicate whether individual turrets are powered or not
-  - add coolConcentration to HUDs
-  - show on position info card whether location is placeable/collectable
-  - steam
-    - if steam cool rate is less than water heat rate then clouds might form
-    - set higher threshold for steam before it condenses back to water
-  - procedurally generate level:
-    - need to guarantee at least one pocket of each resource
-    - random seed
-
-
-- - - - - - BARE BONES - - - - - -
+- - - - - - SIMULATION - - - - - -
   - oil
+    - needs a separate tileIndex sprite
     - separate pheromone for oil on fire?
       - how is heat produced from this?
-    - can be separated into sulphur?
-    - should give off some gas
-    - limit on phase change if there's already a certain concentration
-      where you are?
+  - procedurally generate level:
+    - need to guarantee at least one pocket of each resource
+      - instead of numPockets, make X pockets for each resource
+      - pocket size and frequency bounds per resource type
+    - random seed
+    - randomize pocket shape a little more
+
+
+- - - - - - TODO - - - - - -
+  - flicker resources when you spend them
 
 
 - - - - - - LATER - - - - - - - -
+  - mode with no missiles
+  - plants
+    -
+  - visually indicate whether individual turrets are powered or not
+  - add coolConcentration to HUDs
+  - show on position info card whether location is placeable/collectable
   - cause game loss when base is killed
+  - steam
+    - if steam cool rate is less than water heat rate then clouds might form
   - HUDS
     - render the entity in the cards for the HUDS
-  - turrets
-    - missile turret that requires additional resources to fire
   - explosives:
     - pre-render what an explosion under the mouse would look like
     - render horizontal/vertical explosions differently
-  - sulphur
-    - separated from oil somehow?
-    - just mined like sand?
   - uranium
     - constantly produces heat
-  - dynamite = coal + sulphur?
-  - ice entity
-    - getTemp helper function for heat calculations
-    - how to allow melting AND different water freezing on?
   - get a good average fps algorithm going
 
 

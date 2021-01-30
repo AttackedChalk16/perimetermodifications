@@ -12,7 +12,7 @@ const config = {
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_STEEL',
   hp: 240,
-  meltTemp: 100, // temperature at which you catch on fire
+  meltTemp: 140, // temperature at which you catch on fire
   heatQuantity: 240, // amount of steel  produced when melted
 };
 

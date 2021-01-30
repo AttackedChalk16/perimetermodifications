@@ -25,7 +25,7 @@ const config = {
     duration: 300,
     effectIndex: 250,
     spriteOrder: [0],
-  }
+  },
 };
 
 const make = (
@@ -39,7 +39,7 @@ const make = (
     ...config,
     playerID,
     actions: [],
-    explosionRadiusType,
+    explosionRadiusType: explosionRadiusType || 'CIRCULAR',
   };
 };
 

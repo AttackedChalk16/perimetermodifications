@@ -224,6 +224,7 @@ const rootReducer = (state: State, action: Action): State => {
     case 'COLLECT_ENTITIES':
     case 'SET_KEEP_MARQUEE':
     case 'PAUSE_MISSILES':
+    case 'PAUSE_POWER_CONSUMPTION':
     case 'SUBTRACT_BASE_RESOURCES':
     case 'ENQUEUE_ENTITY_ACTION': {
       if (!state.game) return state;

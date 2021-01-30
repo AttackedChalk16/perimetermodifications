@@ -58,14 +58,16 @@ const initBaseState = (
 
     pheromoneDisplay: {
       COLONY: false,
-      ALERT: false,
       WATER: true,
       STEAM: true,
       HEAT: true,
+      COLD: true,
       MOLTEN_IRON: true,
       MOLTEN_STEEL: true,
       SAND: true,
       MOLTEN_SAND: true,
+      OIL: true,
+      SULPHUR_DIOXIDE: true,
     },
     maxMinimap: false,
 
@@ -95,6 +97,7 @@ const initBaseState = (
     controlledEntity: null,
 
     pauseMissiles: false,
+    pausePowerConsumption: false,
 
     staleTiles: [],
     floodFillSources: [],

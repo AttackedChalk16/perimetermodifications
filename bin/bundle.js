@@ -9,20 +9,32 @@ var config = {
   canvasWidth: 1200,
   canvasHeight: 1200,
 
-  viewWidth: 52,
-  viewHeight: 66,
+  viewWidth: 66,
+  viewHeight: 72,
   useFullScreen: true,
-  cellWidth: 33,
-  cellHeight: 25,
+  cellWidth: 25,
+  cellHeight: 20,
 
   audioFiles: [{ path: 'audio/Song Oct. 9.wav', type: 'wav' }],
 
   dispersingPheromoneUpdateRate: 6,
-  gravity: -100
+  gravity: -100,
+
+  proceduralFrequencies: {
+    IRON: { numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10 },
+    COAL: { numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10 },
+    STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
+    ICE: { numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8 },
+    WATER: { numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14 },
+    SAND: { numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8 },
+    OIL: { numMin: 2, numMax: 4, sizeMin: 6, sizeMax: 12 },
+    SULPHUR: { numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4 },
+    GLASS: { numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4 }
+  }
 };
 
 var nonMoltenPheromoneBlockingTypes = ['DIRT', 'STONE', 'DOODAD', 'TURRET'];
-var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['STEEL', 'IRON', 'SILICON', 'GLASS']);
+var pheromoneBlockingTypes = [].concat(nonMoltenPheromoneBlockingTypes, ['ICE', 'SULPHUR', 'STEEL', 'IRON', 'SILICON', 'GLASS']);
 
 var pheromones = {
   COLONY: {
@@ -33,16 +45,6 @@ var pheromones = {
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL'])
   },
-  ALERT: {
-    quantity: 60,
-    decayAmount: 10,
-    decayRate: 1, // how much it decays per tick
-    color: 'rgb(255, 0, 0)',
-    tileIndex: 2,
-
-    blockingTypes: pheromoneBlockingTypes,
-    isDispersing: true
-  },
   WATER: {
     quantity: 120,
     decayAmount: 120,
@@ -52,9 +54,14 @@ var pheromones = {
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['WORM']),
     isDispersing: true,
-    heatPoint: 100,
+    heatPoint: 125,
     heatsTo: 'STEAM',
     heatRate: 0.02,
+    coolPoint: -100, // heat level to condense at
+    coolsTo: 'ICE',
+    coolsToEntity: true,
+    coolRate: 1, // amount of yourself that condenses per step
+    coolConcentration: 5, // amount of yourself needed before condensation starts
     viscosity: {
       verticalLeftOver: 0,
       diagonalLeftOver: 0.5,
@@ -75,6 +82,47 @@ var pheromones = {
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
     coolConcentration: 80, // amount of yourself needed before condensation starts
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.3,
+      horizontalLeftOver: 0.66
+    },
+    isRising: true
+  },
+  OIL: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 4,
+
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    isDispersing: true,
+    heatPoint: 10,
+    heatsTo: 'SULPHUR_DIOXIDE',
+    heatRate: 0.02,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.8,
+      horizontalLeftOver: 0.9
+    },
+    isFluid: true
+  },
+  SULPHUR_DIOXIDE: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 0,
+
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    isDispersing: true,
+    coolPoint: -5, // heat level to condense at
+    coolsTo: 'SULPHUR',
+    coolRate: 1, // amount of yourself that condenses per step
+    coolConcentration: 80, // amount of yourself needed before condensation starts
+    coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -170,11 +218,20 @@ var pheromones = {
     }
   },
   HEAT: {
+    quantity: 150,
+    decayAmount: 15,
+    decayRate: 1, // how much it decays per tick
+    color: 'rgb(255, 0, 0)',
+    tileIndex: 2,
+
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
+  },
+  COLD: {
     quantity: 120,
     decayAmount: 12,
     decayRate: 1, // how much it decays per tick
     color: 'rgb(255, 0, 0)',
-    tileIndex: 2,
+    tileIndex: 1,
 
     blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
   }
@@ -321,7 +378,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":39,"../selectors/sprites":48,"../utils/vectors":100,"./makeEntity":16}],3:[function(require,module,exports){
+},{"../render/renderAgent":42,"../selectors/sprites":51,"../utils/vectors":103,"./makeEntity":17}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -356,7 +413,7 @@ var render = function render(ctx, game, tile) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],4:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -402,7 +459,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":16}],5:[function(require,module,exports){
+},{"../config":1,"./makeEntity":17}],5:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -530,7 +587,7 @@ var turretConfigs = {
 module.exports = {
   make: make, render: render, config: config, turretConfigs: turretConfigs
 };
-},{"../render/renderAgent":39,"../utils/vectors":100,"./makeEntity.js":16}],6:[function(require,module,exports){
+},{"../render/renderAgent":42,"../utils/vectors":103,"./makeEntity.js":17}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -606,7 +663,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":48,"../simulation/actionQueue":50,"../utils/vectors":100,"./makeEntity":16}],7:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":51,"../simulation/actionQueue":53,"../utils/vectors":103,"./makeEntity":17}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -624,9 +681,9 @@ var config = {
   pheromoneEmitter: true,
   pheromoneType: 'HEAT',
   hp: 10,
-  combustionTemp: 100, // temperature at which you catch on fire
+  combustionTemp: 125, // temperature at which you catch on fire
   fuel: 3 * 60 * 1000, // ms of burn time
-  heatQuantity: 120 // amount of heat produced when on fire
+  heatQuantity: 150 // amount of heat produced when on fire
 };
 
 var make = function make(game, position, width, height) {
@@ -659,7 +716,7 @@ var render = function render(ctx, game, coal) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],8:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -699,7 +756,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],9:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],9:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -730,7 +787,7 @@ var render = function render(ctx, game, doodad) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"./makeEntity":16}],10:[function(require,module,exports){
+},{"./makeEntity":17}],10:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -773,7 +830,7 @@ var make = function make(game, position, playerID, explosionRadiusType) {
   return _extends({}, makeEntity('DYNAMITE', position, config.width, config.height), config, {
     playerID: playerID,
     actions: [],
-    explosionRadiusType: explosionRadiusType
+    explosionRadiusType: explosionRadiusType || 'CIRCULAR'
   });
 };
 
@@ -803,7 +860,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":48,"../simulation/actionQueue":50,"./makeEntity":16}],11:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":51,"../simulation/actionQueue":53,"./makeEntity":17}],11:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -844,7 +901,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],12:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -892,7 +949,48 @@ var render = function render(ctx, game, glass) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],13:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],13:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isMeltable: true,
+  isCollectable: true,
+  pheromoneEmitter: true,
+  pheromoneType: 'COLD',
+  meltType: 'WATER',
+  hp: 120,
+  meltTemp: 12, // temperature at which you melt
+  heatQuantity: 120 // amount of water produced when melted
+};
+
+var make = function make(game, position, width, height, hp) {
+  return _extends({}, makeEntity('ICE', position, width || 1, height || 1), config, {
+    hp: hp || config.hp,
+    dictIndexStr: '',
+    playerID: 0, // gaia
+    quantity: 120 // amount of pheromone emitted
+  });
+};
+
+var render = function render(ctx, game, ice) {
+  var obj = getTileSprite(game, ice);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, ice.position.x, ice.position.y, ice.width, ice.height);
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":51,"./makeEntity":17}],14:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -910,7 +1008,7 @@ var config = {
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_IRON',
   hp: 120,
-  meltTemp: 100, // temperature at which you melt
+  meltTemp: 125, // temperature at which you melt
   heatQuantity: 120 // amount of iron produced when melted
 };
 
@@ -939,7 +1037,7 @@ var render = function render(ctx, game, iron) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],14:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],15:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1015,7 +1113,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":48,"../simulation/actionQueue":50,"../utils/vectors":100,"./makeEntity":16}],15:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":51,"../simulation/actionQueue":53,"../utils/vectors":103,"./makeEntity":17}],16:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1132,7 +1230,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":39,"../utils/vectors":100,"./makeEntity.js":16}],16:[function(require,module,exports){
+},{"../render/renderAgent":42,"../utils/vectors":103,"./makeEntity.js":17}],17:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -1151,7 +1249,7 @@ var makeEntity = function makeEntity(type, position, width, height) {
 module.exports = {
 	makeEntity: makeEntity
 };
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1191,7 +1289,7 @@ var config = {
   }
 };
 
-var make = function make(game, position, playerID, warhead, theta, velocity) {
+var make = function make(game, position, playerID, warhead, theta, velocity, targetID) {
   return _extends({}, makeEntity('MISSILE', position, config.width, config.height), config, {
     holding: null,
     holdingIDs: [],
@@ -1207,6 +1305,8 @@ var make = function make(game, position, playerID, warhead, theta, velocity) {
     ballisticPosition: _extends({}, position),
     ballisticTheta: theta,
     initialTheta: theta,
+
+    targetID: targetID,
 
     prevPositions: [add(position, { x: config.width / 2, y: config.height / 2 })]
   });
@@ -1245,7 +1345,120 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":48,"../simulation/actionQueue":50,"../utils/vectors":100,"./makeEntity":16}],18:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":51,"../simulation/actionQueue":53,"../utils/vectors":103,"./makeEntity":17}],19:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity.js'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../utils/vectors'),
+    add = _require2.add,
+    subtract = _require2.subtract,
+    equals = _require2.equals,
+    makeVector = _require2.makeVector,
+    vectorTheta = _require2.vectorTheta;
+
+var _require3 = require('../render/renderAgent'),
+    renderAgent = _require3.renderAgent;
+
+var config = {
+  isTower: true,
+  // isPowerConsumer: true,
+  // powerConsumed: 1,
+  hp: 120,
+  width: 3,
+  height: 3,
+  damage: 40,
+  thetaAccel: 0.00005,
+  minTheta: 0.2,
+  maxTheta: Math.PI - 0.2,
+  maxThetaSpeed: 0.04,
+
+  // action overrides
+  DIE: {
+    duration: 2,
+    spriteOrder: [0]
+  },
+  SHOOT: {
+    duration: 4000,
+    spriteOrder: [0]
+  },
+
+  cost: {
+    IRON: 16,
+    STEEL: 8
+  },
+  launchCost: {
+    IRON: 0.1,
+    COAL: 0.1,
+    SULPHUR: 0.1
+  }
+};
+
+var make = function make(game, position, playerID, projectileType, fireRate, name, theta) {
+  var configCopy = _extends({}, config);
+  if (fireRate != null) {
+    configCopy.SHOOT = _extends({}, configCopy.SHOOT, {
+      duration: fireRate
+    });
+  }
+  return _extends({}, makeEntity('MISSILE_TURRET', position, config.width, config.height), configCopy, {
+    playerID: playerID,
+
+    // power:
+    isPowered: false,
+    name: name != null ? name : 'Missile Turret',
+
+    // angle of the turret
+    theta: theta != null ? theta : config.minTheta,
+    thetaSpeed: 0,
+    thetaAccel: 0,
+
+    // what the tower wants to aim at
+    targetID: null,
+
+    projectileType: projectileType != null ? projectileType : 'MISSILE',
+
+    actions: []
+
+  });
+};
+
+var render = function render(ctx, game, turret) {
+  var position = turret.position,
+      width = turret.width,
+      height = turret.height,
+      theta = turret.theta;
+
+  ctx.save();
+  ctx.translate(position.x, position.y);
+
+  // barrel of turret
+  ctx.save();
+  ctx.fillStyle = "black";
+  var turretWidth = 3;
+  var turretHeight = 0.3;
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(theta);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.restore();
+
+  // base of turret
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
+  ctx.restore();
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../render/renderAgent":42,"../utils/vectors":103,"./makeEntity.js":17}],20:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -1271,6 +1484,8 @@ var Entities = {
   STEEL: require('./steel.js'),
   GLASS: require('./glass.js'),
   SILICON: require('./silicon.js'),
+  SULPHUR: require('./sulphur.js'),
+  ICE: require('./ice.js'),
 
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
@@ -1279,6 +1494,7 @@ var Entities = {
   BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
   FAST_TURRET: require('./turret.js'),
+  MISSILE_TURRET: require('./missileTurret.js'),
   LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),
@@ -1292,7 +1508,7 @@ var Entities = {
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./iron.js":13,"./laser.js":14,"./laserTurret.js":15,"./missile.js":17,"./silicon.js":19,"./steel.js":20,"./stone.js":21,"./token.js":22,"./turbine.js":23,"./turret.js":24}],19:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./ice.js":13,"./iron.js":14,"./laser.js":15,"./laserTurret.js":16,"./missile.js":18,"./missileTurret.js":19,"./silicon.js":21,"./steel.js":22,"./stone.js":23,"./sulphur.js":24,"./token.js":25,"./turbine.js":26,"./turret.js":27}],21:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1336,7 +1552,7 @@ var render = function render(ctx, game, silicon) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],20:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],22:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1354,7 +1570,7 @@ var config = {
   pheromoneEmitter: true,
   pheromoneType: 'MOLTEN_STEEL',
   hp: 240,
-  meltTemp: 100, // temperature at which you catch on fire
+  meltTemp: 140, // temperature at which you catch on fire
   heatQuantity: 240 // amount of steel  produced when melted
 };
 
@@ -1383,7 +1599,7 @@ var render = function render(ctx, game, steel) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],21:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],23:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1417,7 +1633,41 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":48,"./makeEntity":16}],22:[function(require,module,exports){
+},{"../selectors/sprites":51,"./makeEntity":17}],24:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('../selectors/sprites'),
+    getTileSprite = _require.getTileSprite;
+
+var _require2 = require('./makeEntity'),
+    makeEntity = _require2.makeEntity;
+
+var config = {
+  isTiled: true,
+  isCollectable: true,
+  hp: 10
+};
+
+var make = function make(game, position, width, height) {
+  return _extends({}, makeEntity('SULPHUR', position, width, height), config, {
+    marked: null,
+    dictIndexStr: ''
+  });
+};
+
+var render = function render(ctx, game, sulphur) {
+  var obj = getTileSprite(game, sulphur);
+
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, sulphur.position.x, sulphur.position.y, sulphur.width, sulphur.height);
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../selectors/sprites":51,"./makeEntity":17}],25:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1454,7 +1704,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":16}],23:[function(require,module,exports){
+},{"../config":1,"./makeEntity":17}],26:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1531,7 +1781,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":39,"../utils/vectors":100,"./makeEntity.js":16}],24:[function(require,module,exports){
+},{"../render/renderAgent":42,"../utils/vectors":103,"./makeEntity.js":17}],27:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1638,7 +1888,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":39,"../utils/vectors":100,"./makeEntity.js":16}],25:[function(require,module,exports){
+},{"../render/renderAgent":42,"../utils/vectors":103,"./makeEntity.js":17}],28:[function(require,module,exports){
 'use strict';
 
 var _require = require('redux'),
@@ -1667,7 +1917,7 @@ function renderUI(store) {
     modal: state.modal
   }), document.getElementById('container'));
 }
-},{"./reducers/rootReducer":36,"./ui/Main.react":84,"react":136,"react-dom":133,"redux":137}],26:[function(require,module,exports){
+},{"./reducers/rootReducer":39,"./ui/Main.react":87,"react":139,"react-dom":136,"redux":140}],29:[function(require,module,exports){
 // @flow
 
 module.exports = {
@@ -1678,17 +1928,17 @@ module.exports = {
   mediumDemoLevel: require('./mediumDemoLevel'),
 }
 
-},{"./mediumBallisticsLevel":27,"./mediumDemoLevel":28,"./smallBallisticsLevel":29,"./smallPhaseChangeTestLevel":30,"./testLevel":31}],27:[function(require,module,exports){
+},{"./mediumBallisticsLevel":30,"./mediumDemoLevel":31,"./smallBallisticsLevel":32,"./smallPhaseChangeTestLevel":33,"./testLevel":34}],30:[function(require,module,exports){
 module.exports = {"numPlayers":3,"gridWidth":100,"gridHeight":100,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":64},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":64,"y":62},"width":7,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":71,"y":63},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":71,"y":65},"width":2,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":63},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":73,"y":64},"width":1,"height":2},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":67,"y":61},"width":3,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":65,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":70,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":63,"y":64},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":62,"y":65},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":74,"y":65},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":51},"width":101,"height":49},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":64},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":66},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":65,"y":65},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":65},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":62,"y":66},"width":3,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":68},"width":5,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":69},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":61,"y":66},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":69},"width":8,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":66,"y":72},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":69},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":68},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":68},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":51},"width":9,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":51},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":52},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":54},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":56},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":54},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":-2,"y":56},"width":6,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":56},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":57},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":82,"y":50},"width":20,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":58},"width":9,"height":8}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":57},"width":7,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":60},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":60},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":66},"width":7,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":87,"y":67},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":86,"y":67},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":71},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":74},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":82},"width":4,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":71,"y":72},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":73},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":74},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":74,"y":75},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":75,"y":76},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":76,"y":77},"width":2,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":77,"y":80},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":78,"y":82},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":71},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":71},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":72,"y":71},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":73},"width":1,"height":1}},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":62},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":61},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":60},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"CREATE_ENTITIES","entityType":"MISSILE","rect":{"position":{"x":84,"y":82},"width":4,"height":3},"args":[0,{"id":-1,"type":"DYNAMITE","position":null,"prevPosition":null,"width":1,"height":1,"theta":0,"prevTheta":0,"isExplosive":true,"hp":1,"explosionRadius":5,"damage":4,"timer":15,"age":0,"DIE":{"duration":300,"effectIndex":250,"spriteOrder":[0]},"playerID":0,"actions":[]},-0.6,70]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":82},"width":4,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":80},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":82},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":83},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":84},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":80,"y":81},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":79,"y":81},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":83},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":84},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":76},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":67},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":70},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":72},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":68},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":69},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":69},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":66},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":67},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":66},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":66},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":63},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":65},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":66},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":72},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":86,"y":71},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":86,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":89,"y":73},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":90,"y":75},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":75},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":71},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":69},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":69},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":71},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":74},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":73},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":74},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":77},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":79},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":82},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":83},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":82},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":83},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":82},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":81},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":97,"y":80},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":80},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":81},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":78},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":78},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":79},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":85},"width":12,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":84},"width":4,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":86,"y":82},"width":2,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":81},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":95,"y":86},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":75},"width":5,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":74},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":73},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":68,"y":76},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":62,"y":76},"width":1,"height":2}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":61,"y":74},"width":8,"height":6},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":67,"y":68},"width":1,"height":1},"args":["1"]},{"type":"CREATE_ENTITIES","entityType":"TURRET","rect":{"position":{"x":82,"y":49},"width":1,"height":1},"args":["1","BULLET",150]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":67,"y":69},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"BASE","rect":{"position":{"x":67,"y":66},"width":1,"height":1},"args":["1"]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":55,"y":66},"width":5,"height":6}},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":55,"y":66},"width":5,"height":6},"args":[1,1]}]};
-},{}],28:[function(require,module,exports){
-module.exports = {"numPlayers":3,"gridWidth":100,"gridHeight":125,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":50},"width":100,"height":75},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":52,"y":49},"width":35,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":55,"y":48},"width":29,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":60,"y":47},"width":18,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":49},"width":20,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":48},"width":9,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":47},"width":3,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":61},"width":9,"height":9}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":11,"y":60},"width":7,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":63},"width":1,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":63},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":11,"y":70},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":13,"y":58},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":16,"y":59},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":13,"y":57},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":12,"y":59},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":17,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":116},"width":3,"height":9}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":3,"y":121},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":3,"y":119},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":124},"width":7,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":123},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":14,"y":124},"width":38,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":123},"width":10,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":121},"width":4,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":119},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":118},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":117},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":116},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":122},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":123},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":48,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":40,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":37,"y":118},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":37,"y":122},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":16,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":17,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":18,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":18,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":17,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":112},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":1,"y":115},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":116},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":5,"y":115},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":113},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":113},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":54,"y":124},"width":13,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":68,"y":124},"width":32,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":69,"y":123},"width":31,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":98,"y":117},"width":2,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":90,"y":122},"width":8,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":97,"y":120},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":99,"y":116},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":118},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":115},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":119},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":65,"y":122},"width":2,"height":2}},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":112},"width":101,"height":13},"args":["STONE",1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":105},"width":9,"height":9}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":106},"width":1,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":106},"width":1,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":114},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":115},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":104},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":103},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":80,"y":107},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":107},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":109},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":110},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":110},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":111},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":76},"width":10,"height":8}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":75},"width":8,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":74},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":77},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":84},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":82},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":54,"y":77},"width":1,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":52,"y":84},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":84},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":85},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":40,"y":89},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":88},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":94},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":90},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":39,"y":90},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":57,"y":65},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":56,"y":66},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":61,"y":66},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":58,"y":64},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":63},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":62},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":64},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":65},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":64},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":66},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":68},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":69},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":61},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":60},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":57},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":56},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":58},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":58},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":62},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":52},"width":7,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":51},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":58},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":62,"y":52},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":54},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":11,"y":89},"width":5,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":16,"y":90},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":90},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":12,"y":88},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":13,"y":95},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":115},"width":6,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":121},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":116},"width":2,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":114},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":116},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":117},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":57,"y":104},"width":7,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":57,"y":102},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":58,"y":101},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":56,"y":103},"width":1,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":58,"y":111},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":105},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":74,"y":86},"width":6,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":75,"y":85},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":75,"y":92},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":80,"y":88},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":87},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":75},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":74},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":80},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":76},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":90,"y":76},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":98},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":97},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":103},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":99},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":99},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":96},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":104},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":100},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":100},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":55,"y":63},"width":8,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":89,"y":73},"width":8,"height":8},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":21,"y":96},"width":11,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":38,"y":88},"width":10,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":20,"y":113},"width":11,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":10,"y":87},"width":8,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":71,"y":84},"width":12,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"BASE","rect":{"position":{"x":47,"y":78},"width":1,"height":1},"args":["1"]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":81,"y":56},"width":9,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":30,"y":60},"width":6,"height":10},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":69,"y":116},"width":5,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":115},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":120},"width":3,"height":1}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":68,"y":115},"width":7,"height":7},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":109},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":108},"width":2,"height":1}},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":43,"y":107},"width":6,"height":7},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":94},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":93},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":92},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":94},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":99},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":97,"y":96},"width":1,"height":2}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":91,"y":92},"width":7,"height":8},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":52},"width":4,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":55},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":56},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":55},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":56},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":52},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":51},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":47,"y":53},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":53},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":54},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":40,"y":51},"width":9,"height":7},"args":[1,1]},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":115},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":115},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":94,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":94,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120}]};
-},{}],29:[function(require,module,exports){
-module.exports = {"numPlayers":2,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":26},"width":50,"height":24},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":36},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":37},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":37},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":38},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":45},"width":9,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":47},"width":6,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":49},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":48},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":8,"y":40},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":34},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":33},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":33},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":36},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":24},"width":20,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":22},"width":15,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":23},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":25},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":21},"width":10,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":20},"width":6,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":19},"width":4,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":5,"y":32},"width":46,"height":18},"args":["STONE",1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":40},"width":8,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":44},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":41},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":42},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":43},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":46},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":39},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":38},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":34,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":43},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":39,"y":39},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":36},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":37},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":43},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":37,"y":39},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":22,"y":42},"width":1,"height":1},"args":[1]}]};
-},{}],30:[function(require,module,exports){
-module.exports = {"numPlayers":3,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":31},"width":1,"height":19},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":1,"y":42},"width":50,"height":8},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":32},"width":1,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"TOKEN","rect":{"position":{"x":24,"y":37},"width":1,"height":1},"args":[0,"HEAT"]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":33},"width":1,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":22,"y":31},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":22,"y":35},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":30},"width":1,"height":4},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":31},"width":1,"height":4}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":34},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":29},"width":1,"height":5},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":25,"y":23},"width":1,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":26,"y":20},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":20},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":29,"y":18},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":32},"width":1,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":22},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":20},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":18},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":18},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":19},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":21},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":21},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":20},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":29,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":13},"width":1,"height":6},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":12},"width":7,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":13},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":16,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":14,"y":14},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":29},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":48,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":26},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":47,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":45,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":28},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":43,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":43,"y":29},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":42,"y":30},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":41,"y":31},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":31},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":39,"y":33},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":34},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":37,"y":35},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":35},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":18},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":18},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":20},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":12,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":18},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":15},"width":3,"height":3}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":15},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":14},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":15},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":22},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":21},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":21},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":20},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":20},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":20},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":21,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":21,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":37},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"TOKEN","rect":{"position":{"x":24,"y":41},"width":1,"height":1},"args":[0,"HEAT"]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":22},"width":1,"height":2}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":37,"y":12},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":13},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":14},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":22},"width":1,"height":2},"args":[1,1]}]};
 },{}],31:[function(require,module,exports){
-module.exports = {"numPlayers":1,"gridWidth":25,"gridHeight":25,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":5,"y":13},"width":1,"height":1},"args":[1,null]},{"type":"CREATE_ENTITIES","entityType":"WORM","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[[{"x":13,"y":15},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":15,"y":17},{"x":16,"y":17},{"x":16,"y":18}],1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":16},"width":1,"height":9},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":24},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":1,"y":24},"width":19,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":10,"y":22},"width":1,"height":3},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":19},"width":1,"height":5},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":21,"y":24},"width":5,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":4,"y":2},"width":5,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":9,"y":1},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":9},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":6,"y":8},"width":2,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DOODAD","rect":{"position":{"x":18,"y":2},"width":3,"height":4},"args":[3,4,"QUESTION"]},{"type":"CREATE_ENTITIES","entityType":"BACKGROUND","rect":{"position":{"x":14,"y":0},"width":2,"height":2},"args":[1,1,"FLOOR_TILE"]}]};
+module.exports = {"numPlayers":3,"gridWidth":100,"gridHeight":125,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":50},"width":100,"height":75},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":52,"y":49},"width":35,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":55,"y":48},"width":29,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":60,"y":47},"width":18,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":49},"width":20,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":48},"width":9,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":47},"width":3,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":61},"width":9,"height":9}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":11,"y":60},"width":7,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":63},"width":1,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":63},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":11,"y":70},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":13,"y":58},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":16,"y":59},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":13,"y":57},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":12,"y":59},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":17,"y":70},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":116},"width":3,"height":9}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":3,"y":121},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":3,"y":119},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":124},"width":7,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":123},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":14,"y":124},"width":38,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":123},"width":10,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":121},"width":4,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":119},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":118},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":117},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":116},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":122},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":123},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":48,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":40,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":37,"y":118},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":37,"y":122},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":16,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":17,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":18,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":18,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":17,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":0,"y":112},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":1,"y":115},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":116},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":5,"y":115},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":4,"y":113},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":113},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":54,"y":124},"width":13,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":68,"y":124},"width":32,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":69,"y":123},"width":31,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":98,"y":117},"width":2,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":90,"y":122},"width":8,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":97,"y":120},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":96,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":99,"y":116},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":121},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":118},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":115},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":119},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":65,"y":122},"width":2,"height":2}},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":112},"width":101,"height":13},"args":["STONE",1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":105},"width":9,"height":9}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":106},"width":1,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":81,"y":106},"width":1,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":114},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":115},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":104},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":85,"y":103},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":80,"y":107},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":107},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":94,"y":109},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":110},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":110},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":111},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":76},"width":10,"height":8}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":75},"width":8,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":74},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":77},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":84},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":82},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":54,"y":77},"width":1,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":52,"y":84},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":84},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":85},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":40,"y":89},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":88},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":94},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":90},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":39,"y":90},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":57,"y":65},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":56,"y":66},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":61,"y":66},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":58,"y":64},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":63},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":62},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":64},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":65},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":64},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":66},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":68},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":69},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":61},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":60},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":83,"y":57},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":56},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":88,"y":58},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":82,"y":58},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":84,"y":62},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":63,"y":52},"width":7,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":51},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":58},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":62,"y":52},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":54},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":11,"y":89},"width":5,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":16,"y":90},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":90},"width":1,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":12,"y":88},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":13,"y":95},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":115},"width":6,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":121},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":116},"width":2,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":114},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":116},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":120},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":117},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":57,"y":104},"width":7,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":57,"y":102},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":58,"y":101},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":56,"y":103},"width":1,"height":7}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":58,"y":111},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":64,"y":105},"width":1,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":74,"y":86},"width":6,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":75,"y":85},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":75,"y":92},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":80,"y":88},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":73,"y":87},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":75},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":74},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":80},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":95,"y":76},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":90,"y":76},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":98},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":97},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":103},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":99},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":99},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":96},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":104},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":100},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":100},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":55,"y":63},"width":8,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":89,"y":73},"width":8,"height":8},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":21,"y":96},"width":11,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":38,"y":88},"width":10,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":20,"y":113},"width":11,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":10,"y":87},"width":8,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":71,"y":84},"width":12,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"BASE","rect":{"position":{"x":47,"y":78},"width":1,"height":1},"args":["1"]},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":81,"y":56},"width":9,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":30,"y":60},"width":6,"height":10},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":69,"y":116},"width":5,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":115},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":70,"y":120},"width":3,"height":1}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":68,"y":115},"width":7,"height":7},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":109},"width":4,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":108},"width":2,"height":1}},{"type":"CREATE_ENTITIES","entityType":"IRON","rect":{"position":{"x":43,"y":107},"width":6,"height":7},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":94},"width":5,"height":5}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":92,"y":93},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":92},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":91,"y":94},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":93,"y":99},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":97,"y":96},"width":1,"height":2}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":91,"y":92},"width":7,"height":8},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":52},"width":4,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":55},"width":4,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":56},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":46,"y":55},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":56},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":52},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":51},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":47,"y":53},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":53},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":54},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"COAL","rect":{"position":{"x":40,"y":51},"width":9,"height":7},"args":[1,1]},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":115},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":115},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":114},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":113},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":112},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":94,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":94,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":80,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":92,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":93,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":81,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":82,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":83,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":84,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":85,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":86,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":87,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":88,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":89,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":90,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":91,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":111},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":110},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":109},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":108},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":107},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":106},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":61,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":60,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":59,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":58,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":57,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":56,"y":105},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":71},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":70},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":69},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":68},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":67},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":66},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":65},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":64},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":9,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":10,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":11,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":12,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":13,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":14,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":15,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":16,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":17,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":18,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":19,"y":63},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":58},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":57},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":56},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":55},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":70,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":54},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":53},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":69,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":63,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":62,"y":52},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":64,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":65,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":66,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":67,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":68,"y":51},"pheromoneType":"SAND","playerID":0,"quantity":120}]};
 },{}],32:[function(require,module,exports){
+module.exports = {"numPlayers":2,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":26},"width":50,"height":24},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":36},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":37},"width":2,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":23,"y":37},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":38},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":41,"y":45},"width":9,"height":6}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":47},"width":6,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":49},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":48},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":7,"y":35},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":6,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":8,"y":40},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":9,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":10,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":42,"y":34},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":33},"width":2,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":45,"y":33},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":44,"y":36},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":43,"y":36},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":24},"width":20,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":22},"width":15,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":23},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":25},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":21},"width":10,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":20},"width":6,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":19},"width":4,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":5,"y":32},"width":46,"height":18},"args":["STONE",1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":40},"width":8,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":25,"y":38},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":39},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":44},"width":6,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":41},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":19,"y":42},"width":1,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":43},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":21,"y":44},"width":6,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":46},"width":5,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":20,"y":44},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":39},"width":4,"height":4}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":38},"width":3,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":34,"y":40},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":43},"width":2,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":41},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":30,"y":42},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":39,"y":39},"width":1,"height":3}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":36,"y":36},"width":3,"height":2}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":37},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":35,"y":43},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":37,"y":39},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":22,"y":42},"width":1,"height":1},"args":[1]}]};
+},{}],33:[function(require,module,exports){
+module.exports = {"numPlayers":3,"gridWidth":50,"gridHeight":50,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":0,"y":31},"width":1,"height":19},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":1,"y":42},"width":50,"height":8},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":32},"width":1,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"TOKEN","rect":{"position":{"x":24,"y":37},"width":1,"height":1},"args":[0,"HEAT"]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":33},"width":1,"height":9},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":22,"y":31},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":22,"y":35},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":30},"width":1,"height":4},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":22,"y":31},"width":1,"height":4}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":34},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":29},"width":1,"height":5},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":25,"y":23},"width":1,"height":7},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":26,"y":20},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":20},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":29,"y":18},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":32},"width":1,"height":10},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":22},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":20},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":31,"y":18},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":29,"y":18},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":19},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":28,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":20},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":26,"y":21},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":27,"y":21},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":27,"y":21},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":28,"y":20},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":29,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":13},"width":1,"height":6},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":30,"y":12},"width":7,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":13},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":18,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":16,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":14,"y":14},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":19,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":20,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":29},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":48,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":49,"y":26},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":47,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":46,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":45,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":44,"y":28},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":43,"y":29},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":43,"y":29},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":42,"y":30},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":41,"y":31},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":40,"y":31},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":39,"y":33},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":34},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":37,"y":35},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":35},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":18},"width":3,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":18},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":20},"width":1,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":17,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":12,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":31,"y":18},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":15},"width":3,"height":3}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":15},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":32,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":15},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":33,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":34,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":32,"y":14},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":33,"y":15},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":35,"y":17},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":23,"y":19},"width":1,"height":1},"args":[1,1]},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":22},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":21},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":21},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":20},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":20},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":20},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":19},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":18},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":17},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":21,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":16},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":21,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":22,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":23,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":24,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":25,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":26,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":27,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":28,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"FILL_PHEROMONE","gridPos":{"x":29,"y":15},"pheromoneType":"WATER","playerID":0,"quantity":120},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":38},"width":1,"height":1}},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":37},"width":1,"height":1}},{"type":"CREATE_ENTITIES","entityType":"TOKEN","rect":{"position":{"x":24,"y":41},"width":1,"height":1},"args":[0,"HEAT"]},{"type":"DELETE_ENTITIES","rect":{"position":{"x":24,"y":22},"width":1,"height":2}},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":37,"y":12},"width":2,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":13},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":14},"width":1,"height":2},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":11,"y":16},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":38,"y":14},"width":1,"height":1},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":24,"y":22},"width":1,"height":2},"args":[1,1]}]};
+},{}],34:[function(require,module,exports){
+module.exports = {"numPlayers":1,"gridWidth":25,"gridHeight":25,"upgrades":[],"actions":[{"type":"CREATE_ENTITIES","entityType":"AGENT","rect":{"position":{"x":5,"y":13},"width":1,"height":1},"args":[1,null]},{"type":"CREATE_ENTITIES","entityType":"WORM","rect":{"position":{"x":13,"y":14},"width":1,"height":1},"args":[[{"x":13,"y":15},{"x":13,"y":16},{"x":14,"y":16},{"x":15,"y":16},{"x":15,"y":17},{"x":16,"y":17},{"x":16,"y":18}],1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":0,"y":16},"width":1,"height":9},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":24},"width":1,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":1,"y":24},"width":19,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":10,"y":22},"width":1,"height":3},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":20,"y":19},"width":1,"height":5},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"STONE","rect":{"position":{"x":21,"y":24},"width":5,"height":1},"args":["STONE",1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":4,"y":2},"width":5,"height":4},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":9,"y":1},"width":1,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DIRT","rect":{"position":{"x":21,"y":9},"width":3,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"FOOD","rect":{"position":{"x":6,"y":8},"width":2,"height":3},"args":[1,1]},{"type":"CREATE_ENTITIES","entityType":"DOODAD","rect":{"position":{"x":18,"y":2},"width":3,"height":4},"args":[3,4,"QUESTION"]},{"type":"CREATE_ENTITIES","entityType":"BACKGROUND","rect":{"position":{"x":14,"y":0},"width":2,"height":2},"args":[1,1,"FLOOR_TILE"]}]};
+},{}],35:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -2086,7 +2336,7 @@ var gameReducer = function gameReducer(game, action) {
             _entity5.isAgent = true;
             _entity5.blockingTypes = [].concat(_toConsumableArray(Entities.AGENT.config.blockingTypes));
             _entity5.actions = [];
-            _entity5.playerID = game.playerID;
+            // entity.playerID = entity.playerID != null ? entity.playerID : game.playerID;
             _entity5.MOVE = {
               duration: 4,
               spriteOrder: [1]
@@ -2167,6 +2417,13 @@ var gameReducer = function gameReducer(game, action) {
         game.pauseMissiles = pauseMissiles;
         return game;
       }
+    case 'PAUSE_POWER_CONSUMPTION':
+      {
+        var pausePowerConsumption = action.pausePowerConsumption;
+
+        game.pausePowerConsumption = pausePowerConsumption;
+        return game;
+      }
     case 'SET_GAME_OVER':
       {
         /**
@@ -2226,7 +2483,7 @@ function createEntitiesReducer(game, action) {
 }
 
 module.exports = { gameReducer: gameReducer };
-},{"../config":1,"../entities/registry":18,"../render/render":38,"../selectors/pheromones":47,"../simulation/actionQueue":50,"../simulation/entityOperations":52,"../simulation/pheromones":55,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],33:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../render/render":41,"../selectors/pheromones":50,"../simulation/actionQueue":53,"../simulation/entityOperations":55,"../simulation/pheromones":58,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],36:[function(require,module,exports){
 'use strict';
 
 var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
@@ -2256,7 +2513,7 @@ var hotKeysReducer = function hotKeysReducer(hotKeys, action) {
 };
 
 module.exports = { hotKeysReducer: hotKeysReducer };
-},{}],34:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2280,7 +2537,7 @@ var modalReducer = function modalReducer(state, action) {
 };
 
 module.exports = { modalReducer: modalReducer };
-},{}],35:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2315,7 +2572,7 @@ var mouseReducer = function mouseReducer(mouse, action) {
 };
 
 module.exports = { mouseReducer: mouseReducer };
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2581,6 +2838,7 @@ var rootReducer = function rootReducer(state, action) {
     case 'COLLECT_ENTITIES':
     case 'SET_KEEP_MARQUEE':
     case 'PAUSE_MISSILES':
+    case 'PAUSE_POWER_CONSUMPTION':
     case 'SUBTRACT_BASE_RESOURCES':
     case 'ENQUEUE_ENTITY_ACTION':
       {
@@ -2773,7 +3031,7 @@ function upgradeReducer(state, action) {
 }
 
 module.exports = { rootReducer: rootReducer };
-},{"../levels/levels":26,"../simulation/entityOperations":52,"../state/gameState":56,"../state/state":57,"../utils/helpers":97,"./gameReducer":32,"./hotKeysReducer":33,"./modalReducer":34,"./mouseReducer":35,"./tickReducer":37}],37:[function(require,module,exports){
+},{"../levels/levels":29,"../simulation/entityOperations":55,"../state/gameState":59,"../state/state":60,"../utils/helpers":100,"./gameReducer":35,"./hotKeysReducer":36,"./modalReducer":37,"./mouseReducer":38,"./tickReducer":40}],40:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2831,7 +3089,9 @@ var _require9 = require('../utils/vectors'),
     makeVector = _require9.makeVector,
     vectorTheta = _require9.vectorTheta,
     floor = _require9.floor,
-    round = _require9.round;
+    round = _require9.round,
+    abs = _require9.abs,
+    dist = _require9.dist;
 
 var _require10 = require('../utils/helpers'),
     clamp = _require10.clamp,
@@ -2854,7 +3114,8 @@ var _require14 = require('../selectors/neighbors'),
     areNeighbors = _require14.areNeighbors;
 
 var _require15 = require('../selectors/pheromones'),
-    getPheromoneAtPosition = _require15.getPheromoneAtPosition;
+    getPheromoneAtPosition = _require15.getPheromoneAtPosition,
+    getTemperature = _require15.getTemperature;
 
 var globalConfig = require('../config');
 
@@ -2863,6 +3124,9 @@ var _require16 = require('../simulation/miscOperations'),
 
 var _require17 = require('../entities/registry'),
     Entities = _require17.Entities;
+
+var _require18 = require('../selectors/buildings'),
+    canAffordBuilding = _require18.canAffordBuilding;
 
 var totalTime = 0;
 var tickReducer = function tickReducer(game, action) {
@@ -3050,8 +3314,19 @@ var updateBallistics = function updateBallistics(game) {
     if (ballistic == null || ballistic.position == null) return 'continue';
     ballistic.age += game.timeSinceLastTick;
     // if it has collided with something, deal damage to it and die
+    // OR if it is within Radius of target, die
     var collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
-    if (collisions.length > 0) {
+    var inRadius = false;
+    if (ballistic.targetID != null && ballistic.warhead != null) {
+      var target = game.entities[ballistic.targetID];
+      if (target != null) {
+        if (Math.abs(dist(ballistic.position, target.position)) <= 4) {
+          inRadius = true;
+        }
+      }
+    }
+
+    if (collisions.length > 0 || inRadius) {
       if (ballistic.missRate == null || ballistic.missRate != null && Math.random() > ballistic.missRate) {
         var alreadyDamaged = {};
         collisions.forEach(function (e) {
@@ -3120,7 +3395,7 @@ var updateFlammables = function updateFlammables(game) {
       }
       // if not on fire, check if it should catch on fire
     } else {
-      var temp = getPheromoneAtPosition(game, flammable.position, 'HEAT', 0);
+      var temp = getTemperature(game, flammable.position);
       if (temp >= flammable.combustionTemp) {
         if (flammable.type != 'AGENT') {
           flammable.onFire = true;
@@ -3180,7 +3455,7 @@ var updateMeltables = function updateMeltables(game) {
   for (var id in game.MELTABLE) {
     var meltable = game.entities[id];
 
-    var temp = getPheromoneAtPosition(game, meltable.position, 'HEAT', 0);
+    var temp = getTemperature(game, meltable.position);
     if (temp >= meltable.meltTemp) {
       // if you're an agent (or food!) then you're en route to being collected
       var config = Entities[meltable.type].config;
@@ -3188,6 +3463,18 @@ var updateMeltables = function updateMeltables(game) {
         meltable.type = meltable.collectedAs;
         meltable.playerID = 0;
         config = Entities[meltable.type].config;
+      }
+
+      // if it produces a different pheromone than what it melts to, e.g. ICE,
+      // then need to remove that, then melt
+      if (meltable.meltType) {
+        changePheromoneEmitterQuantity(game, meltable, 0);
+        meltable.pheromoneType = meltable.meltType;
+        game.pheromoneWorker.postMessage({
+          type: 'CHANGE_EMITTER_TYPE',
+          entityID: meltable.id,
+          pheromoneType: meltable.pheromoneType
+        });
       }
       changePheromoneEmitterQuantity(game, meltable, meltable.heatQuantity * (meltable.hp / config.hp));
       changeEntityType(game, meltable, meltable.type, 'FOOD');
@@ -3205,7 +3492,7 @@ var updateTowers = function updateTowers(game) {
     var tower = game.entities[id];
     var config = Entities[tower.type].config;
     // don't do anything if unpowered
-    if (tower.isPowerConsumer && !tower.isPowered) continue;
+    if (tower.isPowerConsumer && !tower.isPowered && !game.pausePowerConsumption) continue;
 
     // choose target if possible
     if (tower.targetID == null) {
@@ -3254,9 +3541,17 @@ var updateTowers = function updateTowers(game) {
         var targetPos = game.entities[tower.targetID].position;
         targetTheta = vectorTheta(subtract(targetPos, tower.position)) % (Math.PI / 2);
         targetTheta = clamp(targetTheta, config.minTheta, config.maxTheta);
+        if (targetPos.y >= tower.position.y) {
+          targetTheta = config.minTheta;
+        }
       }
     }
-    if (closeTo(tower.theta, targetTheta)) {
+
+    // treat missile turrets as a special case
+    if (tower.type == 'MISSILE_TURRET') {
+      tower.thetaAccel = 0;
+      tower.theta = clamp(targetTheta, config.minTheta, config.maxTheta);
+    } else if (closeTo(tower.theta, targetTheta)) {
       tower.thetaAccel /= -2;
     } else if (tower.theta < targetTheta) {
       tower.thetaAccel = config.thetaAccel;
@@ -3278,12 +3573,24 @@ var updateTowers = function updateTowers(game) {
       if (tower.needsCooldown) {
         tower.shotsSinceCooldown += 1;
         if (tower.shotsSinceCooldown > tower.shotsTillCooldown) {
-          console.log("in cooldown");
           tower.shotsSinceCooldown = 0;
           queueAction(game, tower, makeAction(game, tower, 'COOLDOWN', null));
         }
       }
-      queueAction(game, tower, makeAction(game, tower, 'SHOOT', { theta: tower.theta, projectileType: tower.projectileType }));
+
+      var canAfford = true;
+      if (tower.launchCost) {
+        canAfford = canAffordBuilding(game.bases[game.playerID], tower.launchCost);
+        if (canAfford) {
+          for (var resource in tower.launchCost) {
+            game.bases[game.playerID].resources[resource] -= tower.launchCost[resource];
+          }
+        }
+      }
+
+      if (canAfford) {
+        queueAction(game, tower, makeAction(game, tower, 'SHOOT', { theta: tower.theta, projectileType: tower.projectileType }));
+      }
     }
   }
 };
@@ -3352,7 +3659,8 @@ var updateBases = function updateBases(game) {
 
           if (!isActionTypeQueued(entity, 'DIE')) {
             queueAction(game, entity, makeAction(game, entity, 'DIE'));
-            var type = entity.collectedAs;
+            var type = entity.collectedAs ? entity.collectedAs : entity.type;
+            if (!entity.isCollectable) continue;
             if (game.bases[game.playerID].resources[type] == null) {
               game.bases[game.playerID].resources[type] = 0;
             }
@@ -3608,7 +3916,7 @@ var updateRain = function updateRain(game) {
 };
 
 module.exports = { tickReducer: tickReducer };
-},{"../config":1,"../entities/registry":18,"../render/render":38,"../selectors/collisions":44,"../selectors/misc":45,"../selectors/neighbors":46,"../selectors/pheromones":47,"../selectors/sprites":48,"../simulation/actionOperations":49,"../simulation/actionQueue.js":50,"../simulation/agentOperations":51,"../simulation/entityOperations":52,"../simulation/miscOperations":54,"../simulation/pheromones":55,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/stochastic":99,"../utils/vectors":100}],38:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../render/render":41,"../selectors/buildings":46,"../selectors/collisions":47,"../selectors/misc":48,"../selectors/neighbors":49,"../selectors/pheromones":50,"../selectors/sprites":51,"../simulation/actionOperations":52,"../simulation/actionQueue.js":53,"../simulation/agentOperations":54,"../simulation/entityOperations":55,"../simulation/miscOperations":57,"../simulation/pheromones":58,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/stochastic":102,"../utils/vectors":103}],41:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4274,7 +4582,7 @@ var renderPheromones = function renderPheromones(ctx, game) {
 };
 
 module.exports = { render: render };
-},{"../config":1,"../entities/registry":18,"../selectors/misc":45,"../selectors/sprites":48,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100,"./renderMinimap":41}],39:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../selectors/misc":48,"../selectors/sprites":51,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103,"./renderMinimap":44}],42:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4366,7 +4674,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100,"./renderHealthBar":40}],40:[function(require,module,exports){
+},{"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103,"./renderHealthBar":43}],43:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4408,7 +4716,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":96,"../utils/vectors":100}],41:[function(require,module,exports){
+},{"../utils/gridHelpers":99,"../utils/vectors":103}],44:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4746,7 +5054,7 @@ var onMinimap = function onMinimap(dims, entity) {
 module.exports = {
   renderMinimap: renderMinimap
 };
-},{"../selectors/misc":45,"../selectors/sprites":48,"../utils/gridHelpers":96,"../utils/vectors":100,"./renderSegmented":42}],42:[function(require,module,exports){
+},{"../selectors/misc":48,"../selectors/sprites":51,"../utils/gridHelpers":99,"../utils/vectors":103,"./renderSegmented":45}],45:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -4894,7 +5202,7 @@ module.exports = {
   renderSegmented: renderSegmented,
   renderWormCanvas: renderWormCanvas
 };
-},{"../selectors/misc":45,"../selectors/sprites":48,"../utils/vectors":100,"./renderHealthBar":40}],43:[function(require,module,exports){
+},{"../selectors/misc":48,"../selectors/sprites":51,"../utils/vectors":103,"./renderHealthBar":43}],46:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4904,7 +5212,11 @@ var _require = require('../entities/registry'),
 
 var getModifiedCost = function getModifiedCost(game, entityType) {
   var cost = _extends({}, Entities[entityType].config.cost);
-  var numBuilding = game[entityType].length;
+  var numBuilding = game[entityType].map(function (id) {
+    return game.entities[id];
+  }).filter(function (e) {
+    return e.playerID == game.playerID;
+  }).length;
   for (var resource in cost) {
     for (var i = 0; i < numBuilding; i++) {
       cost[resource] *= 2;
@@ -4927,7 +5239,7 @@ module.exports = {
   canAffordBuilding: canAffordBuilding,
   getModifiedCost: getModifiedCost
 };
-},{"../entities/registry":18}],44:[function(require,module,exports){
+},{"../entities/registry":20}],47:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -4978,12 +5290,8 @@ var collisionsAtSpace = function collisionsAtSpace(game, entity, blockingTypes, 
   if (entity == null) return [];
   var collisions = lookupInGrid(game.grid, pos).map(function (id) {
     return game.entities[id];
-  })
-  // regular entities do not block themselves, but segmented entities do
-  // BUT only when we are considering what neighboring spaces are free to move to,
-  // NOT whether a move we've made collides with ourself
-  .filter(function (e) {
-    return e != null && entity.segmented && neighbor ? true : e.id != entity.id;
+  }).filter(function (e) {
+    return e != null && e.id != entity.id;
   }).filter(function (e) {
     return blockingTypes.includes(e.type);
   });
@@ -4995,7 +5303,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":96}],45:[function(require,module,exports){
+},{"../utils/gridHelpers":99}],48:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5188,7 +5496,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":44,"../selectors/neighbors":46,"../simulation/actionQueue":50,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],46:[function(require,module,exports){
+},{"../selectors/collisions":47,"../selectors/neighbors":49,"../simulation/actionQueue":53,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],49:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -5455,7 +5763,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":44,"../utils/gridHelpers":96,"../utils/vectors":100}],47:[function(require,module,exports){
+},{"../selectors/collisions":47,"../utils/gridHelpers":99,"../utils/vectors":103}],50:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5487,6 +5795,10 @@ var getPheromoneAtPosition = function getPheromoneAtPosition(game, position, typ
       y = position.y;
 
   return grid[x][y][playerID][type] || 0;
+};
+
+var getTemperature = function getTemperature(game, position) {
+  return getPheromoneAtPosition(game, position, 'HEAT', 0) - getPheromoneAtPosition(game, position, 'COLD', 0);
 };
 
 /**
@@ -5573,14 +5885,6 @@ var getEntityPheromoneSources = function getEntityPheromoneSources(game, entity)
  *  across all entities emitting pheromones of the given type and playerID
  */
 var getSourcesOfPheromoneType = function getSourcesOfPheromoneType(game, pheromoneType, playerID) {
-  if (pheromoneType == 'MARKED_DIRT_PHER') {
-    return game.markedDirtIDs.map(function (id) {
-      return game.entities[id];
-    }).filter(function (dirt) {
-      return dirt.marked == playerID;
-    });
-  }
-
   var sources = [];
   for (var entityID in game.PHEROMONE_EMITTER) {
     var entity = game.entities[entityID];
@@ -5594,11 +5898,12 @@ var getSourcesOfPheromoneType = function getSourcesOfPheromoneType(game, pheromo
 
 module.exports = {
   getPheromoneAtPosition: getPheromoneAtPosition,
+  getTemperature: getTemperature,
   getSourcesOfPheromoneType: getSourcesOfPheromoneType,
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos
 };
-},{"../config":1,"../selectors/neighbors":46,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],48:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":49,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],51:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -6046,7 +6351,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":45,"../selectors/neighbors":46,"../simulation/actionQueue":50,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],49:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":48,"../selectors/neighbors":49,"../simulation/actionQueue":53,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],52:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -6220,7 +6525,8 @@ var entityShoot = function entityShoot(game, entity, payload) {
     case 'MISSILE':
       {
         var _position = round(add(makeVector(theta, -4), entity.position));
-        projectile = Entities.MISSILE.make(game, _position, entity.playerID, Entities.DYNAMITE.make(game, _position, entity.playerID), theta + Math.PI);
+        projectile = Entities.MISSILE.make(game, _position, entity.playerID, Entities.DYNAMITE.make(game, _position, entity.playerID), theta + Math.PI, 150, entity.targetID);
+        projectile.blockingTypes.push('MISSILE');
         break;
       }
   }
@@ -6247,7 +6553,7 @@ var entityDie = function entityDie(game, entity) {
 module.exports = {
   entityStartCurrentAction: entityStartCurrentAction
 };
-},{"../entities/registry":18,"../selectors/misc":45,"../selectors/sprites":48,"../simulation/actionQueue":50,"../simulation/agentOperations":51,"../simulation/entityOperations":52,"../simulation/explosiveOperations":53,"../utils/helpers":97,"../utils/vectors":100}],50:[function(require,module,exports){
+},{"../entities/registry":20,"../selectors/misc":48,"../selectors/sprites":51,"../simulation/actionQueue":53,"../simulation/agentOperations":54,"../simulation/entityOperations":55,"../simulation/explosiveOperations":56,"../utils/helpers":100,"../utils/vectors":103}],53:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -6479,7 +6785,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":47,"../utils/helpers":97,"../utils/vectors":100}],51:[function(require,module,exports){
+},{"../selectors/pheromones":50,"../utils/helpers":100,"../utils/vectors":103}],54:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -6677,7 +6983,7 @@ var agentDecideMove = function agentDecideMove(game, agent) {
       taskConfig[pherType] = 0;
     }
   }
-  var playerID = agent.playerID;
+  var playerID = game.playerID;
   var baseScore = taskConfig.base;
 
   var basePher = getPheromonesInCell(game.grid, agent.position, playerID);
@@ -6782,7 +7088,7 @@ module.exports = {
   agentDecideMove: agentDecideMove,
   agentSwitchTask: agentSwitchTask
 };
-},{"../config":1,"../entities/registry":18,"../selectors/collisions":44,"../selectors/misc":45,"../selectors/neighbors":46,"../selectors/pheromones":47,"../simulation/actionQueue":50,"../simulation/entityOperations":52,"../simulation/pheromones":55,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/stochastic":99,"../utils/vectors":100}],52:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../selectors/collisions":47,"../selectors/misc":48,"../selectors/neighbors":49,"../selectors/pheromones":50,"../simulation/actionQueue":53,"../simulation/entityOperations":55,"../simulation/pheromones":58,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/stochastic":102,"../utils/vectors":103}],55:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -7349,13 +7655,13 @@ var changeEntityType = function changeEntityType(game, entity, oldType, nextType
 
 var changePheromoneEmitterQuantity = function changePheromoneEmitterQuantity(game, entity, nextQuantity) {
   entity.quantity = nextQuantity;
+  // NOTE: remove then re-add to grid in order to get pheromones working right
+  removeEntityFromGrid(game, entity);
   game.pheromoneWorker.postMessage({
     type: 'SET_EMITTER_QUANTITY',
     entityID: entity.id,
     quantity: nextQuantity
   });
-  // NOTE: remove then re-add to grid in order to get pheromones working right
-  removeEntityFromGrid(game, entity);
   insertEntityInGrid(game, entity);
 };
 
@@ -7542,7 +7848,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":16,"../entities/registry":18,"../selectors/neighbors":46,"../selectors/pheromones":47,"../simulation/pheromones":55,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],53:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":17,"../entities/registry":20,"../selectors/neighbors":49,"../selectors/pheromones":50,"../simulation/pheromones":58,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],56:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -7595,6 +7901,7 @@ var _require6 = require('../simulation/miscOperations'),
 
 
 var triggerExplosion = function triggerExplosion(game, explosive, precompute) {
+  if (explosive == null) return;
   var quadrantThetas = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
   var numRays = explosive.explosionRadius;
   if (explosive.explosionRadiusType == 'HORIZONTAL') {
@@ -7679,7 +7986,7 @@ var triggerExplosion = function triggerExplosion(game, explosive, precompute) {
 module.exports = {
   triggerExplosion: triggerExplosion
 };
-},{"../simulation/actionQueue":50,"../simulation/entityOperations":52,"../simulation/miscOperations":54,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],54:[function(require,module,exports){
+},{"../simulation/actionQueue":53,"../simulation/entityOperations":55,"../simulation/miscOperations":57,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],57:[function(require,module,exports){
 'use strict';
 
 var _require = require('../simulation/actionQueue'),
@@ -7706,7 +8013,7 @@ var dealDamageToEntity = function dealDamageToEntity(game, entity, damage) {
 module.exports = {
   dealDamageToEntity: dealDamageToEntity
 };
-},{"../simulation/actionQueue":50,"../simulation/entityOperations":52}],55:[function(require,module,exports){
+},{"../simulation/actionQueue":53,"../simulation/entityOperations":55}],58:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -8066,7 +8373,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":46,"../selectors/pheromones":47,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],56:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":49,"../selectors/pheromones":50,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],59:[function(require,module,exports){
 'use strict';
 
 var _require = require('../entities/makeEntity'),
@@ -8137,14 +8444,16 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
 
     pheromoneDisplay: {
       COLONY: false,
-      ALERT: false,
       WATER: true,
       STEAM: true,
       HEAT: true,
+      COLD: true,
       MOLTEN_IRON: true,
       MOLTEN_STEEL: true,
       SAND: true,
-      MOLTEN_SAND: true
+      MOLTEN_SAND: true,
+      OIL: true,
+      SULPHUR_DIOXIDE: true
     },
     maxMinimap: false,
 
@@ -8174,6 +8483,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
     controlledEntity: null,
 
     pauseMissiles: false,
+    pausePowerConsumption: false,
 
     staleTiles: [],
     floodFillSources: [],
@@ -8249,7 +8559,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
 };
 
 module.exports = { initBaseState: initBaseState, initPlayer: initPlayer };
-},{"../config":1,"../entities/makeEntity":16,"../entities/registry":18,"../simulation/entityOperations":52,"../utils/gridHelpers":96,"../utils/stochastic":99,"../utils/vectors":100}],57:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":17,"../entities/registry":20,"../simulation/entityOperations":55,"../utils/gridHelpers":99,"../utils/stochastic":102,"../utils/vectors":103}],60:[function(require,module,exports){
 'use strict';
 
 var initState = function initState() {
@@ -8264,7 +8574,7 @@ var initState = function initState() {
 };
 
 module.exports = { initState: initState };
-},{}],58:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -8413,7 +8723,7 @@ var handleGameWon = function handleGameWon(store, dispatch, state, reason) {
 };
 
 module.exports = { initGameOverSystem: initGameOverSystem };
-},{"../render/render":38,"../ui/components/Button.react":88,"../ui/components/Divider.react":90,"../ui/components/Modal.react":93,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100,"axios":101,"react":136}],59:[function(require,module,exports){
+},{"../render/render":41,"../ui/components/Button.react":91,"../ui/components/Divider.react":93,"../ui/components/Modal.react":96,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103,"axios":104,"react":139}],62:[function(require,module,exports){
 'use strict';
 
 var initKeyboardControlsSystem = function initKeyboardControlsSystem(store) {
@@ -8548,7 +8858,7 @@ var getUpDownLeftRight = function getUpDownLeftRight(ev) {
 };
 
 module.exports = { initKeyboardControlsSystem: initKeyboardControlsSystem };
-},{}],60:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -8611,7 +8921,7 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
 };
 
 module.exports = { initMissileAttackSystem: initMissileAttackSystem };
-},{"../config":1,"../entities/registry":18,"../utils/stochastic":99}],61:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../utils/stochastic":102}],64:[function(require,module,exports){
 'use strict';
 
 var _require = require('../config'),
@@ -8844,7 +9154,7 @@ var getMousePixel = function getMousePixel(ev, canvas) {
 };
 
 module.exports = { initMouseControlsSystem: initMouseControlsSystem };
-},{"../config":1,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],62:[function(require,module,exports){
+},{"../config":1,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],65:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -8888,6 +9198,9 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
                 type = _entities$encodedPosi.type,
                 quantity = _entities$encodedPosi.quantity;
 
+            if (!Entities[type]) {
+              console.log('no entity of type', type);
+            }
             var config = Entities[type].config;
             var leftoverQuantity = quantity;
             var _iteratorNormalCompletion = true;
@@ -8934,7 +9247,7 @@ var initPheromoneWorkerSystem = function initPheromoneWorkerSystem(store) {
 };
 
 module.exports = { initPheromoneWorkerSystem: initPheromoneWorkerSystem };
-},{"../entities/registry":18,"../utils/helpers":97,"../utils/vectors":100}],63:[function(require,module,exports){
+},{"../entities/registry":20,"../utils/helpers":100,"../utils/vectors":103}],66:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -8978,7 +9291,7 @@ var initRainSystem = function initRainSystem(store) {
 };
 
 module.exports = { initRainSystem: initRainSystem };
-},{"../config":1,"../simulation/pheromones":55,"../utils/stochastic":99}],64:[function(require,module,exports){
+},{"../config":1,"../simulation/pheromones":58,"../utils/stochastic":102}],67:[function(require,module,exports){
 'use strict';
 
 var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
@@ -8990,8 +9303,8 @@ var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
   loadSprite(dispatch, state, 'FOOD', './img/Food2.png');
   loadSprite(dispatch, state, 'DIRT', './img/Dirt3.png');
   loadSprite(dispatch, state, 'STONE', './img/Stone1.png');
-  loadSprite(dispatch, state, 'BRICK', './img/Brick1.png');
-  loadSprite(dispatch, state, 'KITCHEN', './img/Kitchen1.png');
+  loadSprite(dispatch, state, 'SULPHUR', './img/Brick1.png');
+  loadSprite(dispatch, state, 'ICE', './img/Kitchen1.png');
   loadSprite(dispatch, state, 'PHEROMONE', './img/Pheromones.png');
 
   loadSprite(dispatch, state, 'ALERT', './img/Exclamation1.png');
@@ -9024,7 +9337,7 @@ var loadSprite = function loadSprite(dispatch, state, name, src) {
 };
 
 module.exports = { initSpriteSheetSystem: initSpriteSheetSystem };
-},{}],65:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 
 var levels = require('../levels/levels');
@@ -9065,7 +9378,7 @@ function loadLevel(store, levelName, additionalUpgrades) {
 module.exports = {
   loadLevel: loadLevel
 };
-},{"../levels/levels":26,"../utils/proceduralLevel":98}],66:[function(require,module,exports){
+},{"../levels/levels":29,"../utils/proceduralLevel":101}],69:[function(require,module,exports){
 'use strict';
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -9233,7 +9546,7 @@ var isAboveSomething = function isAboveSomething(game, position) {
 };
 
 module.exports = { handleCollect: handleCollect, handlePlace: handlePlace };
-},{"../entities/registry":18,"../selectors/buildings":43,"../selectors/neighbors":46,"../selectors/pheromones":47,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100}],67:[function(require,module,exports){
+},{"../entities/registry":20,"../selectors/buildings":46,"../selectors/neighbors":49,"../selectors/pheromones":50,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103}],70:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9265,7 +9578,7 @@ var BottomBar = function BottomBar(props) {
 };
 
 module.exports = BottomBar;
-},{"./InfoHUD.react":81,"react":136}],68:[function(require,module,exports){
+},{"./InfoHUD.react":84,"react":139}],71:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -9404,7 +9717,7 @@ function withPropsChecker(WrappedComponent) {
 }
 
 module.exports = React.memo(Canvas);
-},{"../config":1,"react":136}],69:[function(require,module,exports){
+},{"../config":1,"react":139}],72:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -9492,7 +9805,7 @@ var AudioWidget = function AudioWidget(props) {
 };
 
 module.exports = AudioWidget;
-},{"./Button.react":70,"react":136}],70:[function(require,module,exports){
+},{"./Button.react":73,"react":139}],73:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -9576,7 +9889,7 @@ function Button(props) {
 }
 
 module.exports = Button;
-},{"react":136}],71:[function(require,module,exports){
+},{"react":139}],74:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9616,7 +9929,7 @@ function Checkbox(props) {
 }
 
 module.exports = Checkbox;
-},{"react":136}],72:[function(require,module,exports){
+},{"react":139}],75:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9632,7 +9945,7 @@ function Divider(props) {
 }
 
 module.exports = Divider;
-},{"react":136}],73:[function(require,module,exports){
+},{"react":139}],76:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9673,7 +9986,7 @@ var Dropdown = function Dropdown(props) {
 };
 
 module.exports = Dropdown;
-},{"react":136}],74:[function(require,module,exports){
+},{"react":139}],77:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9699,7 +10012,7 @@ var InfoCard = function InfoCard(props) {
 };
 
 module.exports = InfoCard;
-},{"react":136}],75:[function(require,module,exports){
+},{"react":139}],78:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -9773,7 +10086,7 @@ function Modal(props) {
 }
 
 module.exports = Modal;
-},{"../../utils/helpers":97,"./Button.react":70,"react":136}],76:[function(require,module,exports){
+},{"../../utils/helpers":100,"./Button.react":73,"react":139}],79:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -9863,7 +10176,7 @@ var submitValue = function submitValue(onChange, nextVal, onlyInt) {
 };
 
 module.exports = NumberField;
-},{"react":136}],77:[function(require,module,exports){
+},{"react":139}],80:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -9952,7 +10265,7 @@ var RadioPicker = function (_React$Component) {
 }(React.Component);
 
 module.exports = RadioPicker;
-},{"react":136}],78:[function(require,module,exports){
+},{"react":139}],81:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10023,7 +10336,7 @@ function Slider(props) {
 }
 
 module.exports = Slider;
-},{"./NumberField.react":76,"react":136}],79:[function(require,module,exports){
+},{"./NumberField.react":79,"react":139}],82:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -10202,7 +10515,7 @@ function ExperimentalSidebar(props) {
 }
 
 module.exports = ExperimentalSidebar;
-},{"./Components/Button.react":70,"./Components/Checkbox.react":71,"./Components/Divider.react":72,"./Components/Dropdown.react":73,"./Components/Slider.react":78,"react":136}],80:[function(require,module,exports){
+},{"./Components/Button.react":73,"./Components/Checkbox.react":74,"./Components/Divider.react":75,"./Components/Dropdown.react":76,"./Components/Slider.react":81,"react":139}],83:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10451,7 +10764,7 @@ function configureMouseHandlers(game) {
 }
 
 module.exports = Game;
-},{"../config":1,"../selectors/misc":45,"../simulation/actionQueue":50,"../systems/gameOverSystem":58,"../systems/keyboardControlsSystem":59,"../systems/missileAttackSystem":60,"../systems/mouseControlsSystem":61,"../systems/pheromoneWorkerSystem":62,"../systems/rainSystem":63,"../systems/spriteSheetSystem":64,"../thunks/mouseInteractions":66,"../utils/gridHelpers":96,"../utils/helpers":97,"../utils/vectors":100,"./BottomBar.react":67,"./Canvas.react":68,"./Components/Button.react":70,"./Components/Checkbox.react":71,"./Components/RadioPicker.react":77,"./ExperimentalSidebar.react":79,"./TopBar.react":86,"react":136}],81:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":48,"../simulation/actionQueue":53,"../systems/gameOverSystem":61,"../systems/keyboardControlsSystem":62,"../systems/missileAttackSystem":63,"../systems/mouseControlsSystem":64,"../systems/pheromoneWorkerSystem":65,"../systems/rainSystem":66,"../systems/spriteSheetSystem":67,"../thunks/mouseInteractions":69,"../utils/gridHelpers":99,"../utils/helpers":100,"../utils/vectors":103,"./BottomBar.react":70,"./Canvas.react":71,"./Components/Button.react":73,"./Components/Checkbox.react":74,"./Components/RadioPicker.react":80,"./ExperimentalSidebar.react":82,"./TopBar.react":89,"react":139}],84:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -10472,7 +10785,8 @@ var _require4 = require('../utils/gridHelpers'),
     getPheromonesInCell = _require4.getPheromonesInCell;
 
 var _require5 = require('../selectors/pheromones'),
-    getPheromoneAtPosition = _require5.getPheromoneAtPosition;
+    getPheromoneAtPosition = _require5.getPheromoneAtPosition,
+    getTemperature = _require5.getTemperature;
 
 var InfoHUD = function InfoHUD(props) {
   var mousePos = props.mousePos,
@@ -10494,11 +10808,13 @@ var InfoHUD = function InfoHUD(props) {
 
   var entityInfoCards = lookupInGrid(game.grid, mousePos).map(function (id) {
     return game.entities[id];
+  }).filter(function (e) {
+    return e != null;
   }).map(function (e) {
     return React.createElement(EntityInfoCard, { key: 'info_' + e.id, entity: e });
   });
 
-  var temp = getPheromoneAtPosition(game, mousePos, 'HEAT', 0);
+  var temp = getTemperature(game, mousePos);
 
   return React.createElement(
     'div',
@@ -10598,6 +10914,18 @@ var EntityInfoCard = function EntityInfoCard(props) {
   var entity = props.entity;
 
   var config = Entities[entity.type].config;
+  var launchCost = [];
+  if (entity.launchCost != null) {
+    for (var type in entity.launchCost) {
+      launchCost.push(React.createElement(
+        'div',
+        { key: "launchCost_" + entity.type + "_" + type },
+        type,
+        ': ',
+        entity.launchCost[type]
+      ));
+    }
+  }
 
   return React.createElement(
     InfoCard,
@@ -10633,17 +10961,17 @@ var EntityInfoCard = function EntityInfoCard(props) {
       'On Fire: ',
       entity.onFire ? 'Yes' : 'No'
     ) : null,
-    entity.heatQuantity != null ? React.createElement(
-      'div',
-      null,
-      'Fire Temp: ',
-      entity.heatQuantity
-    ) : null,
     entity.combustionTemp != null ? React.createElement(
       'div',
       null,
       'Combustion Temp: ',
       entity.combustionTemp
+    ) : null,
+    entity.combustionTemp != null ? React.createElement(
+      'div',
+      null,
+      'Fire Temp: ',
+      entity.heatQuantity
     ) : null,
     entity.powerConsumed != null ? React.createElement(
       'div',
@@ -10661,7 +10989,7 @@ var EntityInfoCard = function EntityInfoCard(props) {
       'div',
       null,
       'Melts To: ',
-      entity.pheromoneType
+      entity.meltType ? entity.meltType : entity.pheromoneType
     ) : null,
     entity.meltTemp != null ? React.createElement(
       'div',
@@ -10682,12 +11010,18 @@ var EntityInfoCard = function EntityInfoCard(props) {
       entity.powerGenerated.toFixed(2),
       '/',
       config.powerGenerated
+    ) : null,
+    launchCost.length > 0 ? React.createElement(
+      'div',
+      null,
+      'Cost Per Launch: ',
+      launchCost
     ) : null
   );
 };
 
 module.exports = InfoHUD;
-},{"../config":1,"../entities/registry":18,"../selectors/pheromones":47,"../ui/components/InfoCard.react":92,"../utils/gridHelpers":96,"../utils/helpers":97,"react":136}],82:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../selectors/pheromones":50,"../ui/components/InfoCard.react":95,"../utils/gridHelpers":99,"../utils/helpers":100,"react":139}],85:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -11113,6 +11447,19 @@ function LevelEditor(props) {
       React.createElement(
         'div',
         null,
+        React.createElement(Checkbox, {
+          label: 'Pause Power Consumption',
+          checked: !!state.game.pausePowerConsumption,
+          onChange: function onChange(pausePowerConsumption) {
+            return dispatch({
+              type: 'PAUSE_POWER_CONSUMPTION', pausePowerConsumption: pausePowerConsumption
+            });
+          }
+        })
+      ),
+      React.createElement(
+        'div',
+        null,
         React.createElement(Button, {
           label: 'Reset View',
           onClick: function onClick() {
@@ -11405,6 +11752,8 @@ function createEntities(game, dispatch, editor, rect) {
     case 'COAL':
     case 'GLASS':
     case 'SILICON':
+    case 'ICE':
+    case 'SULPHUR':
       if (editor.subdividing) {
         args = [rect.width, rect.height];
       } else {
@@ -11444,6 +11793,7 @@ function createEntities(game, dispatch, editor, rect) {
       }
     case 'LASER_TURRET':
     case 'BASIC_TURRET':
+    case 'MISSILE_TURRET':
       args = [editor.playerID];
       break;
     case 'FAST_TURRET':
@@ -11673,7 +12023,7 @@ function createEntityOptions(game, editor, setEditor) {
 }
 
 module.exports = LevelEditor;
-},{"../config":1,"../entities/registry":18,"../render/render":38,"../systems/mouseControlsSystem":61,"../utils/vectors":100,"./components/Button.react":88,"./components/Checkbox.react":89,"./components/Divider.react":90,"./components/Dropdown.react":91,"./components/NumberField.react":94,"./components/Slider.react":95,"react":136}],83:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../render/render":41,"../systems/mouseControlsSystem":64,"../utils/vectors":103,"./components/Button.react":91,"./components/Checkbox.react":92,"./components/Divider.react":93,"./components/Dropdown.react":94,"./components/NumberField.react":97,"./components/Slider.react":98,"react":139}],86:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -12024,7 +12374,7 @@ function playLevel(store, levelName, setLoadingProgress, setIsLoaded) {
 }
 
 module.exports = Lobby;
-},{"../config":1,"../levels/levels":26,"../systems/spriteSheetSystem":64,"../thunks/levelThunks":65,"../ui/components/Modal.react":93,"../utils/helpers":97,"./components/AudioWidget.react":87,"./components/Button.react":88,"./components/Checkbox.react":89,"./components/Divider.react":90,"./components/Dropdown.react":91,"axios":101,"react":136}],84:[function(require,module,exports){
+},{"../config":1,"../levels/levels":29,"../systems/spriteSheetSystem":67,"../thunks/levelThunks":68,"../ui/components/Modal.react":96,"../utils/helpers":100,"./components/AudioWidget.react":90,"./components/Button.react":91,"./components/Checkbox.react":92,"./components/Divider.react":93,"./components/Dropdown.react":94,"axios":104,"react":139}],87:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -12071,7 +12421,7 @@ function Main(props) {
 }
 
 module.exports = Main;
-},{"./Game.react":80,"./LevelEditor.react":82,"./Lobby.react":83,"react":136}],85:[function(require,module,exports){
+},{"./Game.react":83,"./LevelEditor.react":85,"./Lobby.react":86,"react":139}],88:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -12234,7 +12584,7 @@ function PlaceBuildingCard(props) {
 }
 
 module.exports = PlacementPalette;
-},{"../entities/registry":18,"../selectors/buildings":43,"../ui/Components/InfoCard.react":74,"react":136}],86:[function(require,module,exports){
+},{"../entities/registry":20,"../selectors/buildings":46,"../ui/Components/InfoCard.react":77,"react":139}],89:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -12465,25 +12815,25 @@ function dismissModal(dispatch) {
 }
 
 module.exports = TopBar;
-},{"../config":1,"../entities/registry":18,"../ui/PlacementPalette.react":85,"../ui/components/InfoCard.react":92,"../utils/helpers":97,"./Components/AudioWidget.react":69,"./Components/Button.react":70,"./Components/Modal.react":75,"react":136}],87:[function(require,module,exports){
-arguments[4][69][0].apply(exports,arguments)
-},{"./Button.react":88,"dup":69,"react":136}],88:[function(require,module,exports){
-arguments[4][70][0].apply(exports,arguments)
-},{"dup":70,"react":136}],89:[function(require,module,exports){
-arguments[4][71][0].apply(exports,arguments)
-},{"dup":71,"react":136}],90:[function(require,module,exports){
+},{"../config":1,"../entities/registry":20,"../ui/PlacementPalette.react":88,"../ui/components/InfoCard.react":95,"../utils/helpers":100,"./Components/AudioWidget.react":72,"./Components/Button.react":73,"./Components/Modal.react":78,"react":139}],90:[function(require,module,exports){
 arguments[4][72][0].apply(exports,arguments)
-},{"dup":72,"react":136}],91:[function(require,module,exports){
+},{"./Button.react":91,"dup":72,"react":139}],91:[function(require,module,exports){
 arguments[4][73][0].apply(exports,arguments)
-},{"dup":73,"react":136}],92:[function(require,module,exports){
+},{"dup":73,"react":139}],92:[function(require,module,exports){
 arguments[4][74][0].apply(exports,arguments)
-},{"dup":74,"react":136}],93:[function(require,module,exports){
+},{"dup":74,"react":139}],93:[function(require,module,exports){
 arguments[4][75][0].apply(exports,arguments)
-},{"../../utils/helpers":97,"./Button.react":88,"dup":75,"react":136}],94:[function(require,module,exports){
+},{"dup":75,"react":139}],94:[function(require,module,exports){
 arguments[4][76][0].apply(exports,arguments)
-},{"dup":76,"react":136}],95:[function(require,module,exports){
+},{"dup":76,"react":139}],95:[function(require,module,exports){
+arguments[4][77][0].apply(exports,arguments)
+},{"dup":77,"react":139}],96:[function(require,module,exports){
 arguments[4][78][0].apply(exports,arguments)
-},{"./NumberField.react":94,"dup":78,"react":136}],96:[function(require,module,exports){
+},{"../../utils/helpers":100,"./Button.react":91,"dup":78,"react":139}],97:[function(require,module,exports){
+arguments[4][79][0].apply(exports,arguments)
+},{"dup":79,"react":139}],98:[function(require,module,exports){
+arguments[4][81][0].apply(exports,arguments)
+},{"./NumberField.react":97,"dup":81,"react":139}],99:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -12619,7 +12969,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":97,"../utils/vectors":100}],97:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":100,"../utils/vectors":103}],100:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -12730,7 +13080,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":100}],98:[function(require,module,exports){
+},{"./vectors":103}],101:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/stochastic'),
@@ -12756,45 +13106,43 @@ var getProceduralLevel = function getProceduralLevel() {
   });
 
   // add the pockets of resources:
-  var numPockets = normalIn(20, 30);
-  for (var i = 0; i < numPockets; i++) {
-    var resourceType = weightedOneOf(['STONE', 'IRON', 'COAL', 'WATER', 'SAND'], [1, 10, 12, 4, 2]);
-    var isPheromone = globalConfig.pheromones[resourceType] != null;
-    var width = randomIn(5, 10);
-    var height = randomIn(5, 10);
+  for (var resourceType in globalConfig.config.proceduralFrequencies) {
+    var _globalConfig$config$ = globalConfig.config.proceduralFrequencies[resourceType],
+        numMin = _globalConfig$config$.numMin,
+        numMax = _globalConfig$config$.numMax,
+        sizeMin = _globalConfig$config$.sizeMin,
+        sizeMax = _globalConfig$config$.sizeMax;
 
-    // bit of a hack to increase size
-    if (isPheromone) {
-      if (Math.random() < 0.5) {
-        width *= 2;
+    var numPockets = randomIn(numMin, numMax);
+    for (var i = 0; i < numPockets; i++) {
+      var isPheromone = globalConfig.pheromones[resourceType] != null;
+      var width = randomIn(sizeMin, sizeMax);
+      var height = randomIn(sizeMin, sizeMax);
+
+      var _x = randomIn(1, level.gridWidth - width - 1);
+      var _y = randomIn(surfaceY + 1, level.gridHeight - height - 1);
+
+      // clear out the area for the pocket
+      clearOutPocket(level, { position: { x: _x, y: _y }, width: width, height: height });
+
+      // add the resource
+      if (!isPheromone) {
+        level.actions.push({
+          type: "CREATE_ENTITIES",
+          entityType: resourceType,
+          rect: { position: { x: _x, y: _y }, width: width, height: height },
+          args: [1, 1]
+        });
       } else {
-        height *= 2;
+        level.actions.push({
+          type: "FILL_PHEROMONE",
+          pheromoneType: resourceType,
+          playerID: 0,
+          quantity: globalConfig.pheromones[resourceType].quantity,
+          rect: { position: { x: _x, y: _y }, width: width, height: height },
+          args: [1, 1]
+        });
       }
-    }
-
-    var _x = randomIn(1, level.gridWidth - width - 1);
-    var _y = randomIn(surfaceY + 1, level.gridHeight - height - 1);
-
-    // clear out the area for the pocket
-    clearOutPocket(level, { position: { x: _x, y: _y }, width: width, height: height });
-
-    // add the resource
-    if (!isPheromone) {
-      level.actions.push({
-        type: "CREATE_ENTITIES",
-        entityType: resourceType,
-        rect: { position: { x: _x, y: _y }, width: width, height: height },
-        args: [1, 1]
-      });
-    } else {
-      level.actions.push({
-        type: "FILL_PHEROMONE",
-        pheromoneType: resourceType,
-        playerID: 0,
-        quantity: globalConfig.pheromones[resourceType].quantity,
-        rect: { position: { x: _x, y: _y }, width: width, height: height },
-        args: [1, 1]
-      });
     }
   }
 
@@ -12840,7 +13188,7 @@ var clearOutPocket = function clearOutPocket(level, rect) {
 };
 
 module.exports = { getProceduralLevel: getProceduralLevel };
-},{"../config":1,"../utils/stochastic":99}],99:[function(require,module,exports){
+},{"../config":1,"../utils/stochastic":102}],102:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -12895,7 +13243,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],100:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -13094,9 +13442,9 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}],101:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 module.exports = require('./lib/axios');
-},{"./lib/axios":103}],102:[function(require,module,exports){
+},{"./lib/axios":106}],105:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -13277,7 +13625,7 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-},{"../core/buildFullPath":109,"../core/createError":110,"./../core/settle":114,"./../helpers/buildURL":118,"./../helpers/cookies":120,"./../helpers/isURLSameOrigin":123,"./../helpers/parseHeaders":125,"./../utils":127}],103:[function(require,module,exports){
+},{"../core/buildFullPath":112,"../core/createError":113,"./../core/settle":117,"./../helpers/buildURL":121,"./../helpers/cookies":123,"./../helpers/isURLSameOrigin":126,"./../helpers/parseHeaders":128,"./../utils":130}],106:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -13335,7 +13683,7 @@ module.exports = axios;
 // Allow use of default import syntax in TypeScript
 module.exports.default = axios;
 
-},{"./cancel/Cancel":104,"./cancel/CancelToken":105,"./cancel/isCancel":106,"./core/Axios":107,"./core/mergeConfig":113,"./defaults":116,"./helpers/bind":117,"./helpers/isAxiosError":122,"./helpers/spread":126,"./utils":127}],104:[function(require,module,exports){
+},{"./cancel/Cancel":107,"./cancel/CancelToken":108,"./cancel/isCancel":109,"./core/Axios":110,"./core/mergeConfig":116,"./defaults":119,"./helpers/bind":120,"./helpers/isAxiosError":125,"./helpers/spread":129,"./utils":130}],107:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13356,7 +13704,7 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-},{}],105:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 'use strict';
 
 var Cancel = require('./Cancel');
@@ -13415,14 +13763,14 @@ CancelToken.source = function source() {
 
 module.exports = CancelToken;
 
-},{"./Cancel":104}],106:[function(require,module,exports){
+},{"./Cancel":107}],109:[function(require,module,exports){
 'use strict';
 
 module.exports = function isCancel(value) {
   return !!(value && value.__CANCEL__);
 };
 
-},{}],107:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -13519,7 +13867,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = Axios;
 
-},{"../helpers/buildURL":118,"./../utils":127,"./InterceptorManager":108,"./dispatchRequest":111,"./mergeConfig":113}],108:[function(require,module,exports){
+},{"../helpers/buildURL":121,"./../utils":130,"./InterceptorManager":111,"./dispatchRequest":114,"./mergeConfig":116}],111:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -13573,7 +13921,7 @@ InterceptorManager.prototype.forEach = function forEach(fn) {
 
 module.exports = InterceptorManager;
 
-},{"./../utils":127}],109:[function(require,module,exports){
+},{"./../utils":130}],112:[function(require,module,exports){
 'use strict';
 
 var isAbsoluteURL = require('../helpers/isAbsoluteURL');
@@ -13595,7 +13943,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
   return requestedURL;
 };
 
-},{"../helpers/combineURLs":119,"../helpers/isAbsoluteURL":121}],110:[function(require,module,exports){
+},{"../helpers/combineURLs":122,"../helpers/isAbsoluteURL":124}],113:[function(require,module,exports){
 'use strict';
 
 var enhanceError = require('./enhanceError');
@@ -13615,7 +13963,7 @@ module.exports = function createError(message, config, code, request, response) 
   return enhanceError(error, config, code, request, response);
 };
 
-},{"./enhanceError":112}],111:[function(require,module,exports){
+},{"./enhanceError":115}],114:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -13696,7 +14044,7 @@ module.exports = function dispatchRequest(config) {
   });
 };
 
-},{"../cancel/isCancel":106,"../defaults":116,"./../utils":127,"./transformData":115}],112:[function(require,module,exports){
+},{"../cancel/isCancel":109,"../defaults":119,"./../utils":130,"./transformData":118}],115:[function(require,module,exports){
 'use strict';
 
 /**
@@ -13740,7 +14088,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
   return error;
 };
 
-},{}],113:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -13829,7 +14177,7 @@ module.exports = function mergeConfig(config1, config2) {
   return config;
 };
 
-},{"../utils":127}],114:[function(require,module,exports){
+},{"../utils":130}],117:[function(require,module,exports){
 'use strict';
 
 var createError = require('./createError');
@@ -13856,7 +14204,7 @@ module.exports = function settle(resolve, reject, response) {
   }
 };
 
-},{"./createError":110}],115:[function(require,module,exports){
+},{"./createError":113}],118:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -13878,7 +14226,7 @@ module.exports = function transformData(data, headers, fns) {
   return data;
 };
 
-},{"./../utils":127}],116:[function(require,module,exports){
+},{"./../utils":130}],119:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -13980,7 +14328,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this)}).call(this,require('_process'))
-},{"./adapters/http":102,"./adapters/xhr":102,"./helpers/normalizeHeaderName":124,"./utils":127,"_process":146}],117:[function(require,module,exports){
+},{"./adapters/http":105,"./adapters/xhr":105,"./helpers/normalizeHeaderName":127,"./utils":130,"_process":149}],120:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -13993,7 +14341,7 @@ module.exports = function bind(fn, thisArg) {
   };
 };
 
-},{}],118:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -14065,7 +14413,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
   return url;
 };
 
-},{"./../utils":127}],119:[function(require,module,exports){
+},{"./../utils":130}],122:[function(require,module,exports){
 'use strict';
 
 /**
@@ -14081,7 +14429,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
     : baseURL;
 };
 
-},{}],120:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -14136,7 +14484,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":127}],121:[function(require,module,exports){
+},{"./../utils":130}],124:[function(require,module,exports){
 'use strict';
 
 /**
@@ -14152,7 +14500,7 @@ module.exports = function isAbsoluteURL(url) {
   return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
 };
 
-},{}],122:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 'use strict';
 
 /**
@@ -14165,7 +14513,7 @@ module.exports = function isAxiosError(payload) {
   return (typeof payload === 'object') && (payload.isAxiosError === true);
 };
 
-},{}],123:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -14235,7 +14583,7 @@ module.exports = (
     })()
 );
 
-},{"./../utils":127}],124:[function(require,module,exports){
+},{"./../utils":130}],127:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -14249,7 +14597,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
   });
 };
 
-},{"../utils":127}],125:[function(require,module,exports){
+},{"../utils":130}],128:[function(require,module,exports){
 'use strict';
 
 var utils = require('./../utils');
@@ -14304,7 +14652,7 @@ module.exports = function parseHeaders(headers) {
   return parsed;
 };
 
-},{"./../utils":127}],126:[function(require,module,exports){
+},{"./../utils":130}],129:[function(require,module,exports){
 'use strict';
 
 /**
@@ -14333,7 +14681,7 @@ module.exports = function spread(callback) {
   };
 };
 
-},{}],127:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 'use strict';
 
 var bind = require('./helpers/bind');
@@ -14686,7 +15034,7 @@ module.exports = {
   stripBOM: stripBOM
 };
 
-},{"./helpers/bind":117}],128:[function(require,module,exports){
+},{"./helpers/bind":120}],131:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -14778,7 +15126,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],129:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 (function (process){(function (){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -14884,7 +15232,7 @@ checkPropTypes.resetWarningCache = function() {
 module.exports = checkPropTypes;
 
 }).call(this)}).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":130,"_process":146}],130:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":133,"_process":149}],133:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -14898,7 +15246,7 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],131:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react-dom.development.js
@@ -39914,7 +40262,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":146,"object-assign":128,"prop-types/checkPropTypes":129,"react":136,"scheduler":142,"scheduler/tracing":143}],132:[function(require,module,exports){
+},{"_process":149,"object-assign":131,"prop-types/checkPropTypes":132,"react":139,"scheduler":145,"scheduler/tracing":146}],135:[function(require,module,exports){
 /** @license React v16.14.0
  * react-dom.production.min.js
  *
@@ -40208,7 +40556,7 @@ exports.flushSync=function(a,b){if((W&(fj|gj))!==V)throw Error(u(187));var c=W;W
 exports.unmountComponentAtNode=function(a){if(!gk(a))throw Error(u(40));return a._reactRootContainer?(Nj(function(){ik(null,null,a,!1,function(){a._reactRootContainer=null;a[Od]=null})}),!0):!1};exports.unstable_batchedUpdates=Mj;exports.unstable_createPortal=function(a,b){return kk(a,b,2<arguments.length&&void 0!==arguments[2]?arguments[2]:null)};
 exports.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!gk(c))throw Error(u(200));if(null==a||void 0===a._reactInternalFiber)throw Error(u(38));return ik(a,b,c,!1,d)};exports.version="16.14.0";
 
-},{"object-assign":128,"react":136,"scheduler":142}],133:[function(require,module,exports){
+},{"object-assign":131,"react":139,"scheduler":145}],136:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -40250,7 +40598,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react-dom.development.js":131,"./cjs/react-dom.production.min.js":132,"_process":146}],134:[function(require,module,exports){
+},{"./cjs/react-dom.development.js":134,"./cjs/react-dom.production.min.js":135,"_process":149}],137:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v16.14.0
  * react.development.js
@@ -42166,7 +42514,7 @@ exports.version = ReactVersion;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":146,"object-assign":128,"prop-types/checkPropTypes":129}],135:[function(require,module,exports){
+},{"_process":149,"object-assign":131,"prop-types/checkPropTypes":132}],138:[function(require,module,exports){
 /** @license React v16.14.0
  * react.production.min.js
  *
@@ -42193,7 +42541,7 @@ key:d,ref:g,props:e,_owner:k}};exports.createContext=function(a,b){void 0===b&&(
 exports.lazy=function(a){return{$$typeof:A,_ctor:a,_status:-1,_result:null}};exports.memo=function(a,b){return{$$typeof:z,type:a,compare:void 0===b?null:b}};exports.useCallback=function(a,b){return Z().useCallback(a,b)};exports.useContext=function(a,b){return Z().useContext(a,b)};exports.useDebugValue=function(){};exports.useEffect=function(a,b){return Z().useEffect(a,b)};exports.useImperativeHandle=function(a,b,c){return Z().useImperativeHandle(a,b,c)};
 exports.useLayoutEffect=function(a,b){return Z().useLayoutEffect(a,b)};exports.useMemo=function(a,b){return Z().useMemo(a,b)};exports.useReducer=function(a,b,c){return Z().useReducer(a,b,c)};exports.useRef=function(a){return Z().useRef(a)};exports.useState=function(a){return Z().useState(a)};exports.version="16.14.0";
 
-},{"object-assign":128}],136:[function(require,module,exports){
+},{"object-assign":131}],139:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -42204,7 +42552,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/react.development.js":134,"./cjs/react.production.min.js":135,"_process":146}],137:[function(require,module,exports){
+},{"./cjs/react.development.js":137,"./cjs/react.production.min.js":138,"_process":149}],140:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -42882,7 +43230,7 @@ exports.compose = compose;
 exports.createStore = createStore;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":146,"symbol-observable":144}],138:[function(require,module,exports){
+},{"_process":149,"symbol-observable":147}],141:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler-tracing.development.js
@@ -43235,7 +43583,7 @@ exports.unstable_wrap = unstable_wrap;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":146}],139:[function(require,module,exports){
+},{"_process":149}],142:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler-tracing.production.min.js
  *
@@ -43247,7 +43595,7 @@ exports.unstable_wrap = unstable_wrap;
 
 'use strict';var b=0;exports.__interactionsRef=null;exports.__subscriberRef=null;exports.unstable_clear=function(a){return a()};exports.unstable_getCurrent=function(){return null};exports.unstable_getThreadID=function(){return++b};exports.unstable_subscribe=function(){};exports.unstable_trace=function(a,d,c){return c()};exports.unstable_unsubscribe=function(){};exports.unstable_wrap=function(a){return a};
 
-},{}],140:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 (function (process){(function (){
 /** @license React v0.19.1
  * scheduler.development.js
@@ -44109,7 +44457,7 @@ exports.unstable_wrapCallback = unstable_wrapCallback;
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":146}],141:[function(require,module,exports){
+},{"_process":149}],144:[function(require,module,exports){
 /** @license React v0.19.1
  * scheduler.production.min.js
  *
@@ -44132,7 +44480,7 @@ exports.unstable_getCurrentPriorityLevel=function(){return R};exports.unstable_g
 exports.unstable_scheduleCallback=function(a,b,c){var d=exports.unstable_now();if("object"===typeof c&&null!==c){var e=c.delay;e="number"===typeof e&&0<e?d+e:d;c="number"===typeof c.timeout?c.timeout:Y(a)}else c=Y(a),e=d;c=e+c;a={id:P++,callback:b,priorityLevel:a,startTime:e,expirationTime:c,sortIndex:-1};e>d?(a.sortIndex=e,J(O,a),null===L(N)&&a===L(O)&&(U?h():U=!0,g(W,e-d))):(a.sortIndex=c,J(N,a),T||S||(T=!0,f(X)));return a};
 exports.unstable_shouldYield=function(){var a=exports.unstable_now();V(a);var b=L(N);return b!==Q&&null!==Q&&null!==b&&null!==b.callback&&b.startTime<=a&&b.expirationTime<Q.expirationTime||k()};exports.unstable_wrapCallback=function(a){var b=R;return function(){var c=R;R=b;try{return a.apply(this,arguments)}finally{R=c}}};
 
-},{}],142:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -44143,7 +44491,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler.development.js":140,"./cjs/scheduler.production.min.js":141,"_process":146}],143:[function(require,module,exports){
+},{"./cjs/scheduler.development.js":143,"./cjs/scheduler.production.min.js":144,"_process":149}],146:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -44154,7 +44502,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 }).call(this)}).call(this,require('_process'))
-},{"./cjs/scheduler-tracing.development.js":138,"./cjs/scheduler-tracing.production.min.js":139,"_process":146}],144:[function(require,module,exports){
+},{"./cjs/scheduler-tracing.development.js":141,"./cjs/scheduler-tracing.production.min.js":142,"_process":149}],147:[function(require,module,exports){
 (function (global){(function (){
 'use strict';
 
@@ -44186,7 +44534,7 @@ if (typeof self !== 'undefined') {
 var result = (0, _ponyfill2['default'])(root);
 exports['default'] = result;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ponyfill.js":145}],145:[function(require,module,exports){
+},{"./ponyfill.js":148}],148:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -44210,7 +44558,7 @@ function symbolObservablePonyfill(root) {
 
 	return result;
 };
-},{}],146:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -44396,4 +44744,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[25]);
+},{}]},{},[28]);

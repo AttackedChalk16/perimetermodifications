@@ -429,13 +429,13 @@ const changePheromoneEmitterQuantity = (
   game, entity, nextQuantity,
 ): void => {
   entity.quantity = nextQuantity;
+  // NOTE: remove then re-add to grid in order to get pheromones working right
+  removeEntityFromGrid(game, entity);
   game.pheromoneWorker.postMessage({
     type: 'SET_EMITTER_QUANTITY',
     entityID: entity.id,
     quantity: nextQuantity,
   });
-  // NOTE: remove then re-add to grid in order to get pheromones working right
-  removeEntityFromGrid(game, entity);
   insertEntityInGrid(game, entity);
 };
 

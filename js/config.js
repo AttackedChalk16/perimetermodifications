@@ -6,11 +6,11 @@ const config = {
   canvasWidth: 1200,
   canvasHeight: 1200,
 
-  viewWidth: 52,
-  viewHeight: 66,
+  viewWidth: 66,
+  viewHeight: 72,
   useFullScreen: true,
-  cellWidth: 33,
-  cellHeight: 25,
+  cellWidth: 25,
+  cellHeight: 20,
 
   audioFiles: [
     {path: 'audio/Song Oct. 9.wav', type: 'wav'},
@@ -18,6 +18,18 @@ const config = {
 
   dispersingPheromoneUpdateRate: 6,
   gravity: -100,
+
+  proceduralFrequencies: {
+    IRON: {numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10},
+    COAL: {numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10},
+    STONE: {numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12},
+    ICE: {numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8},
+    WATER: {numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14},
+    SAND: {numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8},
+    OIL: {numMin: 2, numMax: 4, sizeMin: 6, sizeMax: 12},
+    SULPHUR: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
+    GLASS: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
+  },
 };
 
 const nonMoltenPheromoneBlockingTypes = [
@@ -25,6 +37,7 @@ const nonMoltenPheromoneBlockingTypes = [
 ];
 const pheromoneBlockingTypes = [
   ...nonMoltenPheromoneBlockingTypes,
+  'ICE', 'SULPHUR',
   'STEEL', 'IRON', 'SILICON', 'GLASS',
 ];
 
@@ -37,16 +50,6 @@ const pheromones = {
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
   },
-  ALERT: {
-    quantity: 60,
-    decayAmount: 10,
-    decayRate: 1, // how much it decays per tick
-    color: 'rgb(255, 0, 0)',
-    tileIndex: 2,
-
-    blockingTypes: pheromoneBlockingTypes,
-    isDispersing: true,
-  },
   WATER: {
     quantity: 120,
     decayAmount: 120,
@@ -56,9 +59,14 @@ const pheromones = {
 
     blockingTypes: [...pheromoneBlockingTypes, 'WORM'],
     isDispersing: true,
-    heatPoint: 100,
+    heatPoint: 125,
     heatsTo: 'STEAM',
     heatRate: 0.02,
+    coolPoint: -100, // heat level to condense at
+    coolsTo: 'ICE',
+    coolsToEntity: true,
+    coolRate: 1, // amount of yourself that condenses per step
+    coolConcentration: 5, // amount of yourself needed before condensation starts
     viscosity: {
       verticalLeftOver: 0,
       diagonalLeftOver: 0.5,
@@ -79,6 +87,47 @@ const pheromones = {
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
     coolConcentration: 80, // amount of yourself needed before condensation starts
+    isFluid: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.3,
+      horizontalLeftOver: 0.66,
+    },
+    isRising: true,
+  },
+  OIL: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 4,
+
+    blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
+    isDispersing: true,
+    heatPoint: 10,
+    heatsTo: 'SULPHUR_DIOXIDE',
+    heatRate: 0.02,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.8,
+      horizontalLeftOver: 0.9,
+    },
+    isFluid: true,
+  },
+  SULPHUR_DIOXIDE: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 0.0005,
+    color: 'rgb(255, 255, 255)',
+    tileIndex: 0,
+
+    blockingTypes: [...pheromoneBlockingTypes],
+    isDispersing: true,
+    coolPoint: -5, // heat level to condense at
+    coolsTo: 'SULPHUR',
+    coolRate: 1, // amount of yourself that condenses per step
+    coolConcentration: 80, // amount of yourself needed before condensation starts
+    coolsToEntity: true,
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -176,11 +225,20 @@ const pheromones = {
     },
   },
   HEAT: {
+    quantity: 150,
+    decayAmount: 15,
+    decayRate: 1, // how much it decays per tick
+    color: 'rgb(255, 0, 0)',
+    tileIndex: 2,
+
+    blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+  },
+  COLD: {
     quantity: 120,
     decayAmount: 12,
     decayRate: 1, // how much it decays per tick
     color: 'rgb(255, 0, 0)',
-    tileIndex: 2,
+    tileIndex: 1,
 
     blockingTypes: [...nonMoltenPheromoneBlockingTypes],
   },

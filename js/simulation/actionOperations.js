@@ -141,7 +141,10 @@ const entityShoot = (game: Game, entity: Entity, payload) => {
         game, position, entity.playerID,
         Entities.DYNAMITE.make(game, position, entity.playerID),
         theta + Math.PI,
+        150,
+        entity.targetID,
       );
+      projectile.blockingTypes.push('MISSILE');
       break;
     }
   }

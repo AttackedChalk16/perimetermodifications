@@ -23,48 +23,40 @@ const getProceduralLevel = (): Array<Action> => {
   });
 
   // add the pockets of resources:
-  const numPockets = normalIn(20, 30);
-  for (let i = 0; i < numPockets; i++) {
-    const resourceType = weightedOneOf(
-      ['STONE', 'IRON', 'COAL', 'WATER', 'SAND'],
-      [1, 10, 12, 4, 2],
-    );
-    const isPheromone = globalConfig.pheromones[resourceType] != null;
-    let width = randomIn(5, 10);
-    let height = randomIn(5, 10);
+  for (const resourceType in globalConfig.config.proceduralFrequencies) {
+    const {
+      numMin, numMax, sizeMin, sizeMax,
+    } = globalConfig.config.proceduralFrequencies[resourceType];
+    const numPockets = randomIn(numMin, numMax);
+    for (let i = 0; i < numPockets; i++) {
+      const isPheromone = globalConfig.pheromones[resourceType] != null;
+      let width = randomIn(sizeMin, sizeMax);
+      let height = randomIn(sizeMin, sizeMax);
 
-    // bit of a hack to increase size
-    if (isPheromone) {
-      if (Math.random() < 0.5) {
-        width *= 2;
+      const x = randomIn(1, level.gridWidth - width - 1);
+      const y = randomIn(surfaceY + 1, level.gridHeight - height - 1);
+
+      // clear out the area for the pocket
+      clearOutPocket(level, {position: {x, y}, width, height});
+
+      // add the resource
+      if (!isPheromone) {
+        level.actions.push({
+          type: "CREATE_ENTITIES",
+          entityType: resourceType,
+          rect: {position: {x, y}, width, height},
+          args: [1, 1],
+        });
       } else {
-        height *= 2;
+        level.actions.push({
+          type: "FILL_PHEROMONE",
+          pheromoneType: resourceType,
+          playerID: 0,
+          quantity: globalConfig.pheromones[resourceType].quantity,
+          rect: {position: {x, y}, width, height},
+          args: [1, 1],
+        });
       }
-    }
-
-    const x = randomIn(1, level.gridWidth - width - 1);
-    const y = randomIn(surfaceY + 1, level.gridHeight - height - 1);
-
-    // clear out the area for the pocket
-    clearOutPocket(level, {position: {x, y}, width, height});
-
-    // add the resource
-    if (!isPheromone) {
-      level.actions.push({
-        type: "CREATE_ENTITIES",
-        entityType: resourceType,
-        rect: {position: {x, y}, width, height},
-        args: [1, 1],
-      });
-    } else {
-      level.actions.push({
-        type: "FILL_PHEROMONE",
-        pheromoneType: resourceType,
-        playerID: 0,
-        quantity: globalConfig.pheromones[resourceType].quantity,
-        rect: {position: {x, y}, width, height},
-        args: [1, 1],
-      });
     }
   }
 
