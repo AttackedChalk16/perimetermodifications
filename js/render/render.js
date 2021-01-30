@@ -17,6 +17,9 @@ const {
 } = require('../selectors/sprites');
 const {renderMinimap} = require('./renderMinimap');
 const {Entities} = require('../entities/registry');
+const {
+  isNeighboringColonyPher, isAboveSomething,
+} = require('../selectors/mouseInteractionSelectors');
 
 import type {Game, Entity, Hill, Ant, Food} from '../types';
 
@@ -192,51 +195,19 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
     }
   }
 
-  // render relevant square in front of controlledEntity
-  const controlledEntity = game.controlledEntity;
-  if (controlledEntity != null && game.tickInterval != null) {
-    ctx.save();
-    const controlledEntityAction = getControlledEntityInteraction(game, controlledEntity);
-    ctx.fillStyle = 'rgba(70,130,180, 0.1)';
-    ctx.strokeStyle = 'steelblue';
-    ctx.lineWidth = ctx.lineWidth * 2;
-    if (controlledEntityAction.type == 'PICKUP') {
-      ctx.fillRect(
-        controlledEntityAction.payload.position.x,
-        controlledEntityAction.payload.position.y,
-        1, 1,
-      );
-      ctx.strokeRect(
-        controlledEntityAction.payload.position.x,
-        controlledEntityAction.payload.position.y,
-        1, 1,
-      );
-    }
-    if (controlledEntityAction.type == 'PUTDOWN') {
-      const putdownPos = getPositionsInFront(game, controlledEntity)
-        .find(pos => {
-          return lookupInGrid(game.grid, pos)
-            .map(id => game.entities[id])
-            .filter(e => !e.notBlockingPutdown)
-            .length == 0;
-        });
-      if (putdownPos != null) {
-        ctx.fillRect(putdownPos.x, putdownPos.y, 1, 1);
-        ctx.strokeRect(putdownPos.x, putdownPos.y, 1, 1);
-      }
-    }
-    ctx.restore();
-  }
 
-  // render dirt putdown positions
+  // render cursor square
+  const cursorPos = game.mouse.curPos;
   ctx.lineWidth = ctx.lineWidth * 2;
-  for (const pos of game.dirtPutdownPositions) {
-    if (!onScreen(game, {position: pos, width: 1, height: 1})) continue;
+  if (!isNeighboringColonyPher(game, cursorPos)) {
     ctx.fillStyle = 'rgba(139,0,0, 0.1)';
     ctx.strokeStyle = 'red';
-    ctx.fillRect(pos.x, pos.y, 1, 1);
-    ctx.strokeRect(pos.x, pos.y, 1, 1);
+  } else {
+    ctx.fillStyle = 'rgba(0,139,0, 0.1)';
+    ctx.strokeStyle = 'green';
   }
+  ctx.fillRect(cursorPos.x, cursorPos.y, 1, 1);
+  ctx.strokeRect(cursorPos.x, cursorPos.y, 1, 1);
 
   // marquee
   if (

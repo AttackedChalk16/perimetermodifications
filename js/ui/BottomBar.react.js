@@ -16,6 +16,7 @@ const BottomBar = (props): React.Node => {
         height,
         width: '100%',
         zIndex: 2,
+        pointerEvents: 'none',
         // textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff',
       }}
     >

@@ -6,7 +6,7 @@ const initSpriteSheetSystem = (store) => {
   const state = store.getState();
 
 
-  loadSprite(dispatch, state, 'FOOD', './img/Food2.png');
+  loadSprite(dispatch, state, 'URANIUM', './img/Food2.png');
   loadSprite(dispatch, state, 'DIRT', './img/Dirt3.png');
   loadSprite(dispatch, state, 'STONE', './img/Stone1.png');
   loadSprite(dispatch, state, 'SULPHUR', './img/Brick1.png');

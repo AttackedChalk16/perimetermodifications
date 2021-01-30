@@ -136,10 +136,14 @@ function instructionsModal(dispatch) {
       title="Instructions"
       body={(<span style={{textAlign: 'initial'}}>
         <div>
-          <div style={{textAlign: 'center'}}><b>Controls:</b></div>TBD
+          <div style={{textAlign: 'center'}}><b>Controls:</b></div>
+          <div>Left Click: collect (solid) resource</div>
+          <div>Right Click: place selected resource or structure</div>
+          <div>Arrow Keys: move screen</div>
         </div>
         <div>
-          <div style={{textAlign: 'center'}}><b>Goal:</b></div>TBD
+          <div style={{textAlign: 'center'}}><b>Goal:</b></div>
+          <div>Survive!</div>
         </div>
       </span>)}
       buttons={[{label: 'Dismiss (Enter)', onClick: () => {

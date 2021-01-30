@@ -9,6 +9,9 @@ const {isDiagonalMove} = require('../utils/helpers');
 const {
   canAffordBuilding, getModifiedCost,
 } = require('../selectors/buildings');
+const {
+  isNeighboringColonyPher, isAboveSomething,
+} = require('../selectors/mouseInteractionSelectors');
 
 const handleCollect = (state, dispatch, gridPos, ignorePrevPos) => {
   const game = state.game;
@@ -109,27 +112,6 @@ const handlePlace = (state, dispatch, gridPos, ignorePrevPos) => {
     }
     dispatch({type: 'CREATE_ENTITY', entity, position: gridPos});
   }
-}
-
-
-const isNeighboringColonyPher = (game, position) => {
-  const neighbors = getNeighborPositions(game, {position});
-  for (const neighbor of neighbors) {
-    if (isDiagonalMove(neighbor, position)) continue;
-
-    const pher = getPheromoneAtPosition(game, neighbor, 'COLONY', game.playerID);
-    if (pher > 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-const isAboveSomething = (game, position) => {
-  return lookupInGrid(game.grid, add(position, {x: 0, y: 1}))
-    .map(id => game.entities[id])
-    .filter(e => e.type != 'BACKGROUND' && !e.isBallistic)
-    .length > 0;
 }
 
 module.exports = {handleCollect, handlePlace};

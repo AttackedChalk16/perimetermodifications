@@ -26,6 +26,7 @@ const Entities = {
   SILICON: require('./silicon.js'),
   SULPHUR: require('./sulphur.js'),
   ICE: require('./ice.js'),
+  URANIUM: require('./uranium.js'),
 
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),

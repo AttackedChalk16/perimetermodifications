@@ -9,8 +9,8 @@ const config = {
   viewWidth: 66,
   viewHeight: 72,
   useFullScreen: true,
-  cellWidth: 25,
-  cellHeight: 20,
+  cellWidth: 20,
+  cellHeight: 16,
 
   audioFiles: [
     {path: 'audio/Song Oct. 9.wav', type: 'wav'},
@@ -29,6 +29,7 @@ const config = {
     OIL: {numMin: 2, numMax: 4, sizeMin: 6, sizeMax: 12},
     SULPHUR: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
     GLASS: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
+    URANIUM: {numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 3},
   },
 };
 

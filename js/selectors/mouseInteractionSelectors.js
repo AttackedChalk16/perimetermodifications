@@ -12,20 +12,45 @@ const {
 
 
 
-const canCollect = (game, gridPos): boolean => {
-  // don't interact with the same position twice
-  if (game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
-    return false;
-  }
+// const canCollect = (game, gridPos): boolean => {
+//   // don't interact with the same position twice
+//   if (game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
+//     return false;
+//   }
+//
+//   // only can collect entities that are connected to the colony
+//   if (!isNeighboringColonyPher(game, gridPos)) {
+//     return false;
+//   }
+//
+//   const entities = lookupInGrid(game.grid, gridPos)
+//     .map(id => game.entities[id])
+//     .filter(e => e.isCollectable && e.type != 'AGENT'); // && e.task == null)
+//
+//   return entities.length > 0;
+// };
 
-  // only can collect entities that are connected to the colony
-  if (!isNeighboringColonyPher(game, gridPos)) {
-    return false;
-  }
+const isNeighboringColonyPher = (game, position) => {
+  const neighbors = getNeighborPositions(game, {position});
+  for (const neighbor of neighbors) {
+    if (isDiagonalMove(neighbor, position)) continue;
 
-  const entities = lookupInGrid(game.grid, gridPos)
+    const pher = getPheromoneAtPosition(game, neighbor, 'COLONY', game.playerID);
+    if (pher > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const isAboveSomething = (game, position) => {
+  return lookupInGrid(game.grid, add(position, {x: 0, y: 1}))
     .map(id => game.entities[id])
-    .filter(e => e.isCollectable && e.type != 'AGENT'); // && e.task == null)
+    .filter(e => e.type != 'BACKGROUND' && !e.isBallistic)
+    .length > 0;
+}
 
-  return entities.length > 0;
+module.exports = {
+  isNeighboringColonyPher,
+  isAboveSomething,
 };

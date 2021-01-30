@@ -49,6 +49,10 @@ const gameReducer = (game: Game, action: Action): Game => {
 
       const nextWidth = game.viewWidth + widthInc;
       const nextHeight = game.viewHeight + heightInc;
+
+      // don't allow zooming out too far
+      if (nextWidth > 100 || nextHeight > 95) return game;
+
       const oldWidth = game.viewWidth;
       const oldHeight = game.viewHeight;
       game.viewWidth = clamp(nextWidth, Math.round(5 * ratio), game.gridWidth + 50);

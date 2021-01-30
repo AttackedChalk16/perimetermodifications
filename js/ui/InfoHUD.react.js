@@ -28,7 +28,7 @@ const InfoHUD = (props): React.Node => {
 
   const entityInfoCards = lookupInGrid(game.grid, mousePos)
     .map(id => game.entities[id])
-    .filter(e => e != null)
+    .filter(e => e != null && e.type != 'AGENT')
     .map(e => (<EntityInfoCard key={'info_' + e.id} entity={e} />));
 
   const temp = getTemperature(game, mousePos);

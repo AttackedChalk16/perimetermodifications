@@ -6,16 +6,8 @@
 
 
 - - - - - - ISSUES - - - - - -
-  - need to be able to right click through the bottom bar, especially on laptops
-  - highlight the square under the cursor
-  - zoom:
-    - start a little more zoomed out
-    - set a zoom limit to before the aspect ratio messes up
-  - missile turret:
-    - your own bullets hit your missiles
   - pheromones:
-    - colony pheromone is getting injected into playerID 0 somehow
-      - when ice is formed or melted
+    - colony pheromone can get disrupted somehow, eventually preventing all pheromone clearing
     - remove playerID concept from pheromones?
     - should just render via canvas
   - sand:
@@ -95,8 +87,6 @@
 
 
 - - - - - - - BUGS - - - - - - -
-  - after passing iron over hot coal breaks pheromones everywhere
-    - fixed for now by just not allowing this
   - bullets can shoot through 1-thick walls
   - when pheromone emitters that are bigger than 1x1 dies, it doesn't clear the
     whole pheromone footprint
@@ -105,9 +95,6 @@
   - worm
     - worm sprite indexing off-by-one when controlled?
     - worm should be able to double back on itself when stuck
-  - clicking top and bottom bars
-    - allow pass-through wherever possible
-    - then don't have to remove them when paused in editor?
   - molten iron isn't preserving its quantity when condensing
     (when viscosity > 0)
     - it ends up creating an additional entity underneath

@@ -222,7 +222,9 @@ const updateBallistics = (game): void => {
     ballistic.age += game.timeSinceLastTick;
     // if it has collided with something, deal damage to it and die
     // OR if it is within Radius of target, die
-    const collisions = collidesWith(game, ballistic, ballistic.blockingTypes);
+    const collisions =
+      collidesWith(game, ballistic, ballistic.blockingTypes)
+      .filter(e => e.playerID != ballistic.playerID);
     let inRadius = false;
     if (ballistic.targetID != null && ballistic.warhead != null) {
       const target = game.entities[ballistic.targetID];

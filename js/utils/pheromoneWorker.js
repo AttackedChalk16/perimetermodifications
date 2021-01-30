@@ -257,7 +257,7 @@ const floodFillPheromone = (
         const neighborAmount = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
         const occupied = lookupInGrid(game.grid, neighbor)
           .map(id => game.entities[id])
-          .filter(e => config.blockingTypes.includes(e.type))
+          .filter(e => e != null && config.blockingTypes.includes(e.type))
           .length > 0;
         if (amount > 0 && amount > neighborAmount && !occupied) {
           posQueue.push({position: neighbor, quantity: amount});
@@ -331,7 +331,7 @@ const reverseFloodFillPheromone = (
         if (isDiagonalMove(position, neighbor)) continue;
         const occupied = lookupInGrid(game.grid, neighbor)
           .map(id => game.entities[id])
-          .filter(e => config.blockingTypes.includes(e.type))
+          .filter(e => e != null && config.blockingTypes.includes(e.type))
           .length > 0;
         const quantity = Math.max(0, amount - decayAmount);
         if (quantity > 0 && !occupied) {
