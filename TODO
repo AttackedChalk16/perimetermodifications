@@ -32,12 +32,10 @@
     - needs a separate tileIndex sprite
     - separate pheromone for oil on fire?
       - how is heat produced from this?
-  - procedurally generate level:
-    - random seed
-    - randomize pocket shape a little more
 
 
 - - - - - - TODO - - - - - -
+  - electron
   - HUDS
     - flicker resources when you spend them
     - render the entity in the cards for the HUDS
@@ -45,45 +43,43 @@
     - add coolConcentration to HUDs
     - show on position info card whether location is placeable/collectable
     - count of missiles survived
-
-
-- - - - - - LATER - - - - - - - -
-  - mode with no missiles
-  - visually indicate whether individual turrets are powered or not
+  - instructions
+    - with pictures?
+    - explanation of how to produce power
+    - list of all recipes?
   - cause game loss when base is killed
+  - nuclear missiles
+
+
+- - - - - - - TO DRAW - - - - - -
+  - missile turret
+  - laser turret
+  - favicon
+
+
+- - - - - - - NEXT - - - - - - -
+  - get gameplay tracking set back up again
+
+
+- - - - - - NICE-TO-HAVE - - - - - - - -
+  - mode with no missiles
   - steam
     - if steam cool rate is less than water heat rate then clouds might form
-  - explosives:
-    - pre-render what an explosion under the mouse would look like
-    - render horizontal/vertical explosions differently
-  - uranium
-    - constantly produces heat
   - get a good average fps algorithm going
+  - procedurally generate level:
+    - random seed
+    - randomize pocket shape a little more
 
 
 - - - - - - - TO THINK ABOUT - - - - - - -
   - ways to have additional interaction with terrain/environment
     - water wears away dirt over time
     - other forms of heat?
-  - crafting
-    - how to convey crafting recipes
-      - e.g. tower comes from steel (and?), where does steel come from
-
-
-- - - - - - - TO DRAW - - - - - -
-  - add cracked stone tilesheet for hp counting
-  - steel tilesheet
-  - coal tilesheet
-  - iron tilesheet
-  - fire
-  - turbine
-  - missile
-  - warheads
-  - bullets
-  - later
-    - drill
-    - train engine + cars
-  - melting animation to replace food
+  - gravity
+    - needs to start stable
+    - needs to have a notion of connected components
+      - so that two neighbors can't just hold each other up
+      - so that you can make chambers that don't fall in
 
 
 - - - - - - - BUGS - - - - - - -

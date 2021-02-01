@@ -163,10 +163,6 @@ const entityDie = (game: Game, entity: Entity): void => {
     putdownEntity(game, entity.holding, entity.position);
   }
 
-  // update taskNeed:
-  if (entity.task != null) {
-  }
-
   removeEntity(game, entity);
 };
 

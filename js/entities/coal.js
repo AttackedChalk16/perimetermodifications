@@ -34,21 +34,13 @@ const make = (
 };
 
 const render = (ctx, game, coal): void => {
-  // const obj = getTileSprite(game, coal);
-  // if (obj == null || obj.img == null) return;
-  // ctx.drawImage(
-  //   obj.img,
-  //   obj.x, obj.y, obj.width, obj.height,
-  //   coal.position.x, coal.position.y, coal.width, coal.height,
-  // );
-
-  ctx.fillStyle = "black";
-  ctx.fillRect(coal.position.x, coal.position.y, coal.width, coal.height);
-
-  if (coal.onFire) {
-    ctx.fillStyle = '#FFA500';
-    ctx.fillRect(coal.position.x, coal.position.y, coal.width, coal.height);
-  }
+  const obj = getTileSprite(game, coal);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(
+    obj.img,
+    obj.x, obj.y, obj.width, obj.height,
+    coal.position.x, coal.position.y, coal.width, coal.height,
+  );
 }
 
 module.exports = {

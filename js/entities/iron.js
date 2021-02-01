@@ -34,16 +34,13 @@ const make = (
 };
 
 const render = (ctx, game, iron): void => {
-  // const obj = getTileSprite(game, iron);
-  // if (obj == null || obj.img == null) return;
-  // ctx.drawImage(
-  //   obj.img,
-  //   obj.x, obj.y, obj.width, obj.height,
-  //   iron.position.x, iron.position.y, iron.width, iron.height,
-  // );
-
-  ctx.fillStyle = "darkgray";
-  ctx.fillRect(iron.position.x, iron.position.y, iron.width, iron.height);
+  const obj = getTileSprite(game, iron);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(
+    obj.img,
+    obj.x, obj.y, obj.width, obj.height,
+    iron.position.x, iron.position.y, iron.width, iron.height,
+  );
 }
 
 module.exports = {

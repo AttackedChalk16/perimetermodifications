@@ -2,7 +2,9 @@
 
 const {add} = require('../utils/vectors');
 const {makeEntity} = require('./makeEntity');
-const {getInterpolatedIndex} = require('../selectors/sprites');
+const {
+  getInterpolatedIndex, getMissileSprite,
+} = require('../selectors/sprites');
 const {getDuration} = require('../simulation/actionQueue');
 const globalConfig = require('../config');
 
@@ -25,7 +27,8 @@ const config = {
     'FAST_TURRET', 'TURBINE',
     'IRON', 'STEEL', 'COAL',
     'BASIC_TURRET', 'LASER_TURRET',
-    'BASE',
+    'BASE', 'MISSILE_TURRET', 'ICE',
+    'URANIUM',
   ],
 
   DIE: {
@@ -92,10 +95,14 @@ const render = (ctx, game, missile): void => {
   ctx.rotate(ballisticTheta + Math.PI / 2);
   ctx.translate(-width / 2, -height / 2);
 
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, missile.width, missile.height);
-  ctx.strokeRect(0, 0, missile.width, missile.height);
+  const obj = getMissileSprite(game, missile);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(
+    obj.img,
+    obj.x, obj.y, obj.width, obj.height,
+    0, 0,
+    missile.width, missile.height,
+  );
 
   ctx.restore();
 };

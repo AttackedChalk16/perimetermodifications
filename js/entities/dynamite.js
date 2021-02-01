@@ -44,16 +44,16 @@ const make = (
 };
 
 const render = (ctx, game, dynamite): void => {
-  ctx.save();
   const curAction = dynamite.actions[0];
-  ctx.translate(dynamite.position.x, dynamite.position.y);
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'red';
-  ctx.fillRect(0, 0, dynamite.width, dynamite.height);
-  ctx.strokeRect(0, 0, dynamite.width, dynamite.height);
+  // ctx.strokeStyle = 'black';
+  // ctx.fillStyle = 'red';
+  // ctx.fillRect(0, 0, dynamite.width, dynamite.height);
+  // ctx.strokeRect(0, 0, dynamite.width, dynamite.height);
 
   // explosion itself
   if (curAction != null && curAction.type == 'DIE') {
+    ctx.save();
+    ctx.translate(dynamite.position.x, dynamite.position.y);
     const duration = getDuration(game, dynamite, curAction.type);
     const index = getInterpolatedIndex(game, dynamite);
     ctx.globalAlpha = 0.8;
@@ -67,9 +67,9 @@ const render = (ctx, game, dynamite): void => {
     );
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
   }
 
-  ctx.restore();
 };
 
 module.exports = {config, make, render};

@@ -8,9 +8,20 @@ const initSpriteSheetSystem = (store) => {
 
   loadSprite(dispatch, state, 'URANIUM', './img/Food2.png');
   loadSprite(dispatch, state, 'DIRT', './img/Dirt3.png');
+  loadSprite(dispatch, state, 'IRON', './img/Iron1.png');
+  loadSprite(dispatch, state, 'STEEL', './img/Steel1.png');
+  loadSprite(dispatch, state, 'COAL', './img/Coal1.png');
+  loadSprite(dispatch, state, 'HOT_COAL', './img/Hot Coal.png');
   loadSprite(dispatch, state, 'STONE', './img/Stone1.png');
   loadSprite(dispatch, state, 'SULPHUR', './img/Brick1.png');
   loadSprite(dispatch, state, 'ICE', './img/Kitchen1.png');
+
+  loadSprite(dispatch, state, 'MISSILE', './img/Missile2.png');
+  loadSprite(dispatch, state, 'BASIC_TURRET', './img/Basic_turret1.png');
+  loadSprite(dispatch, state, 'FAST_TURRET', './img/Fast_turret1.png');
+  loadSprite(dispatch, state, 'LASER_TURRET', './img/Laser_turret.png');
+  loadSprite(dispatch, state, 'BASE', './img/Base1.png');
+
   loadSprite(dispatch, state, 'PHEROMONE', './img/Pheromones.png');
 
   loadSprite(dispatch, state, 'ALERT', './img/Exclamation1.png');

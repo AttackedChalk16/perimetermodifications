@@ -18,6 +18,7 @@ const config = {
     'DIRT', 'STONE', 'FOOD', 'AGENT',
     'DOODAD', 'WORM', 'MISSILE',
     'TURBINE', 'IRON', 'STEEL', 'COAL',
+    'ICE', 'URANIUM',
   ],
 
   DIE: {

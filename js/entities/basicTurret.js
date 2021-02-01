@@ -72,6 +72,7 @@ const make = (
 
 const render = (ctx, game, turret): void => {
   const {position, width, height, theta} = turret;
+  const img = game.sprites.BASIC_TURRET;
   ctx.save();
   ctx.translate(
     position.x, position.y,
@@ -79,50 +80,29 @@ const render = (ctx, game, turret): void => {
 
   // barrel of turret
   ctx.save();
-  ctx.fillStyle = "black";
-  const turretWidth = 1.5;
-  const turretHeight = 0.3;
+  const turretWidth = 1;
+  const turretHeight = 1;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
   ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.drawImage(img,
+    16, 0, 16, 16,
+    0, 0, turretWidth, turretHeight,
+  );
+
+
   ctx.restore();
 
   // base of turret
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "steelblue";
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeRect(0, 0, width, height);
-
+  ctx.drawImage(img,
+    0, 0, 16, 16,
+    0, 0, width, height,
+  );
 
   ctx.restore();
 };
 
-const turretConfigs = {
-  basic: {
-    name: 'Basic Turret',
-    fireRate: 1000,
-    projectileType: 'BULLET',
-    cost: {
-      IRON: 4,
-    },
-    isPowerConsumer: false,
-    powerConsumed: 0,
-  },
-
-  fast: {
-    name: 'Fast Turret',
-    fireRate: 150,
-    projectileType: 'BULLET',
-    cost: {
-      STEEL: 4,
-    },
-    isPowerConsumer: true,
-    powerConsumed: 1,
-  },
-}
-
 
 module.exports = {
-  make, render, config, turretConfigs,
+  make, render, config,
 };

@@ -94,6 +94,68 @@ const getMaxFrameOffset = (entity: Entity): number => {
     frameStep: entity[actionType].frameStep || 0,
   };
 };
+
+//////////////////////////////////////////////////////////////////////
+// Turret-specific
+//////////////////////////////////////////////////////////////////////
+
+const getFastBarrelSprite = (game: Game, turret: Turret): Object => {
+  const width = 32;
+  const height = 32;
+  const index = getInterpolatedIndex(game, turret);
+  const frame = getFrame(game, turret, index);
+
+  const obj = {
+    img: game.sprites.FAST_TURRET,
+    x: width * (frame + 2),
+    y: 0,
+    width,
+    height,
+  };
+
+  return obj;
+}
+
+const getLaserBarrelSprite = (game: Game, turret: Turret): Object => {
+  const width = 48;
+  const height = 48;
+  const index = getInterpolatedIndex(game, turret);
+  const frame = getFrame(game, turret, index);
+
+  const obj = {
+    img: game.sprites.LASER_TURRET,
+    x: width * (frame + 2),
+    y: 0,
+    width,
+    height,
+  };
+
+  return obj;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Missile-specific
+//////////////////////////////////////////////////////////////////////
+
+const getMissileSprite = (game: Game, missile: Missile): Object => {
+  let width = 16;
+  let height = 32;
+  let img = game.sprites.MISSILE;
+  let dur = 6;
+  let numFrames = 3;
+  let index = Math.floor(((missile.id + game.time) % (dur * numFrames)) / dur);
+
+  const obj = {
+    img,
+    x: index * width,
+    y: 0,
+    width,
+    height,
+  };
+
+  return obj;
+};
+
 //////////////////////////////////////////////////////////////////////
 // Ant-specific
 //////////////////////////////////////////////////////////////////////
@@ -219,6 +281,12 @@ const getTileSprite = (game: Game, entity: Entity): Object => {
   let height = 16;
   let spriteType = entityType == 'STONE' ? entity.subType : entityType;
   spriteType = spriteType == null ? entityType : spriteType;
+  if (entity.onFire) {
+    spriteType = 'HOT_' + spriteType;
+  }
+  if (entity.type == 'GLASS') {
+    spriteType = 'STEEL';
+  }
   let img = game.sprites[spriteType];
   const obj = {
     img,
@@ -393,6 +461,9 @@ module.exports = {
   getInterpolatedIndex,
   getAntSpriteAndOffset,
   getTileSprite,
+  getMissileSprite,
+  getFastBarrelSprite,
+  getLaserBarrelSprite,
   getPheromoneSprite,
   getDictIndexStr,
   getBackgroundSprite,

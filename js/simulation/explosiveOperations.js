@@ -37,7 +37,7 @@ const triggerExplosion = (game, explosive, precompute): Array<Vector> => {
     numRays = 1;
   }
 
-  let positionsCleared = [];
+  // let positionsCleared = [];
   let alreadyDamaged = {};
   for (const quadrant of quadrantThetas) {
     for (let i = 0; i < numRays; i++) {
@@ -65,20 +65,20 @@ const triggerExplosion = (game, explosive, precompute): Array<Vector> => {
               if (!precompute) {
                 dealDamageToEntity(game, e, e.hp);
               }
-              positionsCleared.push({...position});
+              // positionsCleared.push({...position});
             }
             dealtDamage = true;
           });
         // if you didn't hit anything, still reduce damage as the radius increases
         if (!dealtDamage) {
           damage -= 10;
-          positionsCleared.push({...position});
+          // positionsCleared.push({...position});
         }
       }
     }
   }
 
-  return positionsCleared;
+  // return positionsCleared;
 };
 
 module.exports = {

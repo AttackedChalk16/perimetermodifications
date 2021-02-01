@@ -2,7 +2,7 @@
 
 const {makeEntity}= require('./makeEntity.js');
 const {add, subtract, equals, makeVector, vectorTheta} = require('../utils/vectors');
-const {renderAgent} = require('../render/renderAgent');
+const {getLaserBarrelSprite} = require('../selectors/sprites');
 
 const config = {
   isTower: true,
@@ -27,7 +27,7 @@ const config = {
   },
   SHOOT: {
     duration: 1,
-    spriteOrder: [0],
+    spriteOrder: [1],
   },
   COOLDOWN: {
     duration: 1800,
@@ -90,23 +90,29 @@ const render = (ctx, game, turret): void => {
     position.x, position.y,
   );
 
+  // base of turret
+  const img = game.sprites.LASER_TURRET;
+  const xOffset = (turret.isPowered || game.pausePowerConsumption) ? 0 : 48;
+  ctx.drawImage(
+    img,
+    xOffset, 0, 48, 48,
+    0, 0, width, height,
+  );
+
   // barrel of turret
   ctx.save();
-  ctx.fillStyle = "black";
   const turretWidth = 3;
-  const turretHeight = 0.3;
+  const turretHeight = 3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  const obj = getLaserBarrelSprite(game, turret);
+  ctx.drawImage(
+    obj.img,
+    obj.x, obj.y, obj.width, obj.height,
+    0, 0, turretWidth, turretHeight,
+  );
   ctx.restore();
-
-  // base of turret
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "steelblue";
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeRect(0, 0, width, height);
-
 
   ctx.restore();
 };

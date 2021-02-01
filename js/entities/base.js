@@ -31,22 +31,9 @@ const make = (
   };
 };
 
-const render = (ctx, game, token): void => {
-  ctx.save();
-  ctx.translate(token.position.x, token.position.y);
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'steelblue';
-  ctx.beginPath();
-  const radius = token.width / 2;
-  ctx.arc(
-    token.width / 2,
-    token.height / 2,
-    radius, 0, Math.PI * 2,
-  );
-  ctx.closePath();
-  ctx.stroke();
-  ctx.fill();
-  ctx.restore();
+const render = (ctx, game, base): void => {
+  const img = game.sprites.BASE;
+  ctx.drawImage(img, base.position.x, base.position.y, base.width, base.height);
 };
 
 module.exports = {config, make, render};

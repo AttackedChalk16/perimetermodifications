@@ -445,18 +445,9 @@ var make = function make(game, position, playerID, quantity) {
   });
 };
 
-var render = function render(ctx, game, token) {
-  ctx.save();
-  ctx.translate(token.position.x, token.position.y);
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'steelblue';
-  ctx.beginPath();
-  var radius = token.width / 2;
-  ctx.arc(token.width / 2, token.height / 2, radius, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.stroke();
-  ctx.fill();
-  ctx.restore();
+var render = function render(ctx, game, base) {
+  var img = game.sprites.BASE;
+  ctx.drawImage(img, base.position.x, base.position.y, base.width, base.height);
 };
 
 module.exports = { config: config, make: make, render: render };
@@ -538,55 +529,29 @@ var render = function render(ctx, game, turret) {
       height = turret.height,
       theta = turret.theta;
 
+  var img = game.sprites.BASIC_TURRET;
   ctx.save();
   ctx.translate(position.x, position.y);
 
   // barrel of turret
   ctx.save();
-  ctx.fillStyle = "black";
-  var turretWidth = 1.5;
-  var turretHeight = 0.3;
+  var turretWidth = 1;
+  var turretHeight = 1;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
   ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.drawImage(img, 16, 0, 16, 16, 0, 0, turretWidth, turretHeight);
+
   ctx.restore();
 
   // base of turret
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "steelblue";
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, 16, 16, 0, 0, width, height);
 
   ctx.restore();
 };
 
-var turretConfigs = {
-  basic: {
-    name: 'Basic Turret',
-    fireRate: 1000,
-    projectileType: 'BULLET',
-    cost: {
-      IRON: 4
-    },
-    isPowerConsumer: false,
-    powerConsumed: 0
-  },
-
-  fast: {
-    name: 'Fast Turret',
-    fireRate: 150,
-    projectileType: 'BULLET',
-    cost: {
-      STEEL: 4
-    },
-    isPowerConsumer: true,
-    powerConsumed: 1
-  }
-};
-
 module.exports = {
-  make: make, render: render, config: config, turretConfigs: turretConfigs
+  make: make, render: render, config: config
 };
 },{"../render/renderAgent":30,"../utils/vectors":43,"./makeEntity.js":17}],6:[function(require,module,exports){
 'use strict';
@@ -614,7 +579,7 @@ var config = {
   width: 2,
   height: 1,
   velocity: 500,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'MISSILE', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'ICE', 'URANIUM'],
 
   DIE: {
     duration: 1,
@@ -697,21 +662,9 @@ var make = function make(game, position, width, height) {
 };
 
 var render = function render(ctx, game, coal) {
-  // const obj = getTileSprite(game, coal);
-  // if (obj == null || obj.img == null) return;
-  // ctx.drawImage(
-  //   obj.img,
-  //   obj.x, obj.y, obj.width, obj.height,
-  //   coal.position.x, coal.position.y, coal.width, coal.height,
-  // );
-
-  ctx.fillStyle = "black";
-  ctx.fillRect(coal.position.x, coal.position.y, coal.width, coal.height);
-
-  if (coal.onFire) {
-    ctx.fillStyle = '#FFA500';
-    ctx.fillRect(coal.position.x, coal.position.y, coal.width, coal.height);
-  }
+  var obj = getTileSprite(game, coal);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, coal.position.x, coal.position.y, coal.width, coal.height);
 };
 
 module.exports = {
@@ -836,16 +789,16 @@ var make = function make(game, position, playerID, explosionRadiusType) {
 };
 
 var render = function render(ctx, game, dynamite) {
-  ctx.save();
   var curAction = dynamite.actions[0];
-  ctx.translate(dynamite.position.x, dynamite.position.y);
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'red';
-  ctx.fillRect(0, 0, dynamite.width, dynamite.height);
-  ctx.strokeRect(0, 0, dynamite.width, dynamite.height);
+  // ctx.strokeStyle = 'black';
+  // ctx.fillStyle = 'red';
+  // ctx.fillRect(0, 0, dynamite.width, dynamite.height);
+  // ctx.strokeRect(0, 0, dynamite.width, dynamite.height);
 
   // explosion itself
   if (curAction != null && curAction.type == 'DIE') {
+    ctx.save();
+    ctx.translate(dynamite.position.x, dynamite.position.y);
     var duration = getDuration(game, dynamite, curAction.type);
     var index = getInterpolatedIndex(game, dynamite);
     ctx.globalAlpha = 0.8;
@@ -855,9 +808,8 @@ var render = function render(ctx, game, dynamite) {
     ctx.arc(dynamite.width / 2, dynamite.height / 2, radius, 0, Math.PI * 2);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
   }
-
-  ctx.restore();
 };
 
 module.exports = { config: config, make: make, render: render };
@@ -934,16 +886,10 @@ var make = function make(game, position, width, height, hp) {
 };
 
 var render = function render(ctx, game, glass) {
-  // const obj = getTileSprite(game, glass);
-  // if (obj == null || obj.img == null) return;
-  // ctx.drawImage(
-  //   obj.img,
-  //   obj.x, obj.y, obj.width, obj.height,
-  //   glass.position.x, glass.position.y, glass.width, glass.height,
-  // );
   ctx.globalAlpha = 0.5;
-  ctx.fillStyle = "lightgray";
-  ctx.fillRect(glass.position.x, glass.position.y, glass.width, glass.height);
+  var obj = getTileSprite(game, glass);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, glass.position.x, glass.position.y, glass.width, glass.height);
   ctx.globalAlpha = 1;
 };
 
@@ -1023,16 +969,9 @@ var make = function make(game, position, width, height, hp) {
 };
 
 var render = function render(ctx, game, iron) {
-  // const obj = getTileSprite(game, iron);
-  // if (obj == null || obj.img == null) return;
-  // ctx.drawImage(
-  //   obj.img,
-  //   obj.x, obj.y, obj.width, obj.height,
-  //   iron.position.x, iron.position.y, iron.width, iron.height,
-  // );
-
-  ctx.fillStyle = "darkgray";
-  ctx.fillRect(iron.position.x, iron.position.y, iron.width, iron.height);
+  var obj = getTileSprite(game, iron);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, iron.position.x, iron.position.y, iron.width, iron.height);
 };
 
 module.exports = {
@@ -1129,8 +1068,8 @@ var _require2 = require('../utils/vectors'),
     makeVector = _require2.makeVector,
     vectorTheta = _require2.vectorTheta;
 
-var _require3 = require('../render/renderAgent'),
-    renderAgent = _require3.renderAgent;
+var _require3 = require('../selectors/sprites'),
+    getLaserBarrelSprite = _require3.getLaserBarrelSprite;
 
 var config = {
   isTower: true,
@@ -1155,7 +1094,7 @@ var config = {
   },
   SHOOT: {
     duration: 1,
-    spriteOrder: [0]
+    spriteOrder: [1]
   },
   COOLDOWN: {
     duration: 1800,
@@ -1208,22 +1147,21 @@ var render = function render(ctx, game, turret) {
   ctx.save();
   ctx.translate(position.x, position.y);
 
+  // base of turret
+  var img = game.sprites.LASER_TURRET;
+  var xOffset = turret.isPowered || game.pausePowerConsumption ? 0 : 48;
+  ctx.drawImage(img, xOffset, 0, 48, 48, 0, 0, width, height);
+
   // barrel of turret
   ctx.save();
-  ctx.fillStyle = "black";
   var turretWidth = 3;
-  var turretHeight = 0.3;
+  var turretHeight = 3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  var obj = getLaserBarrelSprite(game, turret);
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, turretWidth, turretHeight);
   ctx.restore();
-
-  // base of turret
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "steelblue";
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeRect(0, 0, width, height);
 
   ctx.restore();
 };
@@ -1231,7 +1169,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":30,"../utils/vectors":43,"./makeEntity.js":17}],17:[function(require,module,exports){
+},{"../selectors/sprites":36,"../utils/vectors":43,"./makeEntity.js":17}],17:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -1262,7 +1200,8 @@ var _require2 = require('./makeEntity'),
     makeEntity = _require2.makeEntity;
 
 var _require3 = require('../selectors/sprites'),
-    getInterpolatedIndex = _require3.getInterpolatedIndex;
+    getInterpolatedIndex = _require3.getInterpolatedIndex,
+    getMissileSprite = _require3.getMissileSprite;
 
 var _require4 = require('../simulation/actionQueue'),
     getDuration = _require4.getDuration;
@@ -1282,7 +1221,7 @@ var config = {
   width: 1,
   height: 2,
   velocity: 50,
-  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'FAST_TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'BASIC_TURRET', 'LASER_TURRET', 'BASE'],
+  blockingTypes: ['DIRT', 'STONE', 'FOOD', 'AGENT', 'DOODAD', 'WORM', 'FAST_TURRET', 'TURBINE', 'IRON', 'STEEL', 'COAL', 'BASIC_TURRET', 'LASER_TURRET', 'BASE', 'MISSILE_TURRET', 'ICE', 'URANIUM'],
 
   DIE: {
     duration: 1,
@@ -1337,10 +1276,9 @@ var render = function render(ctx, game, missile) {
   ctx.rotate(ballisticTheta + Math.PI / 2);
   ctx.translate(-width / 2, -height / 2);
 
-  ctx.strokeStyle = 'black';
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, missile.width, missile.height);
-  ctx.strokeRect(0, 0, missile.width, missile.height);
+  var obj = getMissileSprite(game, missile);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, missile.width, missile.height);
 
   ctx.restore();
 };
@@ -1586,16 +1524,9 @@ var make = function make(game, position, width, height, hp) {
 };
 
 var render = function render(ctx, game, steel) {
-  // const obj = getTileSprite(game, steel);
-  // if (obj == null || obj.img == null) return;
-  // ctx.drawImage(
-  //   obj.img,
-  //   obj.x, obj.y, obj.width, obj.height,
-  //   steel.position.x, steel.position.y, steel.width, steel.height,
-  // );
-
-  ctx.fillStyle = "lightgray";
-  ctx.fillRect(steel.position.x, steel.position.y, steel.width, steel.height);
+  var obj = getTileSprite(game, steel);
+  if (obj == null || obj.img == null) return;
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, steel.position.x, steel.position.y, steel.width, steel.height);
 };
 
 module.exports = {
@@ -1801,6 +1732,9 @@ var _require2 = require('../utils/vectors'),
 var _require3 = require('../render/renderAgent'),
     renderAgent = _require3.renderAgent;
 
+var _require4 = require('../selectors/sprites'),
+    getFastBarrelSprite = _require4.getFastBarrelSprite;
+
 var config = {
   isTower: true,
   isPowerConsumer: true,
@@ -1821,7 +1755,7 @@ var config = {
   },
   SHOOT: {
     duration: 150,
-    spriteOrder: [0]
+    spriteOrder: [1, 2]
   },
 
   cost: {
@@ -1869,20 +1803,20 @@ var render = function render(ctx, game, turret) {
 
   // barrel of turret
   ctx.save();
-  ctx.fillStyle = "black";
-  var turretWidth = 2.5;
-  var turretHeight = 0.3;
+  var turretWidth = width;
+  var turretHeight = height;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.fillRect(0, 0, turretWidth, turretHeight);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  var obj = getFastBarrelSprite(game, turret);
+  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, turretWidth, turretHeight);
+
   ctx.restore();
 
   // base of turret
-  ctx.strokeStyle = "black";
-  ctx.fillStyle = "steelblue";
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeRect(0, 0, width, height);
+  var img = game.sprites.FAST_TURRET;
+  var xOffset = turret.isPowered || game.pausePowerConsumption ? 0 : 32;
+  ctx.drawImage(img, xOffset, 0, 32, 32, 0, 0, width, height);
 
   ctx.restore();
 };
@@ -1890,7 +1824,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":30,"../utils/vectors":43,"./makeEntity.js":17}],28:[function(require,module,exports){
+},{"../render/renderAgent":30,"../selectors/sprites":36,"../utils/vectors":43,"./makeEntity.js":17}],28:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3735,6 +3669,68 @@ var getMaxFrameOffset = function getMaxFrameOffset(entity) {
     frameStep: entity[actionType].frameStep || 0
   };
 };
+
+//////////////////////////////////////////////////////////////////////
+// Turret-specific
+//////////////////////////////////////////////////////////////////////
+
+var getFastBarrelSprite = function getFastBarrelSprite(game, turret) {
+  var width = 32;
+  var height = 32;
+  var index = getInterpolatedIndex(game, turret);
+  var frame = getFrame(game, turret, index);
+
+  var obj = {
+    img: game.sprites.FAST_TURRET,
+    x: width * (frame + 2),
+    y: 0,
+    width: width,
+    height: height
+  };
+
+  return obj;
+};
+
+var getLaserBarrelSprite = function getLaserBarrelSprite(game, turret) {
+  var width = 48;
+  var height = 48;
+  var index = getInterpolatedIndex(game, turret);
+  var frame = getFrame(game, turret, index);
+
+  var obj = {
+    img: game.sprites.LASER_TURRET,
+    x: width * (frame + 2),
+    y: 0,
+    width: width,
+    height: height
+  };
+
+  return obj;
+};
+
+//////////////////////////////////////////////////////////////////////
+// Missile-specific
+//////////////////////////////////////////////////////////////////////
+
+var getMissileSprite = function getMissileSprite(game, missile) {
+  var width = 16;
+  var height = 32;
+  var img = game.sprites.MISSILE;
+  var dur = 6;
+  var numFrames = 3;
+  var index = Math.floor((missile.id + game.time) % (dur * numFrames) / dur);
+
+  var obj = {
+    img: img,
+    x: index * width,
+    y: 0,
+    width: width,
+    height: height
+  };
+
+  return obj;
+};
+
 //////////////////////////////////////////////////////////////////////
 // Ant-specific
 //////////////////////////////////////////////////////////////////////
@@ -3879,6 +3875,12 @@ var getTileSprite = function getTileSprite(game, entity) {
   var height = 16;
   var spriteType = entityType == 'STONE' ? entity.subType : entityType;
   spriteType = spriteType == null ? entityType : spriteType;
+  if (entity.onFire) {
+    spriteType = 'HOT_' + spriteType;
+  }
+  if (entity.type == 'GLASS') {
+    spriteType = 'STEEL';
+  }
   var img = game.sprites[spriteType];
   var obj = {
     img: img,
@@ -4057,6 +4059,9 @@ module.exports = {
   getInterpolatedIndex: getInterpolatedIndex,
   getAntSpriteAndOffset: getAntSpriteAndOffset,
   getTileSprite: getTileSprite,
+  getMissileSprite: getMissileSprite,
+  getFastBarrelSprite: getFastBarrelSprite,
+  getLaserBarrelSprite: getLaserBarrelSprite,
   getPheromoneSprite: getPheromoneSprite,
   getDictIndexStr: getDictIndexStr,
   getBackgroundSprite: getBackgroundSprite,

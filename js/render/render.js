@@ -206,8 +206,16 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
     ctx.fillStyle = 'rgba(0,139,0, 0.1)';
     ctx.strokeStyle = 'green';
   }
-  ctx.fillRect(cursorPos.x, cursorPos.y, 1, 1);
-  ctx.strokeRect(cursorPos.x, cursorPos.y, 1, 1);
+  let cursorWidth = 1;
+  let cursorHeight = 1;
+  if (game.placeType != null && Entities[game.placeType].config.width > 1) {
+    cursorWidth = Entities[game.placeType].config.height;
+  }
+  if (game.placeType != null && Entities[game.placeType].config.height > 1) {
+    cursorHeight = Entities[game.placeType].config.height;
+  }
+  ctx.fillRect(cursorPos.x, cursorPos.y,   cursorWidth, cursorHeight);
+  ctx.strokeRect(cursorPos.x, cursorPos.y, cursorWidth, cursorHeight);
 
   // marquee
   if (
