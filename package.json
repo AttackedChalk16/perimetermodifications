@@ -1,7 +1,7 @@
 {
   "name": "perimeter",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "js/electron.js",
   "scripts": {
     "flow": "flow",
     "babel": "babel",
@@ -16,6 +16,7 @@
     "babel-core": "^6.26.3",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
+    "electron": "^11.2.1",
     "flow-bin": "^0.121.0"
   },
   "dependencies": {

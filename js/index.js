@@ -17,6 +17,7 @@ store.subscribe(() => {
   renderUI(store);
 });
 
+
 function renderUI(store: Store): React.Node {
   const state = store.getState();
   ReactDOM.render(
@@ -27,3 +28,4 @@ function renderUI(store: Store): React.Node {
     document.getElementById('container'),
   );
 }
+

@@ -23,24 +23,28 @@ const {
 
 import type {Game, Entity, Hill, Ant, Food} from '../types';
 
-let start = null;
-let framesRendered = 0;
 let cur = null;
+let prevTime = 0;
+let msAvg = 0;
+const weightRatio = 0.1;
 const render = (game: Game): void => {
   window.requestAnimationFrame((timestamp) => {
-    if (start == null) {
-      start = timestamp;
-    }
+    const curTime = new Date().getTime();
+
     // don't call renderFrame multiple times on the same timestamp
     if (timestamp == cur) {
       return;
     }
-
-    framesRendered++;
-    // console.log("fps:", framesRendered / ((cur - start) / 1000));
     cur = timestamp;
 
+    if (prevTime > 0) {
+      msAvg = msAvg * (1 - weightRatio) + (curTime - prevTime) * weightRatio;
+    }
+    // console.log(1 / (msAvg / 1000));
+
     renderFrame(game);
+
+    prevTime = curTime;
   });
 }
 

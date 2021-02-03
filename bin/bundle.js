@@ -3941,24 +3941,28 @@ var _require8 = require('../selectors/mouseInteractionSelectors'),
     isNeighboringColonyPher = _require8.isNeighboringColonyPher,
     isAboveSomething = _require8.isAboveSomething;
 
-var start = null;
-var framesRendered = 0;
 var cur = null;
+var prevTime = 0;
+var msAvg = 0;
+var weightRatio = 0.1;
 var render = function render(game) {
   window.requestAnimationFrame(function (timestamp) {
-    if (start == null) {
-      start = timestamp;
-    }
+    var curTime = new Date().getTime();
+
     // don't call renderFrame multiple times on the same timestamp
     if (timestamp == cur) {
       return;
     }
-
-    framesRendered++;
-    // console.log("fps:", framesRendered / ((cur - start) / 1000));
     cur = timestamp;
 
+    if (prevTime > 0) {
+      msAvg = msAvg * (1 - weightRatio) + (curTime - prevTime) * weightRatio;
+    }
+    console.log(1 / (msAvg / 1000));
+
     renderFrame(game);
+
+    prevTime = curTime;
   });
 };
 

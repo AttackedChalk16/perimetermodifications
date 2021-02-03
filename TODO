@@ -31,11 +31,15 @@
   - oil
     - needs a separate tileIndex sprite
     - separate pheromone for oil on fire?
-      - how is heat produced from this?
+      - make heat (and cold) dispersing
+      - make coal/uranium emit heat regularly
+      - add some heat when oil turns, then burn off fast
 
 
 - - - - - - TODO - - - - - -
   - electron
+    - how to distinguish npm start as node  server/server.js vs electron .
+    - how to get a downloadable application you click on
   - HUDS
     - flicker resources when you spend them
     - render the entity in the cards for the HUDS
@@ -63,9 +67,6 @@
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
   - mode with no missiles
-  - steam
-    - if steam cool rate is less than water heat rate then clouds might form
-  - get a good average fps algorithm going
   - procedurally generate level:
     - random seed
     - randomize pocket shape a little more

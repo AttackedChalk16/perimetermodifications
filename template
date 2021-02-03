@@ -49,3 +49,6 @@ npm install pg
 
 # clientside REST
 npm install axios
+
+# electron
+npm i -D electron@latest
