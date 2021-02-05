@@ -120,6 +120,7 @@ const doTick = (game: Game): Game => {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updatePheromoneEmitters(game);
   updateTowers(game);
   updateBases(game);
   updateBallistics(game);
@@ -680,6 +681,18 @@ const updateViewPos = (
 //////////////////////////////////////////////////////////////////////////
 // Pheromones
 //////////////////////////////////////////////////////////////////////////
+
+const updatePheromoneEmitters = (game: Game): void => {
+  for (const id in game.PHEROMONE_EMITTER) {
+    const emitter = game.entities[id];
+    if (emitter.quantity == 0) continue;
+    if (emitter.refreshRate == null) continue;
+
+    if ((game.time + emitter.id) % emitter.refreshRate == 0) {
+      changePheromoneEmitterQuantity(game, emitter, emitter.quantity);
+    }
+  }
+};
 
 const updatePheromones = (game: Game): void => {
 

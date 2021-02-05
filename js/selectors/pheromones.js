@@ -111,10 +111,30 @@ const getSourcesOfPheromoneType = (
   return sources;
 };
 
+const isPositionBlockingPheromone = (
+  game: Game, pheromoneType: PheromoneType, position: Vector,
+): boolean => {
+  const config = globalConfig.pheromones[pheromoneType];
+  const occupied = lookupInGrid(game.grid, position)
+    .map(id => game.entities[id])
+    .filter(e => e != null && config.blockingTypes.includes(e.type))
+    .length > 0;
+
+  if (occupied) return true;
+
+  for (const blockingPher of config.blockingPheromones) {
+    if (getPheromoneAtPosition(game, position, blockingPher, 0) > 0) {
+      return true;
+    }
+  }
+  return false;
+};
+
 module.exports = {
   getPheromoneAtPosition,
   getTemperature,
   getSourcesOfPheromoneType,
   getEntityPheromoneSources,
   getQuantityForStalePos,
+  isPositionBlockingPheromone,
 };

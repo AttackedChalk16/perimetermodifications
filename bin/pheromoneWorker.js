@@ -41,19 +41,21 @@ var pheromones = {
   COLONY: {
     quantity: 350,
     decayAmount: 1,
-    color: 'rgb(0, 0, 255)',
+    color: 'rgb(155, 227, 90)',
     tileIndex: 0,
 
-    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL'])
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: []
   },
   WATER: {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(0, 0, 255)',
+    color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['WORM']),
+    blockingPheromones: [],
     isDispersing: true,
     heatPoint: 125,
     heatsTo: 'STEAM',
@@ -78,6 +80,7 @@ var pheromones = {
     tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: [],
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
@@ -95,10 +98,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(0, 0, 0)',
     tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: [],
     isDispersing: true,
     heatPoint: 10,
     heatsTo: 'SULPHUR_DIOXIDE',
@@ -114,10 +118,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(155, 227, 90)',
     tileIndex: 0,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: [],
     isDispersing: true,
     coolPoint: -5, // heat level to condense at
     coolsTo: 'SULPHUR',
@@ -136,10 +141,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(250, 240, 70)',
     tileIndex: 3,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: ['MOLTEN_SAND'],
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'MOLTEN_SAND',
@@ -155,10 +161,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(215, 88, 101)',
     tileIndex: 2,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: ['SAND', 'MOLTEN_IRON', 'MOLTEN_STEEL'],
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'GLASS',
@@ -180,6 +187,7 @@ var pheromones = {
     tileIndex: 5,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: ['MOLTEN_STEEL', 'MOLTEN_SAND', 'SAND'],
     isDispersing: true,
     coolPoint: 80, // heat level to freeze at
     coolsTo: 'IRON',
@@ -202,10 +210,11 @@ var pheromones = {
     quantity: 240,
     decayAmount: 240,
     decayRate: 0.0005,
-    color: 'rgb(100, 100, 100)',
+    color: 'rgb(220, 220, 220)',
     tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: ['MOLTEN_IRON', 'MOLTEN_SAND', 'SAND'],
     isDispersing: true,
     coolPoint: 90, // heat level to freeze at
     coolsTo: 'STEEL',
@@ -225,7 +234,9 @@ var pheromones = {
     color: 'rgb(255, 0, 0)',
     tileIndex: 2,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingPheromones: [],
+    isDispersing: true
   },
   COLD: {
     quantity: 120,
@@ -234,7 +245,9 @@ var pheromones = {
     color: 'rgb(255, 0, 0)',
     tileIndex: 1,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingPheromones: [],
+    isDispersing: true
   }
 };
 
@@ -529,25 +542,55 @@ var render = function render(ctx, game, turret) {
       height = turret.height,
       theta = turret.theta;
 
-  var img = game.sprites.BASIC_TURRET;
   ctx.save();
   ctx.translate(position.x, position.y);
 
   // barrel of turret
   ctx.save();
-  var turretWidth = 1;
-  var turretHeight = 1;
+  ctx.fillStyle = "black";
+  var turretWidth = 1.5;
+  var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
   ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.drawImage(img, 16, 0, 16, 16, 0, 0, turretWidth, turretHeight);
-
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
   // base of turret
-  ctx.drawImage(img, 0, 0, 16, 16, 0, 0, width, height);
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
 
   ctx.restore();
+  // const img = game.sprites.BASIC_TURRET;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = 1;
+  // const turretHeight = 1;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  // ctx.drawImage(img,
+  //   16, 0, 16, 16,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+
+
+  // ctx.restore();
+
+  // // base of turret
+  // ctx.drawImage(img,
+  //   0, 0, 16, 16,
+  //   0, 0, width, height,
+  // );
+
+  // ctx.restore();
 };
 
 module.exports = {
@@ -649,7 +692,8 @@ var config = {
   hp: 10,
   combustionTemp: 125, // temperature at which you catch on fire
   fuel: 3 * 60 * 1000, // ms of burn time
-  heatQuantity: 150 // amount of heat produced when on fire
+  heatQuantity: 150, // amount of heat produced when on fire
+  refreshRate: 60 // heat is updated this often
 };
 
 var make = function make(game, position, width, height) {
@@ -916,7 +960,8 @@ var config = {
   meltType: 'WATER',
   hp: 120,
   meltTemp: 12, // temperature at which you melt
-  heatQuantity: 120 // amount of water produced when melted
+  heatQuantity: 120, // amount of water produced when melted
+  refreshRate: 60
 };
 
 var make = function make(game, position, width, height, hp) {
@@ -1076,8 +1121,8 @@ var config = {
   isPowerConsumer: true,
   powerConsumed: 4,
   hp: 120,
-  width: 3,
-  height: 3,
+  width: 4,
+  height: 4,
   damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
@@ -1147,23 +1192,55 @@ var render = function render(ctx, game, turret) {
   ctx.save();
   ctx.translate(position.x, position.y);
 
-  // base of turret
-  var img = game.sprites.LASER_TURRET;
-  var xOffset = turret.isPowered || game.pausePowerConsumption ? 0 : 48;
-  ctx.drawImage(img, xOffset, 0, 48, 48, 0, 0, width, height);
-
   // barrel of turret
   ctx.save();
-  var turretWidth = 3;
-  var turretHeight = 3;
+  ctx.fillStyle = "black";
+  var turretWidth = 4;
+  var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
-  var obj = getLaserBarrelSprite(game, turret);
-  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, turretWidth, turretHeight);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
+  // base of turret
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
   ctx.restore();
+  // const {position, width, height, theta} = turret;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // base of turret
+  // const img = game.sprites.LASER_TURRET;
+  // const xOffset = (turret.isPowered || game.pausePowerConsumption) ? 0 : 48;
+  // ctx.drawImage(
+  //   img,
+  //   xOffset, 0, 48, 48,
+  //   0, 0, width, height,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = 3;
+  // const turretHeight = 3;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  // const obj = getLaserBarrelSprite(game, turret);
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+  // ctx.restore();
+
+  // ctx.restore();
 };
 
 module.exports = {
@@ -1803,22 +1880,54 @@ var render = function render(ctx, game, turret) {
 
   // barrel of turret
   ctx.save();
-  var turretWidth = width;
-  var turretHeight = height;
+  ctx.fillStyle = "black";
+  var turretWidth = 2.5;
+  var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
-  var obj = getFastBarrelSprite(game, turret);
-  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, turretWidth, turretHeight);
-
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
   // base of turret
-  var img = game.sprites.FAST_TURRET;
-  var xOffset = turret.isPowered || game.pausePowerConsumption ? 0 : 32;
-  ctx.drawImage(img, xOffset, 0, 32, 32, 0, 0, width, height);
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
 
   ctx.restore();
+  // const {position, width, height, theta} = turret;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = width;
+  // const turretHeight = height;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  // const obj = getFastBarrelSprite(game, turret);
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+
+  // ctx.restore();
+
+  // // base of turret
+  // const img = game.sprites.FAST_TURRET;
+  // const xOffset = (turret.isPowered || game.pausePowerConsumption) ? 0 : 32;
+  // ctx.drawImage(
+  //   img,
+  //   xOffset, 0, 32, 32,
+  //   0, 0, width, height,
+  // );
+
+  // ctx.restore();
 };
 
 module.exports = {
@@ -1841,7 +1950,8 @@ var config = {
   pheromoneEmitter: true,
   pheromoneType: 'HEAT',
   hp: 100,
-  heatQuantity: 125 // amount of heat produced when on fire
+  heatQuantity: 125, // amount of heat produced when on fire
+  refreshRate: 120
 };
 
 var make = function make(game, position, width, height) {
@@ -1897,7 +2007,8 @@ var _require5 = require('./utils/gridHelpers'),
 var _require6 = require('./selectors/pheromones'),
     getPheromoneAtPosition = _require6.getPheromoneAtPosition,
     getQuantityForStalePos = _require6.getQuantityForStalePos,
-    getTemperature = _require6.getTemperature;
+    getTemperature = _require6.getTemperature,
+    isPositionBlockingPheromone = _require6.isPositionBlockingPheromone;
 
 var _require7 = require('./utils/helpers'),
     encodePosition = _require7.encodePosition,
@@ -2099,7 +2210,7 @@ var startFloodFill = function startFloodFill() {
         console.log("no pheromone config", source.pheromoneType, source);
       }
       if (source.quantity > globalConfig.pheromones[source.pheromoneType].quantity) {
-        console.log("big quantity", source.quantity, source.pheromoneType, source);
+        // console.log("big quantity", source.quantity, source.pheromoneType, source);
         source.quantity = globalConfig.pheromones[source.pheromoneType].quantity;
       }
       if (source.pheromoneType == 'COLONY' && source.playerID == 0 && source.quantity > 0) {
@@ -2191,11 +2302,7 @@ var floodFillPheromone = function floodFillPheromone(game, pheromoneType, player
         position = _posQueue$shift.position,
         quantity = _posQueue$shift.quantity;
 
-    var isOccupied = lookupInGrid(game.grid, position).map(function (id) {
-      return game.entities[id];
-    }).filter(function (e) {
-      return config.blockingTypes.includes(e.type);
-    }).length > 0;
+    var isOccupied = isPositionBlockingPheromone(game, pheromoneType, position);
     if ((!isOccupied || config.canInhabitBlocker) && getPheromoneAtPosition(game, position, pheromoneType, playerID) < quantity) {
       setPheromone(game, position, pheromoneType, quantity, playerID);
       resultPositions[encodePosition(position)] = { pheromoneType: pheromoneType, quantity: quantity, playerID: playerID };
@@ -2214,11 +2321,7 @@ var floodFillPheromone = function floodFillPheromone(game, pheromoneType, player
 
           if (isDiagonalMove(position, neighbor)) continue;
           var neighborAmount = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
-          var occupied = lookupInGrid(game.grid, neighbor).map(function (id) {
-            return game.entities[id];
-          }).filter(function (e) {
-            return e != null && config.blockingTypes.includes(e.type);
-          }).length > 0;
+          var occupied = isPositionBlockingPheromone(game, pheromoneType, neighbor);
           if (amount > 0 && amount > neighborAmount && !occupied) {
             posQueue.push({ position: neighbor, quantity: amount });
           }
@@ -2325,11 +2428,7 @@ var reverseFloodFillPheromone = function reverseFloodFillPheromone(game, pheromo
           var _neighbor = _step5.value;
 
           if (isDiagonalMove(position, _neighbor)) continue;
-          var occupied = lookupInGrid(game.grid, _neighbor).map(function (id) {
-            return game.entities[id];
-          }).filter(function (e) {
-            return e != null && config.blockingTypes.includes(e.type);
-          }).length > 0;
+          var occupied = isPositionBlockingPheromone(game, pheromoneType, _neighbor);
           var quantity = Math.max(0, amount - decayAmount);
           if (quantity > 0 && !occupied) {
             floodFillQueue.push({ position: _neighbor, quantity: quantity });
@@ -2372,8 +2471,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   for (var _pherType in game.dispersingPheromonePositions) {
     var nextFluid = {}; // the algorithm for gravity with fluids will try to push
     // the same source position multiple times, so don't let it
-
-    var _loop = function _loop(encodedPosition) {
+    for (var encodedPosition in game.dispersingPheromonePositions[_pherType]) {
       var source = game.dispersingPheromonePositions[_pherType][encodedPosition];
       var position = source.position,
           playerID = source.playerID,
@@ -2460,7 +2558,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
       // (Can't remove it as soon as it becomes 0 or else we won't tell the client
       //  to also set itself to 0)
       if (!config.isFluid && pheromoneQuantity <= 0) {
-        return 'continue';
+        continue;
       }
       var decayRate = config.decayRate;
       if (decayRate == null) {
@@ -2478,11 +2576,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
           y = -1;
         }
         var positionBelow = add(position, { x: 0, y: y });
-        var occupied = lookupInGrid(game.grid, positionBelow).map(function (id) {
-          return game.entities[id];
-        }).filter(function (e) {
-          return config.blockingTypes.includes(e.type);
-        }).length > 0;
+        var occupied = isPositionBlockingPheromone(game, pheromoneType, positionBelow);
         var diagonal = false;
         var leftOrRight = false;
         var pherBotLeft = 0;
@@ -2490,16 +2584,8 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         if (occupied || getPheromoneAtPosition(game, positionBelow, pheromoneType, playerID) > config.quantity - 1) {
           var botLeft = add(position, { x: -1, y: y });
           var botRight = add(position, { x: 1, y: y });
-          var botLeftOccupied = lookupInGrid(game.grid, botLeft).map(function (id) {
-            return game.entities[id];
-          }).filter(function (e) {
-            return config.blockingTypes.includes(e.type);
-          }).length > 0;
-          var botRightOccupied = lookupInGrid(game.grid, botRight).map(function (id) {
-            return game.entities[id];
-          }).filter(function (e) {
-            return config.blockingTypes.includes(e.type);
-          }).length > 0;
+          var botLeftOccupied = isPositionBlockingPheromone(game, pheromoneType, botLeft);
+          var botRightOccupied = isPositionBlockingPheromone(game, pheromoneType, botRight);
           if (!botLeftOccupied && !botRightOccupied) {
             var leftPher = getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
             var rightPher = getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
@@ -2528,16 +2614,8 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
         if (occupied && (!diagonal || pherBotLeft > config.quantity - 1 || pherBotRight > config.quantity - 1)) {
           var left = add(position, { x: -1, y: 0 });
           var right = add(position, { x: 1, y: 0 });
-          var leftOccupied = lookupInGrid(game.grid, left).map(function (id) {
-            return game.entities[id];
-          }).filter(function (e) {
-            return config.blockingTypes.includes(e.type);
-          }).length > 0;
-          var rightOccupied = lookupInGrid(game.grid, right).map(function (id) {
-            return game.entities[id];
-          }).filter(function (e) {
-            return config.blockingTypes.includes(e.type);
-          }).length > 0;
+          var leftOccupied = isPositionBlockingPheromone(game, pheromoneType, left);
+          var rightOccupied = isPositionBlockingPheromone(game, pheromoneType, right);
           if (!leftOccupied && !rightOccupied) {
             var _leftPher = getPheromoneAtPosition(game, left, pheromoneType, playerID);
             var _rightPher = getPheromoneAtPosition(game, right, pheromoneType, playerID);
@@ -2698,12 +2776,6 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
       } else {
         nextDispersingPheromones[pheromoneType][encodePosition(source.position)] = _extends({}, source, { quantity: finalPherQuantity });
       }
-    };
-
-    for (var encodedPosition in game.dispersingPheromonePositions[_pherType]) {
-      var _ret = _loop(encodedPosition);
-
-      if (_ret === 'continue') continue;
     }
   }
   // console.log(nextDispersingPheromones);
@@ -2716,13 +2788,13 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
 
   try {
     for (var _iterator8 = game.TURBINE[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-      var turbineID = _step8.value;
+      var _turbineID = _step8.value;
 
-      if (nextTurbines[turbineID] != null) {
+      if (nextTurbines[_turbineID] != null) {
         postMessage({
           type: 'TURBINES',
-          entityID: turbineID,
-          thetaSpeed: nextTurbines[turbineID]
+          entityID: _turbineID,
+          thetaSpeed: nextTurbines[_turbineID]
         });
       }
     }
@@ -3544,12 +3616,53 @@ var getSourcesOfPheromoneType = function getSourcesOfPheromoneType(game, pheromo
   return sources;
 };
 
+var isPositionBlockingPheromone = function isPositionBlockingPheromone(game, pheromoneType, position) {
+  var config = globalConfig.pheromones[pheromoneType];
+  var occupied = lookupInGrid(game.grid, position).map(function (id) {
+    return game.entities[id];
+  }).filter(function (e) {
+    return e != null && config.blockingTypes.includes(e.type);
+  }).length > 0;
+
+  if (occupied) return true;
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = config.blockingPheromones[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var blockingPher = _step2.value;
+
+      if (getPheromoneAtPosition(game, position, blockingPher, 0) > 0) {
+        return true;
+      }
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  return false;
+};
+
 module.exports = {
   getPheromoneAtPosition: getPheromoneAtPosition,
   getTemperature: getTemperature,
   getSourcesOfPheromoneType: getSourcesOfPheromoneType,
   getEntityPheromoneSources: getEntityPheromoneSources,
-  getQuantityForStalePos: getQuantityForStalePos
+  getQuantityForStalePos: getQuantityForStalePos,
+  isPositionBlockingPheromone: isPositionBlockingPheromone
 };
 },{"../config":1,"../selectors/neighbors":34,"../utils/gridHelpers":40,"../utils/helpers":41,"../utils/vectors":43}],36:[function(require,module,exports){
 'use strict';

@@ -16,6 +16,7 @@ const {
 } = require('./utils/gridHelpers');
 const {
   getPheromoneAtPosition, getQuantityForStalePos, getTemperature,
+  isPositionBlockingPheromone,
 } = require('./selectors/pheromones');
 const {
   encodePosition, decodePosition, clamp,
@@ -177,7 +178,7 @@ const startFloodFill = () => {
       console.log("no pheromone config", source.pheromoneType, source);
     }
     if (source.quantity > globalConfig.pheromones[source.pheromoneType].quantity) {
-      console.log("big quantity", source.quantity, source.pheromoneType, source);
+      // console.log("big quantity", source.quantity, source.pheromoneType, source);
       source.quantity = globalConfig.pheromones[source.pheromoneType].quantity;
     }
     if (source.pheromoneType == 'COLONY' && source.playerID == 0 && source.quantity > 0) {
@@ -237,10 +238,7 @@ const floodFillPheromone = (
 
   while (posQueue.length > 0) {
     const {position, quantity} = posQueue.shift();
-    const isOccupied = lookupInGrid(game.grid, position)
-      .map(id => game.entities[id])
-      .filter(e => config.blockingTypes.includes(e.type))
-      .length > 0;
+    const isOccupied = isPositionBlockingPheromone(game, pheromoneType, position);
     if (
       (!isOccupied  || config.canInhabitBlocker) &&
       getPheromoneAtPosition(game, position, pheromoneType, playerID) < quantity
@@ -255,10 +253,7 @@ const floodFillPheromone = (
       for (const neighbor of neighborPositions) {
         if (isDiagonalMove(position, neighbor)) continue;
         const neighborAmount = getPheromoneAtPosition(game, neighbor, pheromoneType, playerID);
-        const occupied = lookupInGrid(game.grid, neighbor)
-          .map(id => game.entities[id])
-          .filter(e => e != null && config.blockingTypes.includes(e.type))
-          .length > 0;
+        const occupied = isPositionBlockingPheromone(game, pheromoneType, neighbor);
         if (amount > 0 && amount > neighborAmount && !occupied) {
           posQueue.push({position: neighbor, quantity: amount});
         }
@@ -329,10 +324,7 @@ const reverseFloodFillPheromone = (
       const neighborPositions = getNeighborPositions(game, {position}, false /* internal */);
       for (const neighbor of neighborPositions) {
         if (isDiagonalMove(position, neighbor)) continue;
-        const occupied = lookupInGrid(game.grid, neighbor)
-          .map(id => game.entities[id])
-          .filter(e => e != null && config.blockingTypes.includes(e.type))
-          .length > 0;
+        const occupied = isPositionBlockingPheromone(game, pheromoneType, neighbor);
         const quantity = Math.max(0, amount - decayAmount);
         if (quantity > 0 && !occupied) {
           floodFillQueue.push({position: neighbor, quantity});
@@ -467,10 +459,7 @@ const updateDispersingPheromones = (game) => {
           y = -1;
         }
         let positionBelow = add(position, {x: 0, y});
-        let occupied = lookupInGrid(game.grid, positionBelow)
-          .map(id => game.entities[id])
-          .filter(e => config.blockingTypes.includes(e.type))
-          .length > 0;
+        let occupied = isPositionBlockingPheromone(game, pheromoneType, positionBelow);
         let diagonal = false;
         let leftOrRight = false;
         let pherBotLeft = 0;
@@ -482,14 +471,8 @@ const updateDispersingPheromones = (game) => {
         ) {
           const botLeft = add(position, {x: -1, y});
           const botRight = add(position, {x: 1, y});
-          const botLeftOccupied = lookupInGrid(game.grid, botLeft)
-            .map(id => game.entities[id])
-            .filter(e => config.blockingTypes.includes(e.type))
-            .length > 0;
-          const botRightOccupied = lookupInGrid(game.grid, botRight)
-            .map(id => game.entities[id])
-            .filter(e => config.blockingTypes.includes(e.type))
-            .length > 0;
+          const botLeftOccupied = isPositionBlockingPheromone(game, pheromoneType, botLeft);
+          const botRightOccupied = isPositionBlockingPheromone(game, pheromoneType, botRight);
           if (!botLeftOccupied && !botRightOccupied) {
             const leftPher = getPheromoneAtPosition(game, botLeft, pheromoneType, playerID);
             const rightPher = getPheromoneAtPosition(game, botRight, pheromoneType, playerID);
@@ -526,14 +509,8 @@ const updateDispersingPheromones = (game) => {
         ) {
           const left = add(position, {x: -1, y: 0});
           const right = add(position, {x: 1, y: 0});
-          const leftOccupied = lookupInGrid(game.grid, left)
-            .map(id => game.entities[id])
-            .filter(e => config.blockingTypes.includes(e.type))
-            .length > 0;
-          const rightOccupied = lookupInGrid(game.grid, right)
-            .map(id => game.entities[id])
-            .filter(e => config.blockingTypes.includes(e.type))
-            .length > 0;
+          const leftOccupied = isPositionBlockingPheromone(game, pheromoneType, left);
+          const rightOccupied = isPositionBlockingPheromone(game, pheromoneType, right);
           if (!leftOccupied && !rightOccupied) {
             const leftPher = getPheromoneAtPosition(game, left, pheromoneType, playerID);
             const rightPher = getPheromoneAtPosition(game, right, pheromoneType, playerID);

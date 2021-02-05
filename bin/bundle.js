@@ -41,19 +41,21 @@ var pheromones = {
   COLONY: {
     quantity: 350,
     decayAmount: 1,
-    color: 'rgb(0, 0, 255)',
+    color: 'rgb(155, 227, 90)',
     tileIndex: 0,
 
-    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL'])
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: []
   },
   WATER: {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(0, 0, 255)',
+    color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['WORM']),
+    blockingPheromones: [],
     isDispersing: true,
     heatPoint: 125,
     heatsTo: 'STEAM',
@@ -78,6 +80,7 @@ var pheromones = {
     tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: [],
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
@@ -95,10 +98,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(0, 0, 0)',
     tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: [],
     isDispersing: true,
     heatPoint: 10,
     heatsTo: 'SULPHUR_DIOXIDE',
@@ -114,10 +118,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(155, 227, 90)',
     tileIndex: 0,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: [],
     isDispersing: true,
     coolPoint: -5, // heat level to condense at
     coolsTo: 'SULPHUR',
@@ -136,10 +141,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(250, 240, 70)',
     tileIndex: 3,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: ['MOLTEN_SAND'],
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'MOLTEN_SAND',
@@ -155,10 +161,11 @@ var pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(215, 88, 101)',
     tileIndex: 2,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: ['SAND', 'MOLTEN_IRON', 'MOLTEN_STEEL'],
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'GLASS',
@@ -180,6 +187,7 @@ var pheromones = {
     tileIndex: 5,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: ['MOLTEN_STEEL', 'MOLTEN_SAND', 'SAND'],
     isDispersing: true,
     coolPoint: 80, // heat level to freeze at
     coolsTo: 'IRON',
@@ -202,10 +210,11 @@ var pheromones = {
     quantity: 240,
     decayAmount: 240,
     decayRate: 0.0005,
-    color: 'rgb(100, 100, 100)',
+    color: 'rgb(220, 220, 220)',
     tileIndex: 4,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes)),
+    blockingPheromones: ['MOLTEN_IRON', 'MOLTEN_SAND', 'SAND'],
     isDispersing: true,
     coolPoint: 90, // heat level to freeze at
     coolsTo: 'STEEL',
@@ -225,7 +234,9 @@ var pheromones = {
     color: 'rgb(255, 0, 0)',
     tileIndex: 2,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingPheromones: [],
+    isDispersing: true
   },
   COLD: {
     quantity: 120,
@@ -234,7 +245,9 @@ var pheromones = {
     color: 'rgb(255, 0, 0)',
     tileIndex: 1,
 
-    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes)
+    blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),
+    blockingPheromones: [],
+    isDispersing: true
   }
 };
 
@@ -529,25 +542,55 @@ var render = function render(ctx, game, turret) {
       height = turret.height,
       theta = turret.theta;
 
-  var img = game.sprites.BASIC_TURRET;
   ctx.save();
   ctx.translate(position.x, position.y);
 
   // barrel of turret
   ctx.save();
-  var turretWidth = 1;
-  var turretHeight = 1;
+  ctx.fillStyle = "black";
+  var turretWidth = 1.5;
+  var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
   ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.drawImage(img, 16, 0, 16, 16, 0, 0, turretWidth, turretHeight);
-
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
   // base of turret
-  ctx.drawImage(img, 0, 0, 16, 16, 0, 0, width, height);
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
 
   ctx.restore();
+  // const img = game.sprites.BASIC_TURRET;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = 1;
+  // const turretHeight = 1;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  // ctx.drawImage(img,
+  //   16, 0, 16, 16,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+
+
+  // ctx.restore();
+
+  // // base of turret
+  // ctx.drawImage(img,
+  //   0, 0, 16, 16,
+  //   0, 0, width, height,
+  // );
+
+  // ctx.restore();
 };
 
 module.exports = {
@@ -649,7 +692,8 @@ var config = {
   hp: 10,
   combustionTemp: 125, // temperature at which you catch on fire
   fuel: 3 * 60 * 1000, // ms of burn time
-  heatQuantity: 150 // amount of heat produced when on fire
+  heatQuantity: 150, // amount of heat produced when on fire
+  refreshRate: 60 // heat is updated this often
 };
 
 var make = function make(game, position, width, height) {
@@ -916,7 +960,8 @@ var config = {
   meltType: 'WATER',
   hp: 120,
   meltTemp: 12, // temperature at which you melt
-  heatQuantity: 120 // amount of water produced when melted
+  heatQuantity: 120, // amount of water produced when melted
+  refreshRate: 60
 };
 
 var make = function make(game, position, width, height, hp) {
@@ -1076,8 +1121,8 @@ var config = {
   isPowerConsumer: true,
   powerConsumed: 4,
   hp: 120,
-  width: 3,
-  height: 3,
+  width: 4,
+  height: 4,
   damage: 10,
   thetaAccel: 0.00005,
   minTheta: 0.2,
@@ -1147,23 +1192,55 @@ var render = function render(ctx, game, turret) {
   ctx.save();
   ctx.translate(position.x, position.y);
 
-  // base of turret
-  var img = game.sprites.LASER_TURRET;
-  var xOffset = turret.isPowered || game.pausePowerConsumption ? 0 : 48;
-  ctx.drawImage(img, xOffset, 0, 48, 48, 0, 0, width, height);
-
   // barrel of turret
   ctx.save();
-  var turretWidth = 3;
-  var turretHeight = 3;
+  ctx.fillStyle = "black";
+  var turretWidth = 4;
+  var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
-  var obj = getLaserBarrelSprite(game, turret);
-  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, turretWidth, turretHeight);
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
+  // base of turret
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
   ctx.restore();
+  // const {position, width, height, theta} = turret;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // base of turret
+  // const img = game.sprites.LASER_TURRET;
+  // const xOffset = (turret.isPowered || game.pausePowerConsumption) ? 0 : 48;
+  // ctx.drawImage(
+  //   img,
+  //   xOffset, 0, 48, 48,
+  //   0, 0, width, height,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = 3;
+  // const turretHeight = 3;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  // const obj = getLaserBarrelSprite(game, turret);
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+  // ctx.restore();
+
+  // ctx.restore();
 };
 
 module.exports = {
@@ -1803,22 +1880,54 @@ var render = function render(ctx, game, turret) {
 
   // barrel of turret
   ctx.save();
-  var turretWidth = width;
-  var turretHeight = height;
+  ctx.fillStyle = "black";
+  var turretWidth = 2.5;
+  var turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
-  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
-  var obj = getFastBarrelSprite(game, turret);
-  ctx.drawImage(obj.img, obj.x, obj.y, obj.width, obj.height, 0, 0, turretWidth, turretHeight);
-
+  ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
   // base of turret
-  var img = game.sprites.FAST_TURRET;
-  var xOffset = turret.isPowered || game.pausePowerConsumption ? 0 : 32;
-  ctx.drawImage(img, xOffset, 0, 32, 32, 0, 0, width, height);
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
 
   ctx.restore();
+  // const {position, width, height, theta} = turret;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = width;
+  // const turretHeight = height;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2 - 0.25);
+  // const obj = getFastBarrelSprite(game, turret);
+  // ctx.drawImage(
+  //   obj.img,
+  //   obj.x, obj.y, obj.width, obj.height,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+
+  // ctx.restore();
+
+  // // base of turret
+  // const img = game.sprites.FAST_TURRET;
+  // const xOffset = (turret.isPowered || game.pausePowerConsumption) ? 0 : 32;
+  // ctx.drawImage(
+  //   img,
+  //   xOffset, 0, 32, 32,
+  //   0, 0, width, height,
+  // );
+
+  // ctx.restore();
 };
 
 module.exports = {
@@ -1841,7 +1950,8 @@ var config = {
   pheromoneEmitter: true,
   pheromoneType: 'HEAT',
   hp: 100,
-  heatQuantity: 125 // amount of heat produced when on fire
+  heatQuantity: 125, // amount of heat produced when on fire
+  refreshRate: 120
 };
 
 var make = function make(game, position, width, height) {
@@ -3178,6 +3288,7 @@ var doTick = function doTick(game) {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updatePheromoneEmitters(game);
   updateTowers(game);
   updateBases(game);
   updateBallistics(game);
@@ -3800,6 +3911,18 @@ var updateViewPos = function updateViewPos(game, clampToGrid) {
 // Pheromones
 //////////////////////////////////////////////////////////////////////////
 
+var updatePheromoneEmitters = function updatePheromoneEmitters(game) {
+  for (var id in game.PHEROMONE_EMITTER) {
+    var emitter = game.entities[id];
+    if (emitter.quantity == 0) continue;
+    if (emitter.refreshRate == null) continue;
+
+    if ((game.time + emitter.id) % emitter.refreshRate == 0) {
+      changePheromoneEmitterQuantity(game, emitter, emitter.quantity);
+    }
+  }
+};
+
 var updatePheromones = function updatePheromones(game) {
 
   if (game.time % globalConfig.config.dispersingPheromoneUpdateRate == 0) {
@@ -3958,7 +4081,7 @@ var render = function render(game) {
     if (prevTime > 0) {
       msAvg = msAvg * (1 - weightRatio) + (curTime - prevTime) * weightRatio;
     }
-    console.log(1 / (msAvg / 1000));
+    // console.log(1 / (msAvg / 1000));
 
     renderFrame(game);
 
@@ -4137,10 +4260,8 @@ var renderView = function renderView(canvas, ctx2d, game, dims, isMini) {
   }
   var cursorWidth = 1;
   var cursorHeight = 1;
-  if (game.placeType != null && Entities[game.placeType].config.width > 1) {
+  if (game.placeType != null && Entities[game.placeType] != null) {
     cursorWidth = Entities[game.placeType].config.height;
-  }
-  if (game.placeType != null && Entities[game.placeType].config.height > 1) {
     cursorHeight = Entities[game.placeType].config.height;
   }
   ctx.fillRect(cursorPos.x, cursorPos.y, cursorWidth, cursorHeight);
@@ -4511,8 +4632,8 @@ var renderPheromones = function renderPheromones(ctx, game) {
             ctx.font = '1px sans serif';
             ctx.fillText(parseInt(Math.ceil(quantity)), x, y + 1, 1);
           } else {
-            var obj = getPheromoneSprite(game, { x: x, y: y }, player.id, pheromoneType);
-            if (obj.img != null) {
+            if (!config[pheromoneType].isFluid) {
+              var obj = getPheromoneSprite(game, { x: x, y: y }, player.id, pheromoneType);
               ctx.save();
               ctx.translate(x + 0.5, y + 0.5);
               ctx.rotate(obj.theta);
@@ -5935,12 +6056,53 @@ var getSourcesOfPheromoneType = function getSourcesOfPheromoneType(game, pheromo
   return sources;
 };
 
+var isPositionBlockingPheromone = function isPositionBlockingPheromone(game, pheromoneType, position) {
+  var config = globalConfig.pheromones[pheromoneType];
+  var occupied = lookupInGrid(game.grid, position).map(function (id) {
+    return game.entities[id];
+  }).filter(function (e) {
+    return e != null && config.blockingTypes.includes(e.type);
+  }).length > 0;
+
+  if (occupied) return true;
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = config.blockingPheromones[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var blockingPher = _step2.value;
+
+      if (getPheromoneAtPosition(game, position, blockingPher, 0) > 0) {
+        return true;
+      }
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  return false;
+};
+
 module.exports = {
   getPheromoneAtPosition: getPheromoneAtPosition,
   getTemperature: getTemperature,
   getSourcesOfPheromoneType: getSourcesOfPheromoneType,
   getEntityPheromoneSources: getEntityPheromoneSources,
-  getQuantityForStalePos: getQuantityForStalePos
+  getQuantityForStalePos: getQuantityForStalePos,
+  isPositionBlockingPheromone: isPositionBlockingPheromone
 };
 },{"../config":1,"../selectors/neighbors":51,"../utils/gridHelpers":101,"../utils/helpers":102,"../utils/vectors":105}],53:[function(require,module,exports){
 'use strict';
@@ -10882,7 +11044,7 @@ var InfoHUD = function InfoHUD(props) {
   var entityInfoCards = lookupInGrid(game.grid, mousePos).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return e != null && e.type != 'AGENT';
+    return e != null;
   }).map(function (e) {
     return React.createElement(EntityInfoCard, { key: 'info_' + e.id, entity: e });
   });
@@ -10986,13 +11148,14 @@ var PheromoneInfoCard = function PheromoneInfoCard(props) {
 var EntityInfoCard = function EntityInfoCard(props) {
   var entity = props.entity;
 
-  var config = Entities[entity.type].config;
+  var entityType = entity.type != 'AGENT' ? entity.type : entity.collectedAs;
+  var config = Entities[entityType].config;
   var launchCost = [];
   if (entity.launchCost != null) {
     for (var type in entity.launchCost) {
       launchCost.push(React.createElement(
         'div',
-        { key: "launchCost_" + entity.type + "_" + type },
+        { key: "launchCost_" + entityType + "_" + type },
         type,
         ': ',
         entity.launchCost[type]
@@ -11009,7 +11172,7 @@ var EntityInfoCard = function EntityInfoCard(props) {
       React.createElement(
         'b',
         null,
-        entity.type
+        entityType
       )
     ),
     entity.hp ? React.createElement(

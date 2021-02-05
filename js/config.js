@@ -46,19 +46,21 @@ const pheromones = {
   COLONY: {
     quantity: 350,
     decayAmount: 1,
-    color: 'rgb(0, 0, 255)',
+    color: 'rgb(155, 227, 90)',
     tileIndex: 0,
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
+    blockingPheromones: [],
   },
   WATER: {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(0, 0, 255)',
+    color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
     blockingTypes: [...pheromoneBlockingTypes, 'WORM'],
+    blockingPheromones: [],
     isDispersing: true,
     heatPoint: 125,
     heatsTo: 'STEAM',
@@ -83,6 +85,7 @@ const pheromones = {
     tileIndex: 4,
 
     blockingTypes: [...pheromoneBlockingTypes],
+    blockingPheromones: [],
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
@@ -100,10 +103,11 @@ const pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(0, 0, 0)',
     tileIndex: 4,
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
+    blockingPheromones: [],
     isDispersing: true,
     heatPoint: 10,
     heatsTo: 'SULPHUR_DIOXIDE',
@@ -115,14 +119,32 @@ const pheromones = {
     },
     isFluid: true,
   },
+  HOT_OIL: {
+    quantity: 120,
+    decayAmount: 120,
+    decayRate: 2,
+    color: 'rgb(215, 88, 101)',
+    tileIndex: 4,
+
+    blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
+    blockingPheromones: [],
+    isDispersing: true,
+    viscosity: {
+      verticalLeftOver: 0,
+      diagonalLeftOver: 0.8,
+      horizontalLeftOver: 0.9,
+    },
+    isFluid: true,
+  },
   SULPHUR_DIOXIDE: {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(155, 227, 90)',
     tileIndex: 0,
 
     blockingTypes: [...pheromoneBlockingTypes],
+    blockingPheromones: [],
     isDispersing: true,
     coolPoint: -5, // heat level to condense at
     coolsTo: 'SULPHUR',
@@ -141,10 +163,11 @@ const pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(250, 240, 70)',
     tileIndex: 3,
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
+    blockingPheromones: ['MOLTEN_SAND'],
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'MOLTEN_SAND',
@@ -160,10 +183,11 @@ const pheromones = {
     quantity: 120,
     decayAmount: 120,
     decayRate: 0.0005,
-    color: 'rgb(255, 255, 255)',
+    color: 'rgb(215, 88, 101)',
     tileIndex: 2,
 
     blockingTypes: [...pheromoneBlockingTypes],
+    blockingPheromones: ['SAND', 'MOLTEN_IRON', 'MOLTEN_STEEL'],
     isDispersing: true,
     coolPoint: 5, // heat level to condense at
     coolsTo: 'GLASS',
@@ -185,6 +209,7 @@ const pheromones = {
     tileIndex: 5,
 
     blockingTypes: [...pheromoneBlockingTypes],
+    blockingPheromones: ['MOLTEN_STEEL', 'MOLTEN_SAND', 'SAND'],
     isDispersing: true,
     coolPoint: 80, // heat level to freeze at
     coolsTo: 'IRON',
@@ -209,10 +234,11 @@ const pheromones = {
     quantity: 240,
     decayAmount: 240,
     decayRate: 0.0005,
-    color: 'rgb(100, 100, 100)',
+    color: 'rgb(220, 220, 220)',
     tileIndex: 4,
 
     blockingTypes: [...pheromoneBlockingTypes],
+    blockingPheromones: ['MOLTEN_IRON', 'MOLTEN_SAND', 'SAND'],
     isDispersing: true,
     coolPoint: 90, // heat level to freeze at
     coolsTo: 'STEEL',
@@ -233,6 +259,8 @@ const pheromones = {
     tileIndex: 2,
 
     blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+    blockingPheromones: [],
+    isDispersing: true,
   },
   COLD: {
     quantity: 120,
@@ -242,6 +270,8 @@ const pheromones = {
     tileIndex: 1,
 
     blockingTypes: [...nonMoltenPheromoneBlockingTypes],
+    blockingPheromones: [],
+    isDispersing: true,
   },
 };
 

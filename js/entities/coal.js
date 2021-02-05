@@ -15,6 +15,7 @@ const config = {
   combustionTemp: 125, // temperature at which you catch on fire
   fuel: 3 * 60 * 1000, // ms of burn time
   heatQuantity: 150, // amount of heat produced when on fire
+  refreshRate: 60, // heat is updated this often
 };
 
 const make = (

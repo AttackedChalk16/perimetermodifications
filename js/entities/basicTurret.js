@@ -72,7 +72,6 @@ const make = (
 
 const render = (ctx, game, turret): void => {
   const {position, width, height, theta} = turret;
-  const img = game.sprites.BASIC_TURRET;
   ctx.save();
   ctx.translate(
     position.x, position.y,
@@ -80,26 +79,51 @@ const render = (ctx, game, turret): void => {
 
   // barrel of turret
   ctx.save();
-  const turretWidth = 1;
-  const turretHeight = 1;
+  ctx.fillStyle = "black";
+  const turretWidth = 1.5;
+  const turretHeight = 0.3;
   ctx.translate(width / 2, height / 2);
   ctx.rotate(theta);
   ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
-  ctx.drawImage(img,
-    16, 0, 16, 16,
-    0, 0, turretWidth, turretHeight,
-  );
-
-
+  ctx.fillRect(0, 0, turretWidth, turretHeight);
   ctx.restore();
 
   // base of turret
-  ctx.drawImage(img,
-    0, 0, 16, 16,
-    0, 0, width, height,
-  );
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "steelblue";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeRect(0, 0, width, height);
+
 
   ctx.restore();
+  // const img = game.sprites.BASIC_TURRET;
+  // ctx.save();
+  // ctx.translate(
+  //   position.x, position.y,
+  // );
+
+  // // barrel of turret
+  // ctx.save();
+  // const turretWidth = 1;
+  // const turretHeight = 1;
+  // ctx.translate(width / 2, height / 2);
+  // ctx.rotate(theta);
+  // ctx.translate(-1 * turretWidth * 0.75, -turretHeight / 2);
+  // ctx.drawImage(img,
+  //   16, 0, 16, 16,
+  //   0, 0, turretWidth, turretHeight,
+  // );
+
+
+  // ctx.restore();
+
+  // // base of turret
+  // ctx.drawImage(img,
+  //   0, 0, 16, 16,
+  //   0, 0, width, height,
+  // );
+
+  // ctx.restore();
 };
 
 

@@ -212,10 +212,8 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
   }
   let cursorWidth = 1;
   let cursorHeight = 1;
-  if (game.placeType != null && Entities[game.placeType].config.width > 1) {
+  if (game.placeType != null && Entities[game.placeType] != null) {
     cursorWidth = Entities[game.placeType].config.height;
-  }
-  if (game.placeType != null && Entities[game.placeType].config.height > 1) {
     cursorHeight = Entities[game.placeType].config.height;
   }
   ctx.fillRect(cursorPos.x, cursorPos.y,   cursorWidth, cursorHeight);
@@ -501,8 +499,8 @@ const renderPheromones = (ctx, game): void => {
             ctx.font = '1px sans serif';
             ctx.fillText(parseInt(Math.ceil(quantity)), x, y + 1, 1);
           } else {
-            const obj = getPheromoneSprite(game, {x, y}, player.id, pheromoneType);
-            if (obj.img != null) {
+            if (!config[pheromoneType].isFluid) {
+              const obj = getPheromoneSprite(game, {x, y}, player.id, pheromoneType);
               ctx.save();
               ctx.translate(x + 0.5, y + 0.5);
               ctx.rotate(obj.theta);

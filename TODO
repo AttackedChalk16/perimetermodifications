@@ -6,21 +6,6 @@
 
 
 - - - - - - ISSUES - - - - - -
-  - pheromones:
-    - colony pheromone can get disrupted somehow, eventually preventing all pheromone clearing
-    - remove playerID concept from pheromones?
-    - should just render via canvas
-  - sand:
-    - pheromones need to be able to block each other so that molten sand can
-      live on top of regular sand
-      - config for which pheromones you block
-      - helper function for sorting isOccupied
-  - coal:
-    - can strand molten pheromones that don't interact with anything
-  - turbines:
-    - spin direction depends on left/right-hand side of turbine
-    - acceleration may work better than speed for e.g. contradictory flows
-    - reducing pherToGive doesn't actually slow down an array of turbines
 
 
 - - - - - - SIMULATION - - - - - -
@@ -29,17 +14,12 @@
     - catch on fire at a lower temperature and turn to coal?
     - age and die as oil?
   - oil
-    - needs a separate tileIndex sprite
     - separate pheromone for oil on fire?
-      - make heat (and cold) dispersing
-      - make coal/uranium emit heat regularly
+      - what to do abou sulphur also coming from oil?
       - add some heat when oil turns, then burn off fast
 
 
 - - - - - - TODO - - - - - -
-  - electron
-    - how to distinguish npm start as node  server/server.js vs electron .
-    - how to get a downloadable application you click on
   - HUDS
     - flicker resources when you spend them
     - render the entity in the cards for the HUDS
@@ -56,13 +36,13 @@
 
 
 - - - - - - - TO DRAW - - - - - -
-  - missile turret
-  - laser turret
+  - sky background
   - favicon
 
 
 - - - - - - - NEXT - - - - - - -
   - get gameplay tracking set back up again
+  - electron application
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
@@ -84,17 +64,16 @@
 
 
 - - - - - - - BUGS - - - - - - -
+  - pheromones:
+    - colony pheromone can get disrupted somehow, eventually preventing all pheromone clearing
+    - remove playerID concept from pheromones?
+  - coal:
+    - can strand molten pheromones that don't interact with anything
+  - turbines:
+    - spin direction depends on left/right-hand side of turbine
+    - acceleration may work better than speed for e.g. contradictory flows
+    - reducing pherToGive doesn't actually slow down an array of turbines
   - bullets can shoot through 1-thick walls
-  - when pheromone emitters that are bigger than 1x1 dies, it doesn't clear the
-    whole pheromone footprint
-  - resetting the world after firing a bunch of missiles can cause error
-    in collisionsAtSpace when the missiles blow up on each other
-  - worm
-    - worm sprite indexing off-by-one when controlled?
-    - worm should be able to double back on itself when stuck
-  - molten iron isn't preserving its quantity when condensing
-    (when viscosity > 0)
-    - it ends up creating an additional entity underneath
 
 
 - - - - - - - REFACTORS - - - - - - -
@@ -103,4 +82,12 @@
     - setPheromone checking for undefined value
     - deleting the pheromone when you get to 0?
 
+- - - - - - - WON'T FIX - - - - - -
+  - molten iron isn't preserving its quantity when condensing
+    (when viscosity > 0)
+    - it ends up creating an additional entity underneath
+  - resetting the world after firing a bunch of missiles can cause error
+    in collisionsAtSpace when the missiles blow up on each other
+  - when pheromone emitters that are bigger than 1x1 dies, it doesn't clear the
+    whole pheromone footprint
 

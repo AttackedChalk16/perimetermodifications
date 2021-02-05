@@ -15,6 +15,7 @@ const config = {
   hp: 120,
   meltTemp: 12, // temperature at which you melt
   heatQuantity: 120, // amount of water produced when melted
+  refreshRate: 60,
 };
 
 const make = (

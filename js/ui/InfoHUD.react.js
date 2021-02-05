@@ -28,7 +28,7 @@ const InfoHUD = (props): React.Node => {
 
   const entityInfoCards = lookupInGrid(game.grid, mousePos)
     .map(id => game.entities[id])
-    .filter(e => e != null && e.type != 'AGENT')
+    .filter(e => e != null)
     .map(e => (<EntityInfoCard key={'info_' + e.id} entity={e} />));
 
   const temp = getTemperature(game, mousePos);
@@ -68,11 +68,12 @@ const PheromoneInfoCard = (props): React.Node => {
 
 const EntityInfoCard = (props): React.Node => {
   const {entity} = props;
-  const config = Entities[entity.type].config;
+  const entityType = entity.type != 'AGENT' ? entity.type : entity.collectedAs;
+  const config = Entities[entityType].config;
   let launchCost = [];
   if (entity.launchCost != null) {
     for (const type in entity.launchCost) {
-      launchCost.push(<div key={"launchCost_" + entity.type + "_" + type}>
+      launchCost.push(<div key={"launchCost_" + entityType + "_" + type}>
         {type}: {entity.launchCost[type]}
       </div>);
     }
@@ -80,7 +81,7 @@ const EntityInfoCard = (props): React.Node => {
 
   return (
     <InfoCard>
-      <div style={{textAlign: 'center'}}><b>{entity.type}</b></div>
+      <div style={{textAlign: 'center'}}><b>{entityType}</b></div>
       {entity.hp ? (<div>HP: {entity.hp}/{config.hp}</div>) : null}
       {entity.fuel
         ? (<div>Fuel (seconds): {Math.round(entity.fuel/1000)}/{Math.round(config.fuel/1000)}</div>)
