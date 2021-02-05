@@ -182,8 +182,8 @@ const startFloodFill = () => {
       source.quantity = globalConfig.pheromones[source.pheromoneType].quantity;
     }
     if (source.pheromoneType == 'COLONY' && source.playerID == 0 && source.quantity > 0) {
-      console.log("got nonzero colony", source);
-      source.playerID = 0;
+      // console.log("got zero colony", source);
+      source.playerID = 1;
     }
     const positions = floodFillPheromone(
       game, source.pheromoneType, source.playerID, [source], {},
@@ -368,7 +368,35 @@ const updateDispersingPheromones = (game) => {
       let changedPhase = false;
       let cooled = false;
       const originalPosition = {...source.position};
-      if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
+      if (config.combustionPoint && heat >= config.combustionPoint && pheromoneQuantity > 0) {
+        phaseChangeTo = config.combustsTo;
+        if (pheromoneQuantity < 1) {
+          sendToOtherPhase = pheromoneQuantity;
+        } else {
+          sendToOtherPhase = config.combustionRate * pheromoneQuantity;
+        }
+        changedPhase = true;
+
+        // add heat:
+        const heatQuantity = globalConfig.pheromones['HEAT'].quantity;
+        setPheromone(
+          game, position, 'HEAT',
+          heatQuantity,
+          playerID,
+        );
+        game.floodFillQueue.push({
+          playerID: 0,
+          pheromoneType: 'HEAT',
+          position: position,
+          quantity: heatQuantity,
+        });
+        // nextDispersingPheromones['HEAT'][encodePosition(position)] = {
+        //   ...source,
+        //   pheromoneType: 'HEAT',
+        //   position: {...position},
+        //   quantity: heatQuantity,
+        // };
+      } else if (config.heatPoint && heat >= config.heatPoint && pheromoneQuantity > 0) {
         phaseChangeTo = config.heatsTo;
         if (pheromoneQuantity < 1) {
           sendToOtherPhase = pheromoneQuantity;
@@ -620,7 +648,7 @@ const updateDispersingPheromones = (game) => {
 
 
       // fluids only decay in very small concentrations
-      if (config.isFluid && pheromoneQuantity > 0.5) {
+      if (config.isFluid && pheromoneQuantity > 0.5 && pheromoneType != 'HOT_OIL') {
         decayRate = 0;
       }
 

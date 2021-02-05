@@ -141,6 +141,9 @@ const getMissileSprite = (game: Game, missile: Missile): Object => {
   let width = 16;
   let height = 32;
   let img = game.sprites.MISSILE;
+  if (missile.warhead != null && missile.warhead.type == 'NUKE') {
+    img = game.sprites.NUKE_MISSILE;
+  }
   let dur = 6;
   let numFrames = 3;
   let index = Math.floor(((missile.id + game.time) % (dur * numFrames)) / dur);
@@ -364,22 +367,19 @@ const getDictIndexStr = (game: Game, entity: Entity): Object => {
 /////////////////////////////////////////////////////////////////////
 
 const getBackgroundSprite = (game: Game, entity: Entity): Object => {
-  const bgWidth = 80;
-  const bgHeight = 80;
-
-  let width = bgWidth / 25;
-  let height = bgHeight / 25;
+  let width = 100;
+  let height = 50;
   let img = game.sprites[entity.name];
   const obj = {
     img,
     x: 0,
     y: 0,
-    width,
-    height,
+    width: 1,
+    height: 1,
   };
 
-  obj.x = (entity.position.x * bgWidth / 25 + 2 * width) % 250;
-  obj.y = (entity.position.y * bgHeight / 25 + 2 * height) % 300;
+  obj.x = entity.position.x;
+  obj.y = entity.position.y;
 
   return obj;
 };

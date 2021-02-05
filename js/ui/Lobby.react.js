@@ -52,10 +52,14 @@ function Lobby(props: Props): React.Node {
         progress = state.game.loadingProgress;
       }
       let title = 'perimeter'
-      let body = '';
+      let body = 'Keep your underground base alive as long as you can while missiles ' +
+        'rain down from the sky! Combine the resources around you in novel ways to create '+
+        'the alloys used to build anti-missile turrets and generate the electricity to ' +
+        ' power them. Can you create an impenetrable perimeter?';
       if (isMobile()) {
         title = '~~Experimental~~ Mobile Mode';
-        body = '';
+        body = 'Sorry, the game is not yet ready to play on mobile devices :( ' +
+          'try going to this link on a computer instead';
       }
       dispatch({type: 'SET_MODAL', modal: (
         <Modal

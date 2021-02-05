@@ -18,6 +18,7 @@ const initMissileAttackSystem = (store) => {
 
     let freq = 5; // time in seconds
     let altProb = 0;
+    let nukeProb = 0;
     if (game.time > (60 * 60 * 1)) {
       freq = 5;
     }
@@ -28,12 +29,15 @@ const initMissileAttackSystem = (store) => {
     if (game.time > (60 * 60 * 10)) {
       freq = 1;
       altProb = 0.1;
+      nukeProb = 0.1;
     }
     if (game.time > (60 * 60 * 12)) {
       freq = 0.5;
       altProb = 0.15;
+      nukeProb = 0.1;
     }
     let alternateSide = Math.random() < altProb;
+    let isNuke = Math.random() < nukeProb;
     if (time > 1 && time % (freq * 60) == 0) {
       const playerID = 2;
       let pos = {x: randomIn(2, 5), y: randomIn(25, 45)};
@@ -45,7 +49,7 @@ const initMissileAttackSystem = (store) => {
         theta += Math.PI;
       }
 
-      const warhead = Entities.DYNAMITE.make(game, null, playerID);
+      const warhead = Entities[isNuke ? 'NUKE' : 'DYNAMITE'].make(game, null, playerID);
       const missile = Entities.MISSILE.make(game, pos, playerID, warhead, theta, velocity);
       dispatch({type: 'CREATE_ENTITY', entity: missile});
     }

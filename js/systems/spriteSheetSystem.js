@@ -17,6 +17,7 @@ const initSpriteSheetSystem = (store) => {
   loadSprite(dispatch, state, 'ICE', './img/Kitchen1.png');
 
   loadSprite(dispatch, state, 'MISSILE', './img/Missile2.png');
+  loadSprite(dispatch, state, 'NUKE_MISSILE', './img/NukeMissile1.png');
   loadSprite(dispatch, state, 'BASIC_TURRET', './img/Basic_turret1.png');
   loadSprite(dispatch, state, 'FAST_TURRET', './img/Fast_turret1.png');
   loadSprite(dispatch, state, 'LASER_TURRET', './img/Laser_turret.png');
@@ -34,6 +35,7 @@ const initSpriteSheetSystem = (store) => {
   loadSprite(dispatch, state, 'WORM', './img/Worm1.png');
 
   loadSprite(dispatch, state, 'FLOOR_TILE', './img/FloorTile1.png');
+  loadSprite(dispatch, state, 'SKYLINE', './img/Skyline1.png');
 };
 
 const loadSprite = (dispatch, state, name, src): void => {

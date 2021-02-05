@@ -84,7 +84,7 @@ const insertEntityInGrid = (game: Game, entity: Entity): void => {
     for (let x = 0; x < entity.width; x++) {
       for (let y = 0; y < entity.height; y++) {
         let pos = {x, y};
-        if (dir == 'left' || dir == 'right') {
+        if ((dir == 'left' || dir == 'right') && entity.type != "BACKGROUND") {
           pos = {x: y, y: x};
         }
         const gridPos = add(entity.position, pos);

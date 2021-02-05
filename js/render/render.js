@@ -203,7 +203,11 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
   // render cursor square
   const cursorPos = game.mouse.curPos;
   ctx.lineWidth = ctx.lineWidth * 2;
-  if (!isNeighboringColonyPher(game, cursorPos)) {
+  const occupied = lookupInGrid(game.grid, cursorPos)
+    .map(id => game.entities[id])
+    .filter(e => (e.type == 'BACKGROUND' && !isAboveSomething(game, cursorPos)))
+    .length > 0;
+  if (!isNeighboringColonyPher(game, cursorPos) || occupied) {
     ctx.fillStyle = 'rgba(139,0,0, 0.1)';
     ctx.strokeStyle = 'red';
   } else {
@@ -213,8 +217,8 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
   let cursorWidth = 1;
   let cursorHeight = 1;
   if (game.placeType != null && Entities[game.placeType] != null) {
-    cursorWidth = Entities[game.placeType].config.height;
-    cursorHeight = Entities[game.placeType].config.height;
+    cursorWidth = Entities[game.placeType].config.width || 1;
+    cursorHeight = Entities[game.placeType].config.height || 1;
   }
   ctx.fillRect(cursorPos.x, cursorPos.y,   cursorWidth, cursorHeight);
   ctx.strokeRect(cursorPos.x, cursorPos.y, cursorWidth, cursorHeight);
@@ -431,8 +435,8 @@ const renderEntity = (ctx, game, entity, alwaysOnScreen): void => {
 
   // render hitbox
   if (game.showHitboxes) {
-    const positionsInFront = getEntityPositions(game, entity);
-    for (const pos of positionsInFront) {
+    const positionsInHitbox = getEntityPositions(game, entity);
+    for (const pos of positionsInHitbox) {
       const {x, y} = pos;
       ctx.strokeStyle = 'red';
       ctx.strokeRect(x, y, 1, 1);

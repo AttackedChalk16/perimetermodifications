@@ -121,6 +121,7 @@ const isPositionBlockingPheromone = (
     .length > 0;
 
   if (occupied) return true;
+  if (config.blockingPheromones.length == 0) return false;
 
   for (const blockingPher of config.blockingPheromones) {
     if (getPheromoneAtPosition(game, position, blockingPher, 0) > 0) {

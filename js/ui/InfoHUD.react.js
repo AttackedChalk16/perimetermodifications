@@ -28,7 +28,7 @@ const InfoHUD = (props): React.Node => {
 
   const entityInfoCards = lookupInGrid(game.grid, mousePos)
     .map(id => game.entities[id])
-    .filter(e => e != null)
+    .filter(e => e != null && e.type != 'BACKGROUND')
     .map(e => (<EntityInfoCard key={'info_' + e.id} entity={e} />));
 
   const temp = getTemperature(game, mousePos);
@@ -59,8 +59,16 @@ const PheromoneInfoCard = (props): React.Node => {
         Concentration: {Math.round(quantity)}/{config.quantity}
         {config.heatPoint ? (<div>Boil Temp: {config.heatPoint}</div>) : null}
         {config.heatsTo ? (<div>Boils To: {config.heatsTo}</div>) : null}
+        {config.combustionPoint ? (
+          <div>Combustion Temp: {config.combustionPoint}</div>) : null
+        }
+        {config.combustsTo ? (<div>Combusts To: {config.combustsTo}</div>) : null}
         {config.coolPoint ? (<div>Cools At: {config.coolPoint}</div>) : null}
         {config.coolsTo ? (<div>Cools To: {config.coolsTo}</div>): null}
+        {config.coolConcentration
+          ? (<div>Concentration to Cool: {config.coolConcentration}</div>)
+          : null
+        }
       </div>
     </InfoCard>
   );

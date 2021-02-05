@@ -137,13 +137,17 @@ function instructionsModal(dispatch) {
       body={(<span style={{textAlign: 'initial'}}>
         <div>
           <div style={{textAlign: 'center'}}><b>Controls:</b></div>
-          <div>Left Click: collect (solid) resource</div>
-          <div>Right Click: place selected resource or structure</div>
+          <div>Left Click: collect non-fluid resource</div>
+          <div>Right Click: place selected resource or building</div>
           <div>Arrow Keys: move screen</div>
         </div>
         <div>
           <div style={{textAlign: 'center'}}><b>Goal:</b></div>
-          <div>Survive!</div>
+          <div>Survive as long as you can!</div>
+        </div>
+        <div>
+          Additional information about how resources interact can be displayed
+          by hovering over each resource in the selector at the top of the screen
         </div>
       </span>)}
       buttons={[{label: 'Dismiss (Enter)', onClick: () => {

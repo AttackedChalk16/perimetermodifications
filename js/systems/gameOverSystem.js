@@ -37,7 +37,8 @@ const initGameOverSystem = (store) => {
     }
 
     // loss conditions
-    if (false) {
+    const base = game.BASE.length > 0;
+    if (!base) {
       handleGameLoss(store, dispatch, state, 'loss');
     }
 
@@ -70,7 +71,7 @@ const handleGameLoss = (store, dispatch, state, reason): void => {
 
   const body = (
     <div>
-      {"Game Over"}
+    {"Your base was destroyed!"}
     </div>
   );
 

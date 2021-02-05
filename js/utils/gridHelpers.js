@@ -111,7 +111,7 @@ const getEntityPositions = (game: Game, entity: Entity): Array<Vector> => {
   for (let x = 0; x < entity.width; x++) {
     for (let y = 0; y < entity.height; y++) {
       let pos = {x, y};
-      if (dir == 'left' || dir == 'right') {
+      if ((dir == 'left' || dir == 'right') && entity.type != 'BACKGROUND') {
         pos = {x: y, y: x};
       }
       positions.push(add(entity.position, pos));

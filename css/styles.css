@@ -42,7 +42,7 @@ h3 {
   color: steelblue;
 }
 
-.displayOnHover:hover .hidden {
+.displayChildOnHover:hover > .hidden {
   display: block;
 }
 .hidden {

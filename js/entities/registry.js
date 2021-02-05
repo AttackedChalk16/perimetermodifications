@@ -39,6 +39,7 @@ const Entities = {
   LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),
+  NUKE: require('./nuke.js'),
   MISSILE: require('./missile.js'),
   BULLET: require('./bullet.js'),
   LASER: require('./laser.js'),

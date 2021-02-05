@@ -26,7 +26,7 @@ const config = {
   },
 
   cost: {
-    IRON: 4,
+    IRON: 1,
   },
 
 };

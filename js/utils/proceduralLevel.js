@@ -14,11 +14,20 @@ const getProceduralLevel = (): Array<Action> => {
   };
   const surfaceY = 50;
 
+  // add the background:
+  level.actions.push({
+    type: "CREATE_ENTITIES",
+    entityType: "BACKGROUND",
+    rect: {position: {x: 0, y: 0}, width: level.gridWidth, height: surfaceY},
+    // args: [level.gridWidth, surfaceY, 'SKYLINE'],
+    args: [1, 1, 'SKYLINE'],
+  });
+
   // add the dirt:
   level.actions.push({
     type: "CREATE_ENTITIES",
     entityType: "DIRT",
-    rect: {position: {x: 0, y: surfaceY}, width: 100, height: 75},
+    rect: {position: {x: 0, y: surfaceY}, width: level.gridWidth, height: level.gridHeight - surfaceY},
     args: [1, 1],
   });
 

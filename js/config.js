@@ -31,6 +31,131 @@ const config = {
     GLASS: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
     URANIUM: {numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 3},
   },
+
+  descriptions: {
+    // resources:
+    DIRT: {
+      description: 'low-hp blocks for sculpting the landscape',
+    },
+    STONE: {
+      description: 'high-hp blocks',
+    },
+    COAL: {
+      description: 'carbon-based building block, combusts in HEAT',
+    },
+    ['HOT COAL']: {
+      description: 'flaming coal whose HEAT melts resources into their molten form',
+    },
+    IRON: {
+      description: 'abundant resource that can be smelted into STEEL',
+    },
+    STEEL: {
+      description: 'high-hp resource used for making buildings',
+      howToMake: 'COAL + MOLTEN_IRON (place coal directly on molten iron OR place HOT_COAL ' +
+        'directly underneath IRON )',
+    },
+    GLASS: {
+      description: 'resource used in high-tech buildings',
+      howToMake: 'cooled MOLTEN_SAND',
+    },
+    SILICON: {
+      description: 'resource used in high-tech buildings',
+      howToMake: 'COAL + MOLTEN_SAND (place coal directly on molten sand OR place HOT_COAL ' +
+        'directly underneath GLASS )',
+    },
+    SULPHUR: {
+      description: 'resource used in missiles',
+      howToMake: 'frozen SULPHUR_DIOXIDE',
+    },
+    ICE: {
+      description: 'frozen WATER that produces COLD in the area around it',
+      howToMake: 'WATER + ICE',
+    },
+    URANIUM: {
+      description: 'very rare resource that produces indefinite low HEAT',
+    },
+
+    // pheromones:
+    SAND: {
+      description: 'naturally-occurring FLUID particulate that melts into MOLTEN_SAND',
+    },
+    MOLTEN_SAND: {
+      description: 'super-hot FLUID sand that cools to GLASS or combines with COAL to make SILICON',
+      howToMake: 'HEAT + SAND',
+    },
+    MOLTEN_IRON: {
+      description: 'super-hot FLUID IRON',
+      howToMake: 'HEAT + IRON',
+    },
+    MOLTEN_STEEL: {
+      description: 'super-hot FLUID STEEL',
+      howToMake: 'HEAT + IRON + COAL',
+    },
+    WATER: {
+      description: 'FLUID that heats to STEAM and freezes to ICE. Can pass through a TURBINE ' +
+        'to produce POWER',
+    },
+    STEAM: {
+      description: 'rising GAS that can pass through a TURBINE to produce POWER',
+    },
+    SULPHUR_DIOXIDE: {
+      description: 'rising GAS that freezes into SULPHUR',
+      howToMake: 'OIL + low HEAT',
+    },
+    OIL: {
+      description: 'naturally-occurring FLUID that heats to SULPHUR_DIOXIDE and combusts to ' +
+        'HOT_OIL',
+    },
+    HOT_OIL: {
+      description: 'short-lived FLUID that briefly produces HEAT before burning off',
+    },
+    HEAT: {
+      description: 'primary cause of phase changes in resources',
+      howToMake: 'HOT_COAL or URANIUM or HOT_OIL',
+    },
+    COLD: {
+      description: 'counteracts HEAT, needed to make ICE and SULPHUR',
+      howToMake: 'ICE',
+    },
+
+    // buildings:
+    BASIC_TURRET: {
+      description: 'turret with poor aim and a low rate of fire that does not require POWER',
+      howToMake: 'IRON',
+    },
+    FAST_TURRET: {
+      description: 'turret with high fire rate that requires POWER',
+      howToMake: 'STEEL',
+    },
+    MISSILE_TURRET: {
+      description: 'turret that fires interceptor missiles which each cost some IRON COAL and ' +
+        'SULPHUR to produce but does not require POWER',
+      howToMake: 'IRON and STEEL',
+    },
+    LASER_TURRET: {
+      description: 'turret with very high rate of fire with a high POWER requirement',
+      howToMake: 'STEEL and GLASS and SILICON',
+    },
+    TURBINE: {
+      description: 'building that produces POWER when a FLUID or GAS passes through it',
+      howToMake: 'STEEL',
+    },
+
+    // misc:
+    FLUID: {
+      description: 'uncollectable resource type (like WATER or OIL ) that can pass through a TURBINE' +
+        ' to produce POWER',
+    },
+    GAS: {
+      description: 'uncollectable, rising resource that can pass through a TURBINE to produce POWER',
+    },
+    POWER: {
+      description: 'energy produced by passing a FLUID or a GAS through a TURBINE to operate' +
+        ' buildings',
+    },
+
+
+  },
 };
 
 const nonMoltenPheromoneBlockingTypes = [
@@ -62,9 +187,9 @@ const pheromones = {
     blockingTypes: [...pheromoneBlockingTypes, 'WORM'],
     blockingPheromones: [],
     isDispersing: true,
-    heatPoint: 125,
+    heatPoint: 100,
     heatsTo: 'STEAM',
-    heatRate: 0.02,
+    heatRate: 0.015,
     coolPoint: -100, // heat level to condense at
     coolsTo: 'ICE',
     coolsToEntity: true,
@@ -90,7 +215,7 @@ const pheromones = {
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
-    coolConcentration: 80, // amount of yourself needed before condensation starts
+    coolConcentration: 100, // amount of yourself needed before condensation starts
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -112,6 +237,9 @@ const pheromones = {
     heatPoint: 10,
     heatsTo: 'SULPHUR_DIOXIDE',
     heatRate: 0.02,
+    combustionPoint: 125,
+    combustsTo: 'HOT_OIL',
+    combustionRate: 1,
     viscosity: {
       verticalLeftOver: 0,
       diagonalLeftOver: 0.8,
@@ -122,8 +250,8 @@ const pheromones = {
   HOT_OIL: {
     quantity: 120,
     decayAmount: 120,
-    decayRate: 2,
-    color: 'rgb(215, 88, 101)',
+    decayRate: 1,
+    color: 'rgb(150, 88, 101)',
     tileIndex: 4,
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
@@ -131,8 +259,8 @@ const pheromones = {
     isDispersing: true,
     viscosity: {
       verticalLeftOver: 0,
-      diagonalLeftOver: 0.8,
-      horizontalLeftOver: 0.9,
+      diagonalLeftOver: 0.5,
+      horizontalLeftOver: 0.8,
     },
     isFluid: true,
   },
@@ -193,7 +321,7 @@ const pheromones = {
     coolsTo: 'GLASS',
     coolsToEntity: true,
     coolRate: 1, // amount of yourself that condenses per step
-    coolConcentration: 10, // amount of yourself needed before condensation starts
+    coolConcentration: 9, // amount of yourself needed before condensation starts
     viscosity: {
       verticalLeftOver: 0,
       diagonalLeftOver: 0.5,

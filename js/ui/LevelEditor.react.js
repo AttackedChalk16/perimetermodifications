@@ -53,7 +53,7 @@ function LevelEditor(props: Props): React.Node {
     entityType: 'MISSILE',
     subdividing: false,
     pheromoneType: 'HEAT',
-    background: 'FLOOR_TILE',
+    background: 'SKYLINE',
     numSegments: 8,
     doodad: 'QUESTION',
     stoneSubType: 'STONE',
@@ -652,7 +652,7 @@ function createEntities(game, dispatch, editor, rect): void {
       args = [rect.width, rect.height, editor.doodad];
       break;
     case 'BACKGROUND':
-      args = [1, 1, editor.background]; // width and height
+      args = [rect.width, rect.height, editor.background]; // width and height
       break;
     case 'TURBINE':
     case 'AGENT':
@@ -739,7 +739,7 @@ function createEntityOptions(game, editor, setEditor): React.Node {
       options.push(<span>
         Background:
         <Dropdown
-          options={['FLOOR_TILE', 'PICNIC_BLANKET']}
+          options={['FLOOR_TILE', 'SKYLINE']}
           selected={editor.background}
           onChange={(background) => setEditor({...editor, background})}
         />

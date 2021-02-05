@@ -6,53 +6,31 @@
 
 
 - - - - - - ISSUES - - - - - -
+  - hard to get turbines to spin consistently when heat disperses
+  - fluids not coming out of a single horizontal opening
 
 
-- - - - - - SIMULATION - - - - - -
+- - - - - - TODO - - - - - -
+  - Ticker system to display messages about missiles
+  - HUDS
+    - flicker resources when you spend them
+    - render the entity in the cards for the HUDS
+    - show on position info card whether location is placeable/collectable
+    - count of missiles survived
+  - get gameplay tracking set back up again
+  - electron application
+  - favicon
+
+
+- - - - - - NICE-TO-HAVE - - - - - - - -
   - plants
     - leaves + stalks
     - catch on fire at a lower temperature and turn to coal?
     - age and die as oil?
-  - oil
-    - separate pheromone for oil on fire?
-      - what to do abou sulphur also coming from oil?
-      - add some heat when oil turns, then burn off fast
-
-
-- - - - - - TODO - - - - - -
-  - HUDS
-    - flicker resources when you spend them
-    - render the entity in the cards for the HUDS
-    - hovercard for recipes above placement selectors?
-    - add coolConcentration to HUDs
-    - show on position info card whether location is placeable/collectable
-    - count of missiles survived
-  - instructions
-    - with pictures?
-    - explanation of how to produce power
-    - list of all recipes?
-  - cause game loss when base is killed
-  - nuclear missiles
-
-
-- - - - - - - TO DRAW - - - - - -
-  - sky background
-  - favicon
-
-
-- - - - - - - NEXT - - - - - - -
-  - get gameplay tracking set back up again
-  - electron application
-
-
-- - - - - - NICE-TO-HAVE - - - - - - - -
   - mode with no missiles
   - procedurally generate level:
     - random seed
     - randomize pocket shape a little more
-
-
-- - - - - - - TO THINK ABOUT - - - - - - -
   - ways to have additional interaction with terrain/environment
     - water wears away dirt over time
     - other forms of heat?
@@ -61,6 +39,9 @@
     - needs to have a notion of connected components
       - so that two neighbors can't just hold each other up
       - so that you can make chambers that don't fall in
+  - fog of war
+    - fog entity that renders on top of the underground parts of the world
+    - whenever something is collected or destroyed, remove fog in a certain radius
 
 
 - - - - - - - BUGS - - - - - - -
@@ -81,6 +62,7 @@
     - getPheromoneAtPosition everywhere
     - setPheromone checking for undefined value
     - deleting the pheromone when you get to 0?
+
 
 - - - - - - - WON'T FIX - - - - - -
   - molten iron isn't preserving its quantity when condensing

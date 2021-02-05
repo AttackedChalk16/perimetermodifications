@@ -12,7 +12,7 @@ const config = {
   pheromoneType: 'HEAT',
   hp: 100,
   heatQuantity: 125, // amount of heat produced when on fire
-  refreshRate: 120,
+  refreshRate: 60,
 };
 
 const make = (

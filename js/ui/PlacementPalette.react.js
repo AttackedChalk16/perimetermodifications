@@ -2,10 +2,12 @@
 
 const React = require('react');
 const InfoCard = require('../ui/Components/InfoCard.react');
+const globalConfig = require('../config');
 const {Entities} = require('../entities/registry');
 const {
   canAffordBuilding, getModifiedCost,
 } = require('../selectors/buildings');
+const {useMemo, useEffect} = React;
 
 function PlacementPalette(props): React.Node {
   const {dispatch, game, base, placeType} = props;
@@ -50,7 +52,7 @@ function PlacementPalette(props): React.Node {
 
   return (
     <span>
-      <div>{placeEntityCards}</div>
+      <div style={{marginBottom: 6}}>{placeEntityCards}</div>
       <div>{placeBuildingCards}</div>
     </span>
   );
@@ -58,11 +60,19 @@ function PlacementPalette(props): React.Node {
 
 function PlaceEntityCard(props) {
   const {dispatch, entityType, quantity, isSelected} = props;
+
+  const hover = useMemo(() => {
+    return (
+      <HoverCard entityType={entityType} depth={0} />
+    );
+  }, []);
   return (
     <div
       style={{
         display: 'inline-block',
+        position: 'relative',
       }}
+      className='displayChildOnHover'
       onClick={() => dispatch({type: 'SET_PLACE_TYPE', placeType: entityType})}
     >
       <InfoCard
@@ -72,6 +82,7 @@ function PlaceEntityCard(props) {
         <div><b>{entityType}</b></div>
         <div>{quantity.toFixed(1)}</div>
       </InfoCard>
+      {hover}
     </div>
   );
 }
@@ -86,11 +97,19 @@ function PlaceBuildingCard(props) {
     </div>);
   }
 
+  const hover = useMemo(() => {
+    return (
+      <HoverCard entityType={entityType} depth={0} />
+    );
+  }, []);
+
   return (
     <div
       style={{
         display: 'inline-block',
+        position: 'relative',
       }}
+      className='displayChildOnHover'
       onClick={() => dispatch({type: 'SET_PLACE_TYPE', placeType: entityType})}
     >
       <InfoCard
@@ -100,6 +119,87 @@ function PlaceBuildingCard(props) {
         <div><b>{entityType}</b></div>
         <div>Cost:</div>
         {costBreakdown}
+      </InfoCard>
+      {hover}
+    </div>
+  );
+}
+
+function HoverCard(props) {
+  const {entityType, depth} = props;
+  const allDescriptions = globalConfig.config.descriptions;
+  const {description, howToMake} = allDescriptions[entityType];
+
+  let hoverableDescription = [];
+  let hoverableHowToMake = [];
+  if (depth < 4) {
+    const splitDescription = description.split(' ');
+    for (let term of splitDescription) {
+      if (term == 'HOT_COAL') term = 'HOT COAL';
+      if (allDescriptions[term] != null) {
+        hoverableDescription.push(
+          <div
+            style={{
+              display: 'inline'
+            }}
+            key={"hoverDesc_" + entityType + "_" + term + depth}
+            className="displayChildOnHover"
+          >
+            <b><span style={{color: 'steelblue'}}>{term}</span></b>
+            <HoverCard entityType={term} depth={depth + 1} />
+          </div>
+        );
+        hoverableDescription.push(' ');
+      } else {
+        hoverableDescription.push(term + ' ');
+      }
+    }
+    let splitHowToMake = [];
+    if (howToMake != null) {
+      splitHowToMake = howToMake.split(' ');
+    }
+    for (let term of splitHowToMake) {
+      if (term == 'HOT_COAL') term = 'HOT COAL';
+      if (allDescriptions[term] != null) {
+        hoverableHowToMake.push(
+          <div
+            style={{
+              display: 'inline'
+            }}
+            key={"hoverHowTo_" + entityType + "_" + term + depth}
+            className="displayChildOnHover"
+          >
+            <b><span style={{color: 'steelblue'}}>{term}</span></b>
+            <HoverCard entityType={term} depth={depth + 1} />
+          </div>
+        );
+        hoverableHowToMake.push(' ');
+      } else {
+        hoverableHowToMake.push(term + ' ');
+      }
+    }
+  } else {
+    hoverableDescription = description;
+    hoverableHowToMake = howToMake;
+  }
+
+  return (
+    <div
+      className="hidden"
+      style={{
+        position: 'absolute',
+        top: 35,
+        left: 35,
+        width: 300,
+        zIndex: depth + 5,
+      }}
+    >
+      <InfoCard >
+        <div style={{textAlign: 'center'}}><b>
+          {depth == 0 ? "Details" : entityType}
+        </b></div>
+        <div>{hoverableDescription}</div>
+        {howToMake != null ? (<div><b>Made From: </b>{hoverableHowToMake}</div>) : null}
       </InfoCard>
     </div>
   );
