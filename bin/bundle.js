@@ -141,7 +141,7 @@ var pheromones = {
     color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
-    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['WORM']),
+    blockingTypes: pheromoneBlockingTypes,
     blockingPheromones: [],
     isDispersing: true,
     heatPoint: 100,
@@ -2320,6 +2320,18 @@ var gameReducer = function gameReducer(game, action) {
         game.pheromoneDisplay[pheromoneType] = isVisible;
         return game;
       }
+    case 'SET_TICKER_MESSAGE':
+      {
+        var message = action.message,
+            time = action.time;
+
+        game.ticker = {
+          message: message,
+          time: time,
+          max: time
+        };
+        return game;
+      }
     case 'CREATE_ENTITY':
       {
         var _entity = action.entity,
@@ -3109,6 +3121,7 @@ var rootReducer = function rootReducer(state, action) {
     case 'SET_KEEP_MARQUEE':
     case 'PAUSE_MISSILES':
     case 'PAUSE_POWER_CONSUMPTION':
+    case 'SET_TICKER_MESSAGE':
     case 'SUBTRACT_BASE_RESOURCES':
     case 'ENQUEUE_ENTITY_ACTION':
       {
@@ -3471,6 +3484,7 @@ var doTick = function doTick(game) {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updateTicker(game);
   updatePheromoneEmitters(game);
   updateTowers(game);
   updateBases(game);
@@ -4200,6 +4214,14 @@ var updateRain = function updateRain(game) {
   }
 };
 
+var updateTicker = function updateTicker(game) {
+  if (game.ticker == null) return;
+  game.ticker.time--;
+  if (game.ticker.time <= 0) {
+    game.ticker = null;
+  }
+};
+
 module.exports = { tickReducer: tickReducer };
 },{"../config":1,"../entities/registry":21,"../render/render":43,"../selectors/buildings":48,"../selectors/collisions":49,"../selectors/misc":50,"../selectors/neighbors":52,"../selectors/pheromones":53,"../selectors/sprites":54,"../simulation/actionOperations":55,"../simulation/actionQueue.js":56,"../simulation/agentOperations":57,"../simulation/entityOperations":58,"../simulation/miscOperations":60,"../simulation/pheromones":61,"../utils/gridHelpers":102,"../utils/helpers":103,"../utils/stochastic":105,"../utils/vectors":106}],43:[function(require,module,exports){
 'use strict';
@@ -4437,7 +4459,7 @@ var renderView = function renderView(canvas, ctx2d, game, dims, isMini) {
   var occupied = lookupInGrid(game.grid, cursorPos).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return e.type == 'BACKGROUND' && !isAboveSomething(game, cursorPos);
+    return e != null && e.type == 'BACKGROUND' && !isAboveSomething(game, cursorPos);
   }).length > 0;
   if (!isNeighboringColonyPher(game, cursorPos) || occupied) {
     ctx.fillStyle = 'rgba(139,0,0, 0.1)';
@@ -5833,10 +5855,14 @@ var isNeighboringColonyPher = function isNeighboringColonyPher(game, position) {
 };
 
 var isAboveSomething = function isAboveSomething(game, position) {
-  return lookupInGrid(game.grid, add(position, { x: 0, y: 1 })).map(function (id) {
+  var yOffset = 1;
+  if (game.placeType != null && Entities[game.placeType] != null) {
+    yOffset = Entities[game.placeType].config.height || 1;
+  }
+  return lookupInGrid(game.grid, add(position, { x: 0, y: yOffset })).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return e.type != 'BACKGROUND' && !e.isBallistic;
+    return e != null && e.type != 'BACKGROUND' && !e.isBallistic;
   }).length > 0;
 };
 
@@ -6997,6 +7023,10 @@ var entityShoot = function entityShoot(game, entity, payload) {
 };
 
 var entityDie = function entityDie(game, entity) {
+  if (entity.type == 'MISSILE' && entity.playerID == 2) {
+    game.missilesSurvived += 1;
+  }
+
   if (entity.isExplosive) {
     triggerExplosion(game, entity);
   }
@@ -8967,7 +8997,10 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
     // if null then we haven't
     tutorialFlags: {},
 
+    ticker: null,
+
     gameOver: false,
+    missilesSurvived: 0,
 
     // memoized "system"-level properties:
     AGENT: [], // entities that decide their own actions
@@ -9113,7 +9146,7 @@ var handleGameLoss = function handleGameLoss(store, dispatch, state, reason) {
   var body = React.createElement(
     'div',
     null,
-    "Your base was destroyed!"
+    'Your base was destroyed! You survived ' + game.missilesSurvived + ' missiles'
   );
 
   dispatch({ type: 'SET_MODAL',
@@ -9336,20 +9369,64 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
 
     if (game.pauseMissiles) return;
 
-    var freq = 5; // time in seconds
+    var freq = 0; // time in seconds
     var altProb = 0;
     var nukeProb = 0;
+
+    if (game.time == 1) {
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'WARNING - MISSILES INCOMING IN 1 MINUTE'
+      });
+    }
+
+    if (game.time == 60 * 60 * 1) {
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING EVERY 5 - 10 SECONDS'
+      });
+    }
     if (game.time > 60 * 60 * 1) {
       freq = 5;
     }
+
+    if (game.time == 60 * 60 * 5) {
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING TWICE AS OFTEN'
+      });
+    }
     if (game.time > 60 * 60 * 5) {
       freq = 2;
-      altProb = 0.05;
+    }
+
+    if (game.time == 60 * 60 * 9) {
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING TWICE AS OFTEN'
+      });
+    }
+    if (game.time > 60 * 60 * 9) {
+      freq = 1;
+    }
+
+    if (game.time == 60 * 60 * 10) {
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'NUCLEAR MISSILES INCOMING'
+      });
     }
     if (game.time > 60 * 60 * 10) {
       freq = 1;
       altProb = 0.1;
       nukeProb = 0.1;
+    }
+
+    if (game.time == 60 * 60 * 12) {
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING TWICE AS OFTEN'
+      });
     }
     if (game.time > 60 * 60 * 12) {
       freq = 0.5;
@@ -9896,7 +9973,7 @@ var handleCollect = function handleCollect(state, dispatch, gridPos, ignorePrevP
   var entities = lookupInGrid(game.grid, gridPos).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return e.isCollectable && e.type != 'AGENT';
+    return e != null && e.isCollectable && e.type != 'AGENT';
   }); // && e.task == null)
   // NOTE: for some reason using this as the check causes pheromones
   // to not spread???
@@ -9942,7 +10019,7 @@ var handlePlace = function handlePlace(state, dispatch, gridPos, ignorePrevPos) 
   var occupied = lookupInGrid(game.grid, gridPos).map(function (id) {
     return game.entities[id];
   }).filter(function (e) {
-    return !e.notOccupying || e.type == 'BACKGROUND' && !isAboveSomething(game, gridPos);
+    return e != null && (!e.notOccupying || e.type == 'BACKGROUND' && !isAboveSomething(game, gridPos));
   }).length > 0;
   if (occupied) return;
 
@@ -11088,6 +11165,7 @@ function Game(props) {
       isExperimental: state.screen == 'EDITOR',
       focusedEntity: game.focusedEntity
     }),
+    React.createElement(Ticker, { ticker: game.ticker }),
     React.createElement(TopBar, { dispatch: dispatch,
       upgradedAt: game.upgradedAt,
       isExperimental: props.isInLevelEditor,
@@ -11196,6 +11274,31 @@ function configureMouseHandlers(game) {
     }
   };
   return handlers;
+}
+
+function Ticker(props) {
+  var ticker = props.ticker;
+
+  if (ticker == null) return null;
+  var shouldUseIndex = ticker.time < 60 || ticker.max - ticker.time < 60;
+  var index = ticker.time / 60;
+  if (ticker.max - ticker.time < 60) {
+    index = (ticker.max - ticker.time) / 60;
+  }
+
+  return React.createElement(
+    'h2',
+    {
+      style: {
+        position: 'absolute',
+        top: 100,
+        left: 120,
+        opacity: shouldUseIndex ? index : 1,
+        textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff'
+      }
+    },
+    ticker.message
+  );
 }
 
 module.exports = Game;
@@ -13363,14 +13466,19 @@ function TopBar(props) {
       'div',
       {
         style: {
-          // left: leftPadding,
           width: 200,
           marginLeft: 10,
+          fontSize: '1.5em',
           display: 'inline-block'
-          // position: 'absolute',
         }
       },
-      powerStuff
+      React.createElement(
+        'b',
+        null,
+        'Missiles Survived'
+      ),
+      ': ',
+      game.missilesSurvived
     ),
     React.createElement(
       'div',
@@ -13386,6 +13494,19 @@ function TopBar(props) {
         base: base,
         placeType: placeType
       })
+    ),
+    React.createElement(
+      'div',
+      {
+        style: {
+          // left: leftPadding,
+          width: 200,
+          marginLeft: 10,
+          display: 'inline-block'
+          // position: 'absolute',
+        }
+      },
+      powerStuff
     )
   );
 }

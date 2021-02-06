@@ -33,7 +33,7 @@ const handleCollect = (state, dispatch, gridPos, ignorePrevPos) => {
 
   const entities = lookupInGrid(game.grid, gridPos)
     .map(id => game.entities[id])
-    .filter(e => e.isCollectable && e.type != 'AGENT'); // && e.task == null)
+    .filter(e => e != null && e.isCollectable && e.type != 'AGENT'); // && e.task == null)
   // NOTE: for some reason using this as the check causes pheromones
   // to not spread???
   //&& e.type != 'AGENT');
@@ -81,7 +81,7 @@ const handlePlace = (state, dispatch, gridPos, ignorePrevPos) => {
   // can't place on top of other resources
   const occupied = lookupInGrid(game.grid, gridPos)
     .map(id => game.entities[id])
-    .filter(e => !e.notOccupying || (e.type == 'BACKGROUND' && !isAboveSomething(game, gridPos)))
+    .filter(e => e != null && (!e.notOccupying || (e.type == 'BACKGROUND' && !isAboveSomething(game, gridPos))))
     .length > 0;
   if (occupied) return;
 

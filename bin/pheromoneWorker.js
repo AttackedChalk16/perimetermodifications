@@ -141,7 +141,7 @@ var pheromones = {
     color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
-    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['WORM']),
+    blockingTypes: pheromoneBlockingTypes,
     blockingPheromones: [],
     isDispersing: true,
     heatPoint: 100,

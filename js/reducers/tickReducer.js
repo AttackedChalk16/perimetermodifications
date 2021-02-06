@@ -120,6 +120,7 @@ const doTick = (game: Game): Game => {
   updateTiledSprites(game);
   updateViewPos(game, false /*don't clamp to world*/);
   updateRain(game);
+  updateTicker(game);
   updatePheromoneEmitters(game);
   updateTowers(game);
   updateBases(game);
@@ -770,5 +771,13 @@ const updateRain = (game): void => {
     game.rainTicks--;
   }
 }
+
+const updateTicker = (game): void => {
+  if (game.ticker == null) return;
+  game.ticker.time--;
+  if (game.ticker.time <= 0) {
+    game.ticker = null;
+  }
+};
 
 module.exports = {tickReducer};

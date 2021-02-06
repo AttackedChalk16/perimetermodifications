@@ -71,7 +71,7 @@ const handleGameLoss = (store, dispatch, state, reason): void => {
 
   const body = (
     <div>
-    {"Your base was destroyed!"}
+    {`Your base was destroyed! You survived ${game.missilesSurvived} missiles`}
     </div>
   );
 

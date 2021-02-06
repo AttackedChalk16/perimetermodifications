@@ -131,7 +131,10 @@ const initBaseState = (
     tutorialFlags: {
     },
 
+    ticker: null,
+
     gameOver: false,
+    missilesSurvived: 0,
 
     // memoized "system"-level properties:
     AGENT: [], // entities that decide their own actions

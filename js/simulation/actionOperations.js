@@ -155,6 +155,10 @@ const entityShoot = (game: Game, entity: Entity, payload) => {
 };
 
 const entityDie = (game: Game, entity: Entity): void => {
+  if (entity.type == 'MISSILE' && entity.playerID == 2) {
+    game.missilesSurvived += 1;
+  }
+
   if (entity.isExplosive) {
     triggerExplosion(game, entity);
   }

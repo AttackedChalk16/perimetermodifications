@@ -37,6 +37,11 @@ h1 {
   margin-top: 18px;
 }
 
+h2 {
+  font-size: 5em;
+  color: steelblue;
+}
+
 h3 {
   margin-top: 0;
   color: steelblue;

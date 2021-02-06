@@ -184,7 +184,7 @@ const pheromones = {
     color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
-    blockingTypes: [...pheromoneBlockingTypes, 'WORM'],
+    blockingTypes: pheromoneBlockingTypes,
     blockingPheromones: [],
     isDispersing: true,
     heatPoint: 100,

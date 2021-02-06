@@ -97,14 +97,13 @@ function TopBar(props) {
       </div>
       <div
         style={{
-          // left: leftPadding,
           width: 200,
           marginLeft: 10,
+          fontSize: '1.5em',
           display: 'inline-block',
-          // position: 'absolute',
         }}
       >
-        {powerStuff}
+        <b>Missiles Survived</b>: {game.missilesSurvived}
       </div>
       <div
         style={{
@@ -118,6 +117,17 @@ function TopBar(props) {
           base={base}
           placeType={placeType}
         />
+      </div>
+      <div
+        style={{
+          // left: leftPadding,
+          width: 200,
+          marginLeft: 10,
+          display: 'inline-block',
+          // position: 'absolute',
+        }}
+      >
+        {powerStuff}
       </div>
     </div>
   );

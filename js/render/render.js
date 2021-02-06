@@ -205,7 +205,7 @@ const renderView = (canvas, ctx2d, game, dims, isMini): void => {
   ctx.lineWidth = ctx.lineWidth * 2;
   const occupied = lookupInGrid(game.grid, cursorPos)
     .map(id => game.entities[id])
-    .filter(e => (e.type == 'BACKGROUND' && !isAboveSomething(game, cursorPos)))
+    .filter(e => e != null && (e.type == 'BACKGROUND' && !isAboveSomething(game, cursorPos)))
     .length > 0;
   if (!isNeighboringColonyPher(game, cursorPos) || occupied) {
     ctx.fillStyle = 'rgba(139,0,0, 0.1)';

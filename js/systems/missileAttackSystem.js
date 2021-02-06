@@ -16,20 +16,64 @@ const initMissileAttackSystem = (store) => {
 
     if (game.pauseMissiles) return;
 
-    let freq = 5; // time in seconds
+    let freq = 0; // time in seconds
     let altProb = 0;
     let nukeProb = 0;
+
+    if (game.time == 1) {
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'WARNING - MISSILES INCOMING IN 1 MINUTE',
+      });
+    }
+
+    if (game.time == 60 * 60 * 1) {
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING EVERY 5 - 10 SECONDS',
+      });
+    }
     if (game.time > (60 * 60 * 1)) {
       freq = 5;
     }
+
+    if (game.time == 60 * 60 * 5) {
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING TWICE AS OFTEN',
+      });
+    }
     if (game.time > (60 * 60 * 5)) {
       freq = 2;
-      altProb = 0.05;
+    }
+
+    if (game.time == 60 * 60 * 9) {
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING TWICE AS OFTEN',
+      });
+    }
+    if (game.time > (60 * 60 * 9)) {
+      freq = 1;
+    }
+
+    if (game.time == 60 * 60 * 10) {
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'NUCLEAR MISSILES INCOMING',
+      });
     }
     if (game.time > (60 * 60 * 10)) {
       freq = 1;
       altProb = 0.1;
       nukeProb = 0.1;
+    }
+
+    if (game.time == 60 * 60 * 12) {
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 60 * 10,
+        message: 'MISSILES INCOMING TWICE AS OFTEN',
+      });
     }
     if (game.time > (60 * 60 * 12)) {
       freq = 0.5;

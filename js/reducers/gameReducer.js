@@ -69,6 +69,15 @@ const gameReducer = (game: Game, action: Action): Game => {
       game.pheromoneDisplay[pheromoneType] = isVisible;
       return game;
     }
+    case 'SET_TICKER_MESSAGE': {
+      const {message, time} = action;
+      game.ticker = {
+        message,
+        time,
+        max: time,
+      };
+      return game;
+    }
     case 'CREATE_ENTITY': {
       const {entity, position} = action;
       if (position != null) {

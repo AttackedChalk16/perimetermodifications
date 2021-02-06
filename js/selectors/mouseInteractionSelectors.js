@@ -44,9 +44,13 @@ const isNeighboringColonyPher = (game, position) => {
 }
 
 const isAboveSomething = (game, position) => {
-  return lookupInGrid(game.grid, add(position, {x: 0, y: 1}))
+  let yOffset = 1;
+  if (game.placeType != null && Entities[game.placeType] != null) {
+    yOffset = Entities[game.placeType].config.height || 1;
+  }
+  return lookupInGrid(game.grid, add(position, {x: 0, y: yOffset}))
     .map(id => game.entities[id])
-    .filter(e => e.type != 'BACKGROUND' && !e.isBallistic)
+    .filter(e => e != null && e.type != 'BACKGROUND' && !e.isBallistic)
     .length > 0;
 }
 

@@ -108,6 +108,7 @@ function Game(props: Props): React.Node {
         isExperimental={state.screen == 'EDITOR'}
         focusedEntity={game.focusedEntity}
       />
+      <Ticker ticker={game.ticker} />
       <TopBar dispatch={dispatch}
         upgradedAt={game.upgradedAt}
         isExperimental={props.isInLevelEditor}
@@ -222,6 +223,30 @@ function configureMouseHandlers(game) {
     },
   }
   return handlers;
+}
+
+function Ticker(props) {
+  const {ticker} = props;
+  if (ticker == null) return null;
+  const shouldUseIndex = ticker.time < 60 || ticker.max - ticker.time < 60;
+  let index = ticker.time / 60;
+  if (ticker.max - ticker.time < 60) {
+    index = (ticker.max - ticker.time) / 60;
+  }
+
+  return (
+    <h2
+      style={{
+        position: 'absolute',
+        top: 100,
+        left: 120,
+        opacity: shouldUseIndex ? index : 1,
+        textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff',
+      }}
+    >
+      {ticker.message}
+    </h2>
+  );
 }
 
 module.exports = Game;

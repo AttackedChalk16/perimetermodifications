@@ -11,23 +11,20 @@
 
 
 - - - - - - TODO - - - - - -
-  - Ticker system to display messages about missiles
-  - HUDS
-    - flicker resources when you spend them
-    - render the entity in the cards for the HUDS
-    - show on position info card whether location is placeable/collectable
-    - count of missiles survived
   - get gameplay tracking set back up again
   - electron application
-  - favicon
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
+  - mode with no missiles
+  - HUDs
+    - render the entity in the cards for the HUDS
+    - show on position info card whether location is placeable/collectable
+    - flicker resources when you spend them
   - plants
     - leaves + stalks
     - catch on fire at a lower temperature and turn to coal?
     - age and die as oil?
-  - mode with no missiles
   - procedurally generate level:
     - random seed
     - randomize pocket shape a little more
@@ -47,7 +44,6 @@
 - - - - - - - BUGS - - - - - - -
   - pheromones:
     - colony pheromone can get disrupted somehow, eventually preventing all pheromone clearing
-    - remove playerID concept from pheromones?
   - coal:
     - can strand molten pheromones that don't interact with anything
   - turbines:
@@ -55,13 +51,15 @@
     - acceleration may work better than speed for e.g. contradictory flows
     - reducing pherToGive doesn't actually slow down an array of turbines
   - bullets can shoot through 1-thick walls
+  - using game.time for missiles doesn't quite work due to fps issues
 
 
 - - - - - - - REFACTORS - - - - - - -
-  - pheromone refactor to allow 0 values
+  - pheromone refactor
     - getPheromoneAtPosition everywhere
     - setPheromone checking for undefined value
-    - deleting the pheromone when you get to 0?
+    - deleting the pheromone when you get to 0
+    - remove playerID concept from pheromones?
 
 
 - - - - - - - WON'T FIX - - - - - -
