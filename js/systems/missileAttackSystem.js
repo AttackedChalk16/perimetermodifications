@@ -65,7 +65,7 @@ const initMissileAttackSystem = (store) => {
     }
     if (game.time > (60 * 60 * 10)) {
       freq = 1;
-      altProb = 0.1;
+      altProb = 0.02;
       nukeProb = 0.1;
     }
 
@@ -77,7 +77,7 @@ const initMissileAttackSystem = (store) => {
     }
     if (game.time > (60 * 60 * 12)) {
       freq = 0.5;
-      altProb = 0.15;
+      altProb = 0.04;
       nukeProb = 0.1;
     }
     let alternateSide = Math.random() < altProb;

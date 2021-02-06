@@ -1,5 +1,6 @@
 
-const {app, BrowserWindow} = require('electron');
+const {app, BrowserWindow, nativeImage} = require('electron');
+const path = require('path');
 
 function createWindow () {
   // Create the browser window.
@@ -8,15 +9,23 @@ function createWindow () {
     height: 800,
     webPreferences: {
       //preload: path.join(__dirname, 'preload.js')
-    }
-  })
+    },
+    icon: path.join(__dirname, 'favicon.png')
+  });
+
 
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
 
+  mainWindow.setFullScreen(true);
+
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
 }
+const image = nativeImage.createFromPath(
+  app.getAppPath() + "/favicon.ico"
+);
+app.dock.setIcon(image);
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -35,5 +44,5 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+  app.quit()
 })

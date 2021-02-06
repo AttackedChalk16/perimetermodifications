@@ -8,11 +8,17 @@
 - - - - - - ISSUES - - - - - -
   - hard to get turbines to spin consistently when heat disperses
   - fluids not coming out of a single horizontal opening
+  - show base HP next to Missiles Survived
+    - or perhaps show a ticker?
+  - water isn't preserved when doing power generation any more
 
 
 - - - - - - TODO - - - - - -
   - get gameplay tracking set back up again
+    - leaderboard with most missiles survived?
   - electron application
+    - add button to quit in lobby AND in game
+    - make sure to target windows too
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -

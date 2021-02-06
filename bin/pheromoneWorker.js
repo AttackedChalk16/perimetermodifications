@@ -146,7 +146,7 @@ var pheromones = {
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'STEAM',
-    heatRate: 0.015,
+    heatRate: 0.016666666666666666,
     coolPoint: -100, // heat level to condense at
     coolsTo: 'ICE',
     coolsToEntity: true,
@@ -172,7 +172,7 @@ var pheromones = {
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
-    coolConcentration: 100, // amount of yourself needed before condensation starts
+    coolConcentration: 60, // amount of yourself needed before condensation starts
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,

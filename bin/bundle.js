@@ -146,7 +146,7 @@ var pheromones = {
     isDispersing: true,
     heatPoint: 100,
     heatsTo: 'STEAM',
-    heatRate: 0.015,
+    heatRate: 0.016666666666666666,
     coolPoint: -100, // heat level to condense at
     coolsTo: 'ICE',
     coolsToEntity: true,
@@ -172,7 +172,7 @@ var pheromones = {
     coolPoint: 5, // heat level to condense at
     coolsTo: 'WATER',
     coolRate: 0.1, // amount of yourself that condenses per step
-    coolConcentration: 100, // amount of yourself needed before condensation starts
+    coolConcentration: 60, // amount of yourself needed before condensation starts
     isFluid: true,
     viscosity: {
       verticalLeftOver: 0,
@@ -9418,7 +9418,7 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
     }
     if (game.time > 60 * 60 * 10) {
       freq = 1;
-      altProb = 0.1;
+      altProb = 0.02;
       nukeProb = 0.1;
     }
 
@@ -9430,7 +9430,7 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
     }
     if (game.time > 60 * 60 * 12) {
       freq = 0.5;
-      altProb = 0.15;
+      altProb = 0.04;
       nukeProb = 0.1;
     }
     var alternateSide = Math.random() < altProb;
