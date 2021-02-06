@@ -16,6 +16,9 @@
 - - - - - - TODO - - - - - -
   - get gameplay tracking set back up again
     - leaderboard with most missiles survived?
+  - main menu
+    - background gif
+    - play options?
   - electron application
     - add button to quit in lobby AND in game
     - make sure to target windows too
