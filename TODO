@@ -11,9 +11,14 @@
   - show base HP next to Missiles Survived
     - or perhaps show a ticker?
   - water isn't preserved when doing power generation any more
+    - try out rain system
+  - need to pass clicks through the ticker
+  - see if mouse drag events can be registered a little more often
+    - or interpolated and queued
 
 
 - - - - - - TODO - - - - - -
+  - Turn placement palette cards into buttons to look like antocracy controls
   - get gameplay tracking set back up again
     - leaderboard with most missiles survived?
   - main menu
@@ -25,6 +30,9 @@
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
+  - minimap for viewing the surface
+    - turrets, bullets, lasers, missiles
+    - base + some dirt? or just only actual surface?
   - mode with no missiles
   - HUDs
     - render the entity in the cards for the HUDS
