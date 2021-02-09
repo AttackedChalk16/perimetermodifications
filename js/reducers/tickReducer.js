@@ -482,12 +482,14 @@ const updateTowers = (game): void => {
 //////////////////////////////////////////////////////////////////////////
 
 const updateGenerators = (game: Game): void => {
+  const maxLight = globalConfig.pheromones.LIGHT.quantity;
   // tally up available power
   let totalPowerGenerated = 0;
   for (const id in game.GENERATOR) {
     const generator = game.entities[id];
 
     let powerGenerated = Entities[generator.type].config.powerGenerated;
+    const maxPower = powerGenerated;
 
     // Handle turbines
     if (generator.type == 'TURBINE') {
@@ -495,10 +497,18 @@ const updateGenerators = (game: Game): void => {
       if (generator.thetaSpeed < 0.001) {
         generator.thetaSpeed = 0;
       }
-      powerGenerated *= generator.thetaSpeed / generator.maxThetaSpeed;
-      generator.powerGenerated = powerGenerated;
+      powerGenerated *= Math.ceil(generator.thetaSpeed / generator.maxThetaSpeed);
+      // generator.powerGenerated = Math.min(powerGenerated * maxPower / 2, maxPower);
     }
-    totalPowerGenerated += Math.ceil(powerGenerated);
+
+    // Handle solar panels
+    if (generator.type == 'SOLAR_PANEL') {
+      const sunLight = getPheromoneAtPosition(game, generator.position, 'LIGHT', 0);
+      powerGenerated *= sunLight / maxLight;
+    }
+    generator.powerGenerated = powerGenerated;
+
+    totalPowerGenerated += powerGenerated;
 
   }
 
@@ -769,12 +779,14 @@ const updateTiledSprites = (game): void => {
 const updateRain = (game): void => {
   if (game.rainTicks > 0) {
     game.rainTicks--;
+  } else {
+    game.timeSinceLastRain += game.timeSinceLastTick;
   }
 }
 
 const updateTicker = (game): void => {
   if (game.ticker == null) return;
-  game.ticker.time--;
+  game.ticker.time -= game.timeSinceLastTick;
   if (game.ticker.time <= 0) {
     game.ticker = null;
   }

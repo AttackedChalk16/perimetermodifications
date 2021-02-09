@@ -13,8 +13,13 @@ const InfoHUD = (props): React.Node => {
 
   const pheromoneInfoCards = [];
   const pherInCell = getPheromonesInCell(game.grid, mousePos, 0 /* playerID */);
+  let sunLight = 0;
   for (const pherType in pherInCell) {
     if (pherType == 'HEAT' || pherType == 'COLD') continue;
+    if (pherType == 'LIGHT') {
+      sunLight = pherInCell[pherType];
+      continue;
+    }
     if (pherInCell[pherType] > 0) {
       pheromoneInfoCards.push(
         <PheromoneInfoCard
@@ -42,6 +47,7 @@ const InfoHUD = (props): React.Node => {
         <div><b>Position: </b></div>
         <div>x: {mousePos.x} y: {mousePos.y}</div>
         <div><b>Temperature</b>: {temp}</div>
+        <div><b>Sun Light</b>: {sunLight}</div>
       </InfoCard>
       {entityInfoCards}
       {pheromoneInfoCards}

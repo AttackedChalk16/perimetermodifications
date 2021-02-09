@@ -20,9 +20,9 @@ const config = {
   gravity: -100,
 
   proceduralFrequencies: {
+    STONE: {numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12},
     IRON: {numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10},
     COAL: {numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10},
-    STONE: {numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12},
     ICE: {numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8},
     WATER: {numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14},
     SAND: {numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8},
@@ -140,6 +140,10 @@ const config = {
       description: 'building that produces POWER when a FLUID or GAS passes through it',
       howToMake: 'STEEL',
     },
+    SOLAR_PANEL: {
+      description: 'building that passively produces power based on how much sunlight it gets',
+      howToMake: 'STEEL and GLASS and SILICON',
+    },
 
     // misc:
     FLUID: {
@@ -175,6 +179,15 @@ const pheromones = {
     tileIndex: 0,
 
     blockingTypes: [...pheromoneBlockingTypes, 'COAL'],
+    blockingPheromones: [],
+  },
+  LIGHT: {
+    quantity: 350,
+    decayAmount: 1,
+    color: 'rgb(155, 227, 90)',
+    tileIndex: 0,
+
+    blockingTypes: [...pheromoneBlockingTypes, 'COAL', 'TURBINE'],
     blockingPheromones: [],
   },
   WATER: {
@@ -237,7 +250,7 @@ const pheromones = {
     heatPoint: 10,
     heatsTo: 'SULPHUR_DIOXIDE',
     heatRate: 0.02,
-    combustionPoint: 125,
+    combustionPoint: 126,
     combustsTo: 'HOT_OIL',
     combustionRate: 1,
     viscosity: {

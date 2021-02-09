@@ -165,12 +165,21 @@ const gameReducer = (game: Game, action: Action): Game => {
     case 'UPDATE_ALL_PHEROMONES': {
       const {pheromones} = action;
       // console.log('received pheromone update', pheromones, game.time);
+      let allWaterQuantity = game.ICE.length;
+      let shouldUpdateWaterQuantity = false;
       for (const positionHash of pheromones) {
         for (const encodedPosition in positionHash) {
           const position = decodePosition(encodedPosition);
           const {pheromoneType, quantity, playerID} = positionHash[encodedPosition];
           setPheromone(game, position, pheromoneType, quantity, playerID, true /*no worker*/);
+          if (pheromoneType == 'WATER' || pheromoneType == 'STEAM') {
+            shouldUpdateWaterQuantity = true;
+            allWaterQuantity++;
+          }
         }
+      }
+      if (shouldUpdateWaterQuantity) {
+        game.allWaterQuantity = allWaterQuantity;
       }
       return game;
     }
@@ -212,6 +221,7 @@ const gameReducer = (game: Game, action: Action): Game => {
     case 'SET_IS_RAINING': {
       const {rainTicks} = action;
       game.rainTicks = rainTicks;
+      game.timeSinceLastRain = 0;
       return game;
     }
     case 'COLLECT_ENTITIES': {

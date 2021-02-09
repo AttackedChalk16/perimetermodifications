@@ -29,7 +29,7 @@ const config = {
   },
 
   cost: {
-    STEEL: 16,
+    STEEL: 8,
   },
 };
 

@@ -25,9 +25,9 @@ var config = {
   gravity: -100,
 
   proceduralFrequencies: {
+    STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
     IRON: { numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10 },
     COAL: { numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10 },
-    STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
     ICE: { numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8 },
     WATER: { numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14 },
     SAND: { numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8 },
@@ -112,6 +112,9 @@ var config = {
   }), _defineProperty(_descriptions, 'TURBINE', {
     description: 'building that produces POWER when a FLUID or GAS passes through it',
     howToMake: 'STEEL'
+  }), _defineProperty(_descriptions, 'SOLAR_PANEL', {
+    description: 'building that passively produces power based on how much sunlight it gets',
+    howToMake: 'STEEL and GLASS and SILICON'
   }), _defineProperty(_descriptions, 'FLUID', {
     description: 'uncollectable resource type (like WATER or OIL ) that can pass through a TURBINE' + ' to produce POWER'
   }), _defineProperty(_descriptions, 'GAS', {
@@ -132,6 +135,15 @@ var pheromones = {
     tileIndex: 0,
 
     blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL']),
+    blockingPheromones: []
+  },
+  LIGHT: {
+    quantity: 350,
+    decayAmount: 1,
+    color: 'rgb(155, 227, 90)',
+    tileIndex: 0,
+
+    blockingTypes: [].concat(_toConsumableArray(pheromoneBlockingTypes), ['COAL', 'TURBINE']),
     blockingPheromones: []
   },
   WATER: {
@@ -194,7 +206,7 @@ var pheromones = {
     heatPoint: 10,
     heatsTo: 'SULPHUR_DIOXIDE',
     heatRate: 0.02,
-    combustionPoint: 125,
+    combustionPoint: 126,
     combustsTo: 'HOT_OIL',
     combustionRate: 1,
     viscosity: {
@@ -393,7 +405,7 @@ var config = {
   // agent properties
   isAgent: true,
   pickupTypes: ['FOOD', 'DIRT', 'TOKEN', 'DYNAMITE', 'COAL', 'IRON', 'STEEL'],
-  blockingTypes: ['FOOD', 'DIRT', 'AGENT', 'STONE', 'DOODAD', 'WORM', 'TOKEN', 'DYNAMITE', 'TURBINE', 'COAL', 'IRON', 'STEEL'],
+  blockingTypes: ['FOOD', 'DIRT', 'AGENT', 'STONE', 'DOODAD', 'WORM', 'TOKEN', 'DYNAMITE', 'COAL', 'IRON', 'STEEL'],
 
   // action params
   MOVE: {
@@ -499,7 +511,7 @@ var spriteRenderFn = function spriteRenderFn(ctx, game, ant) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":31,"../selectors/sprites":37,"../utils/vectors":44,"./makeEntity":17}],3:[function(require,module,exports){
+},{"../render/renderAgent":33,"../selectors/sprites":39,"../utils/vectors":46,"./makeEntity":17}],3:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -536,7 +548,7 @@ var render = function render(ctx, game, bg) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],4:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],4:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -705,7 +717,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":31,"../utils/vectors":44,"./makeEntity.js":17}],6:[function(require,module,exports){
+},{"../render/renderAgent":33,"../utils/vectors":46,"./makeEntity.js":17}],6:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -737,7 +749,7 @@ var config = {
     duration: 1,
     spriteOrder: [0]
   },
-  missRate: 0.5
+  missRate: 0
 };
 
 var make = function make(game, position, playerID, theta, velocity) {
@@ -781,7 +793,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":38,"../utils/vectors":44,"./makeEntity":17}],7:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":39,"../simulation/actionQueue":40,"../utils/vectors":46,"./makeEntity":17}],7:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -823,7 +835,7 @@ var render = function render(ctx, game, coal) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],8:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],8:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -863,7 +875,7 @@ var render = function render(ctx, game, dirt) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],9:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],9:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -966,7 +978,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":38,"./makeEntity":17}],11:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":39,"../simulation/actionQueue":40,"./makeEntity":17}],11:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1007,7 +1019,7 @@ var render = function render(ctx, game, food) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],12:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],12:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1050,7 +1062,7 @@ var render = function render(ctx, game, glass) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],13:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],13:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1092,7 +1104,7 @@ var render = function render(ctx, game, ice) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],14:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],14:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1132,7 +1144,7 @@ var render = function render(ctx, game, iron) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],15:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],15:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1208,7 +1220,7 @@ var render = function render(ctx, game, bullet) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":38,"../utils/vectors":44,"./makeEntity":17}],16:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":39,"../simulation/actionQueue":40,"../utils/vectors":46,"./makeEntity":17}],16:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1356,7 +1368,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"../utils/vectors":44,"./makeEntity.js":17}],17:[function(require,module,exports){
+},{"../selectors/sprites":39,"../utils/vectors":46,"./makeEntity.js":17}],17:[function(require,module,exports){
 'use strict';
 
 var makeEntity = function makeEntity(type, position, width, height) {
@@ -1471,7 +1483,7 @@ var render = function render(ctx, game, missile) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":38,"../utils/vectors":44,"./makeEntity":17}],19:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":39,"../simulation/actionQueue":40,"../utils/vectors":46,"./makeEntity":17}],19:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1584,7 +1596,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":31,"../utils/vectors":44,"./makeEntity.js":17}],20:[function(require,module,exports){
+},{"../render/renderAgent":33,"../utils/vectors":46,"./makeEntity.js":17}],20:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1656,7 +1668,7 @@ var render = function render(ctx, game, dynamite) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"../selectors/sprites":37,"../simulation/actionQueue":38,"./makeEntity":17}],21:[function(require,module,exports){
+},{"../config":1,"../selectors/sprites":39,"../simulation/actionQueue":40,"./makeEntity":17}],21:[function(require,module,exports){
 'use strict';
 
 var globalConfig = require('../config');
@@ -1689,11 +1701,13 @@ var Entities = {
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   TOKEN: require('./token.js'),
+  SUN: require('./sun.js'),
 
   BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
   FAST_TURRET: require('./turret.js'),
   MISSILE_TURRET: require('./missileTurret.js'),
+  SOLAR_PANEL: require('./solarPanel.js'),
   LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),
@@ -1708,7 +1722,7 @@ var Entities = {
 module.exports = {
   Entities: Entities
 };
-},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./ice.js":13,"./iron.js":14,"./laser.js":15,"./laserTurret.js":16,"./missile.js":18,"./missileTurret.js":19,"./nuke.js":20,"./silicon.js":22,"./steel.js":23,"./stone.js":24,"./sulphur.js":25,"./token.js":26,"./turbine.js":27,"./turret.js":28,"./uranium.js":29}],22:[function(require,module,exports){
+},{"../config":1,"./agent.js":2,"./background.js":3,"./base.js":4,"./basicTurret.js":5,"./bullet.js":6,"./coal.js":7,"./dirt.js":8,"./doodad.js":9,"./dynamite.js":10,"./food.js":11,"./glass.js":12,"./ice.js":13,"./iron.js":14,"./laser.js":15,"./laserTurret.js":16,"./missile.js":18,"./missileTurret.js":19,"./nuke.js":20,"./silicon.js":22,"./solarPanel.js":23,"./steel.js":24,"./stone.js":25,"./sulphur.js":26,"./sun.js":27,"./token.js":28,"./turbine.js":29,"./turret.js":30,"./uranium.js":31}],22:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1752,7 +1766,72 @@ var render = function render(ctx, game, silicon) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],23:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],23:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity.js'),
+    makeEntity = _require.makeEntity;
+
+var _require2 = require('../utils/vectors'),
+    add = _require2.add,
+    subtract = _require2.subtract,
+    equals = _require2.equals,
+    makeVector = _require2.makeVector,
+    vectorTheta = _require2.vectorTheta;
+
+var _require3 = require('../render/renderAgent'),
+    renderAgent = _require3.renderAgent;
+
+var config = {
+  isGenerator: true,
+  powerGenerated: 1,
+  hp: 15,
+  width: 2,
+  height: 2,
+  maxThetaSpeed: 0.4,
+  cost: {
+    STEEL: 1,
+    SILICON: 1,
+    GLASS: 2
+  }
+};
+
+var make = function make(game, position, playerID) {
+  return _extends({}, makeEntity('SOLAR_PANEL', position, config.width, config.height), config, {
+    playerID: playerID,
+
+    theta: Math.PI / 4
+
+  });
+};
+
+var render = function render(ctx, game, panel) {
+  var position = panel.position,
+      width = panel.width,
+      height = panel.height,
+      theta = panel.theta;
+
+  ctx.save();
+  ctx.translate(panel.position.x + width / 2, panel.position.y + height / 2);
+  ctx.rotate(panel.theta);
+  ctx.translate(-panel.width / 2, -panel.height / 4);
+
+  // base of panel
+  ctx.strokeStyle = "black";
+  ctx.fillStyle = "silver";
+  ctx.globalAlpha = 0.75;
+  ctx.fillRect(0, 0, width, height / 2);
+  ctx.strokeRect(0, 0, width, height / 2);
+
+  ctx.restore();
+};
+
+module.exports = {
+  make: make, render: render, config: config
+};
+},{"../render/renderAgent":33,"../utils/vectors":46,"./makeEntity.js":17}],24:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1792,7 +1871,7 @@ var render = function render(ctx, game, steel) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],24:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],25:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1826,7 +1905,7 @@ var render = function render(ctx, game, stone) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],25:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],26:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1860,7 +1939,49 @@ var render = function render(ctx, game, sulphur) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],26:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],27:[function(require,module,exports){
+'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _require = require('./makeEntity'),
+    makeEntity = _require.makeEntity;
+
+var globalConfig = require('../config');
+
+var config = {
+  pheromoneEmitter: true
+};
+
+var make = function make(game, position, playerID) {
+  var pheromoneType = 'LIGHT';
+  return _extends({}, makeEntity('SUN', position, 1, 1), config, {
+    pheromoneType: pheromoneType,
+    playerID: playerID,
+    quantity: globalConfig.pheromones[pheromoneType].quantity
+  });
+};
+
+var render = function render(ctx, game, token) {
+  // ctx.save();
+  // ctx.translate(token.position.x, token.position.y);
+  // ctx.strokeStyle = 'black';
+  // ctx.fillStyle = 'steelblue';
+  // ctx.beginPath();
+  // const radius = token.width / 2;
+  // ctx.arc(
+  //   token.width / 2,
+  //   token.height / 2,
+  //   radius, 0, Math.PI * 2,
+  // );
+  // ctx.closePath();
+  // ctx.stroke();
+  // ctx.fill();
+  // ctx.restore();
+};
+
+module.exports = { config: config, make: make, render: render };
+},{"../config":1,"./makeEntity":17}],28:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1897,7 +2018,7 @@ var render = function render(ctx, game, token) {
 };
 
 module.exports = { config: config, make: make, render: render };
-},{"../config":1,"./makeEntity":17}],27:[function(require,module,exports){
+},{"../config":1,"./makeEntity":17}],29:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -1917,7 +2038,7 @@ var _require3 = require('../render/renderAgent'),
 
 var config = {
   isGenerator: true,
-  powerGenerated: 10,
+  powerGenerated: 1,
   hp: 3,
   width: 2,
   height: 2,
@@ -1974,7 +2095,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":31,"../utils/vectors":44,"./makeEntity.js":17}],28:[function(require,module,exports){
+},{"../render/renderAgent":33,"../utils/vectors":46,"./makeEntity.js":17}],30:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2019,7 +2140,7 @@ var config = {
   },
 
   cost: {
-    STEEL: 16
+    STEEL: 8
   }
 };
 
@@ -2116,7 +2237,7 @@ var render = function render(ctx, game, turret) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../render/renderAgent":31,"../selectors/sprites":37,"../utils/vectors":44,"./makeEntity.js":17}],29:[function(require,module,exports){
+},{"../render/renderAgent":33,"../selectors/sprites":39,"../utils/vectors":46,"./makeEntity.js":17}],31:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -2154,7 +2275,7 @@ var render = function render(ctx, game, uranium) {
 module.exports = {
   make: make, render: render, config: config
 };
-},{"../selectors/sprites":37,"./makeEntity":17}],30:[function(require,module,exports){
+},{"../selectors/sprites":39,"./makeEntity":17}],32:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3032,7 +3153,7 @@ var updateDispersingPheromones = function updateDispersingPheromones(game) {
   return nextDispersingPheromones;
 };
 
-},{"./config":1,"./selectors/neighbors":35,"./selectors/pheromones":36,"./simulation/entityOperations":39,"./simulation/pheromones":40,"./utils/gridHelpers":41,"./utils/helpers":42,"./utils/stochastic":43,"./utils/vectors":44}],31:[function(require,module,exports){
+},{"./config":1,"./selectors/neighbors":37,"./selectors/pheromones":38,"./simulation/entityOperations":41,"./simulation/pheromones":42,"./utils/gridHelpers":43,"./utils/helpers":44,"./utils/stochastic":45,"./utils/vectors":46}],33:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3124,7 +3245,7 @@ var renderAgent = function renderAgent(ctx, game, agent, spriteRenderFn) {
 };
 
 module.exports = { renderAgent: renderAgent };
-},{"../utils/gridHelpers":41,"../utils/helpers":42,"../utils/vectors":44,"./renderHealthBar":32}],32:[function(require,module,exports){
+},{"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46,"./renderHealthBar":34}],34:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3166,7 +3287,7 @@ var renderHealthBar = function renderHealthBar(ctx, entity, maxHealth) {
 };
 
 module.exports = { renderHealthBar: renderHealthBar };
-},{"../utils/gridHelpers":41,"../utils/vectors":44}],33:[function(require,module,exports){
+},{"../utils/gridHelpers":43,"../utils/vectors":46}],35:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/gridHelpers'),
@@ -3230,7 +3351,7 @@ module.exports = {
   collidesWith: collidesWith,
   collisionsAtSpace: collisionsAtSpace
 };
-},{"../utils/gridHelpers":41}],34:[function(require,module,exports){
+},{"../utils/gridHelpers":43}],36:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -3423,7 +3544,7 @@ module.exports = {
   canDoMove: canDoMove,
   getControlledEntityInteraction: getControlledEntityInteraction
 };
-},{"../selectors/collisions":33,"../selectors/neighbors":35,"../simulation/actionQueue":38,"../utils/gridHelpers":41,"../utils/helpers":42,"../utils/vectors":44}],35:[function(require,module,exports){
+},{"../selectors/collisions":35,"../selectors/neighbors":37,"../simulation/actionQueue":40,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],37:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -3690,7 +3811,7 @@ module.exports = {
   getFreeNeighborPositions: getFreeNeighborPositions,
   areNeighbors: areNeighbors
 };
-},{"../selectors/collisions":33,"../utils/gridHelpers":41,"../utils/vectors":44}],36:[function(require,module,exports){
+},{"../selectors/collisions":35,"../utils/gridHelpers":43,"../utils/vectors":46}],38:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -3872,7 +3993,7 @@ module.exports = {
   getQuantityForStalePos: getQuantityForStalePos,
   isPositionBlockingPheromone: isPositionBlockingPheromone
 };
-},{"../config":1,"../selectors/neighbors":35,"../utils/gridHelpers":41,"../utils/helpers":42,"../utils/vectors":44}],37:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":37,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],39:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -4391,7 +4512,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":34,"../selectors/neighbors":35,"../simulation/actionQueue":38,"../utils/gridHelpers":41,"../utils/helpers":42,"../utils/vectors":44}],38:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":36,"../selectors/neighbors":37,"../simulation/actionQueue":40,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],40:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -4623,7 +4744,7 @@ module.exports = {
   makeAction: makeAction,
   getFrame: getFrame
 };
-},{"../selectors/pheromones":36,"../utils/helpers":42,"../utils/vectors":44}],39:[function(require,module,exports){
+},{"../selectors/pheromones":38,"../utils/helpers":44,"../utils/vectors":46}],41:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5383,7 +5504,7 @@ module.exports = {
   insertEntityInGrid: insertEntityInGrid,
   removeEntityFromGrid: removeEntityFromGrid
 };
-},{"../config":1,"../entities/makeEntity":17,"../entities/registry":21,"../selectors/neighbors":35,"../selectors/pheromones":36,"../simulation/pheromones":40,"../utils/gridHelpers":41,"../utils/helpers":42,"../utils/vectors":44}],40:[function(require,module,exports){
+},{"../config":1,"../entities/makeEntity":17,"../entities/registry":21,"../selectors/neighbors":37,"../selectors/pheromones":38,"../simulation/pheromones":42,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],42:[function(require,module,exports){
 'use strict';
 
 var _require = require('../utils/vectors'),
@@ -5743,7 +5864,7 @@ module.exports = {
   refreshPheromones: refreshPheromones,
   getBiggestNeighborVal: getBiggestNeighborVal
 };
-},{"../config":1,"../selectors/neighbors":35,"../selectors/pheromones":36,"../utils/gridHelpers":41,"../utils/helpers":42,"../utils/vectors":44}],41:[function(require,module,exports){
+},{"../config":1,"../selectors/neighbors":37,"../selectors/pheromones":38,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],43:[function(require,module,exports){
 'use strict';
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -5879,7 +6000,7 @@ module.exports = {
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid
 };
-},{"../config":1,"../utils/helpers":42,"../utils/vectors":44}],42:[function(require,module,exports){
+},{"../config":1,"../utils/helpers":44,"../utils/vectors":46}],44:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -5990,7 +6111,7 @@ module.exports = {
   getDisplayTime: getDisplayTime, isMobile: isMobile,
   throttle: throttle
 };
-},{"./vectors":44}],43:[function(require,module,exports){
+},{"./vectors":46}],45:[function(require,module,exports){
 "use strict";
 
 var floor = Math.floor,
@@ -6045,7 +6166,7 @@ module.exports = {
   oneOf: oneOf,
   weightedOneOf: weightedOneOf
 };
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -6244,4 +6365,4 @@ module.exports = {
   rotate: rotate,
   abs: abs
 };
-},{}]},{},[30]);
+},{}]},{},[32]);

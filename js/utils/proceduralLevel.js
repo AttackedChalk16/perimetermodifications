@@ -23,6 +23,14 @@ const getProceduralLevel = (): Array<Action> => {
     args: [1, 1, 'SKYLINE'],
   });
 
+  // add the sun:
+  level.actions.push({
+    type: "CREATE_ENTITIES",
+    entityType: "SUN",
+    rect: {position: {x: level.gridWidth - 1, y: 0}, width: 1, height: 1},
+    args: [0],
+  });
+
   // add the dirt:
   level.actions.push({
     type: "CREATE_ENTITIES",

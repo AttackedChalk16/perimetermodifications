@@ -2,6 +2,7 @@
 const React = require('react');
 const AudioWidget = require('./Components/AudioWidget.react');
 const Button = require('./Components/Button.react');
+const Divider = require('./Components/Divider.react');
 const Modal = require('./Components/Modal.react');
 const globalConfig = require('../config');
 const {getDisplayTime} = require('../utils/helpers');
@@ -35,10 +36,10 @@ function TopBar(props) {
   const leftPadding = canvasWidth / 2 - 100;
   let powerStuff = (
     <div>
-      <div><b>Power Generated: </b>{totalPowerGenerated}</div>
-      <div><b>Power Consumed: </b>{totalPowerNeeded}</div>
+      <div><b>Power Generated: </b>{(totalPowerGenerated || 0).toFixed(1)}</div>
+      <div><b>Power Consumed: </b>{(totalPowerNeeded || 0).toFixed(1)}</div>
       <div><b>Power Available: </b>
-        <span style={{color: powerMargin > 0 ? 'green' : 'red'}}>{powerMargin}</span>
+        <span style={{color: powerMargin > 0 ? 'green' : 'red'}}>{(powerMargin || 0).toFixed(1)}</span>
       </div>
     </div>
   );
@@ -97,16 +98,6 @@ function TopBar(props) {
       </div>
       <div
         style={{
-          width: 200,
-          marginLeft: 10,
-          fontSize: '1.5em',
-          display: 'inline-block',
-        }}
-      >
-        <b>Missiles Survived</b>: {game.missilesSurvived}
-      </div>
-      <div
-        style={{
           display: 'inline-block',
           verticalAlign: 'top',
         }}
@@ -129,6 +120,16 @@ function TopBar(props) {
       >
         {powerStuff}
       </div>
+      <div
+        style={{
+          width: 200,
+          marginLeft: 10,
+          fontSize: '1.5em',
+          display: 'inline-block',
+        }}
+      >
+        <b>Missiles Survived</b>: {game.missilesSurvived}
+      </div>
     </div>
   );
 }
@@ -149,12 +150,16 @@ function instructionsModal(dispatch) {
           <div style={{textAlign: 'center'}}><b>Controls:</b></div>
           <div>Left Click: collect non-fluid resource</div>
           <div>Right Click: place selected resource or building</div>
+          <div>NOTE: resources can only be collected/placed if there is a path
+              to the base. A red cursor means collection/placement is blocked, green
+              cursor means it is possible</div>
           <div>Arrow Keys: move screen</div>
         </div>
         <div>
           <div style={{textAlign: 'center'}}><b>Goal:</b></div>
           <div>Survive as long as you can!</div>
         </div>
+        <Divider />
         <div>
           Additional information about how resources interact can be displayed
           by hovering over each resource in the selector at the top of the screen

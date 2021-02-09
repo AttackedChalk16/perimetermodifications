@@ -113,6 +113,7 @@ const initBaseState = (
       isLeftDown: false,
       isRightDown: false,
       downPos: {x: 0, y: 0},
+      prevPos: {x: 0, y: 0},
       curPos: {x: 0, y: 0},
       curPixel: {x: 0, y: 0},
       prevPixel: {x: 0, y: 0},
@@ -135,6 +136,10 @@ const initBaseState = (
 
     gameOver: false,
     missilesSurvived: 0,
+
+    rainTicks: 0,
+    allWaterQuantity: Infinity,
+    timeSinceLastRain: 0,
 
     // memoized "system"-level properties:
     AGENT: [], // entities that decide their own actions

@@ -25,7 +25,7 @@ const config = {
     duration: 1,
     spriteOrder: [0],
   },
-  missRate: 0.5,
+  missRate: 0,
 };
 
 const make = (

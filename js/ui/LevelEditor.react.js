@@ -654,6 +654,7 @@ function createEntities(game, dispatch, editor, rect): void {
     case 'BACKGROUND':
       args = [rect.width, rect.height, editor.background]; // width and height
       break;
+    case 'SOLAR_PANEL':
     case 'TURBINE':
     case 'AGENT':
     case 'BASE':

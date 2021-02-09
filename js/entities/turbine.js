@@ -6,7 +6,7 @@ const {renderAgent} = require('../render/renderAgent');
 
 const config = {
   isGenerator: true,
-  powerGenerated: 10,
+  powerGenerated: 1,
   hp: 3,
   width: 2,
   height: 2,

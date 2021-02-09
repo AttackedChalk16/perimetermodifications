@@ -128,6 +128,7 @@ function Lobby(props: Props): React.Node {
             borderRadius: '8px',
             cursor: 'pointer',
           }}
+          disabled={loading != '' || isLoaded}
           label="Play"
           onClick={() => {
             setLoading("Loading..");

@@ -14,8 +14,12 @@ const initRainSystem = (store) => {
     if (game.time == time) return;
     time = game.time;
 
-    // rain for 30 seconds every 4 minutes
-    if (time > 1 && time % (60 * 4 * 60) == 0) {
+    // rain for 20 seconds whenever water quantity drops below 300
+    if (
+      time > 1 &&
+      game.timeSinceLastRain > 1000 * 60 * 4 &&
+      game.allWaterQuantity < 300
+    ) {
       dispatch({type: 'SET_IS_RAINING', rainTicks: 24 * 15});
     }
 
@@ -24,12 +28,16 @@ const initRainSystem = (store) => {
       const rainQuantity = globalConfig.pheromones.WATER.quantity;
       for (let i = 0; i < numRainDrops; i++) {
         const rainPos = {
-          x: normalIn(10, game.gridWidth - 10),
-          y: normalIn(5, game.gridHeight / 5),
+          x: randomIn(10, game.gridWidth - 10),
+          y: randomIn(5, game.gridHeight / 5),
         }
-        fillPheromone(
-          game, rainPos, 'WATER', game.playerID, rainQuantity,
-        );
+        store.dispatch({
+          type: 'FILL_PHEROMONE',
+          gridPos: rainPos,
+          pheromoneType: 'WATER',
+          playerID: game.gaiaID,
+          quantity: rainQuantity,
+        });
       }
     }
   });

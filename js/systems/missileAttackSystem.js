@@ -22,14 +22,14 @@ const initMissileAttackSystem = (store) => {
 
     if (game.time == 1) {
       dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 60 * 10,
+        time: 4000,
         message: 'WARNING - MISSILES INCOMING IN 1 MINUTE',
       });
     }
 
     if (game.time == 60 * 60 * 1) {
       dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 60 * 10,
+        time: 4000,
         message: 'MISSILES INCOMING EVERY 5 - 10 SECONDS',
       });
     }
@@ -39,7 +39,7 @@ const initMissileAttackSystem = (store) => {
 
     if (game.time == 60 * 60 * 5) {
       dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 60 * 10,
+        time: 4000,
         message: 'MISSILES INCOMING TWICE AS OFTEN',
       });
     }
@@ -49,7 +49,7 @@ const initMissileAttackSystem = (store) => {
 
     if (game.time == 60 * 60 * 9) {
       dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 60 * 10,
+        time: 4000,
         message: 'MISSILES INCOMING TWICE AS OFTEN',
       });
     }
@@ -59,25 +59,25 @@ const initMissileAttackSystem = (store) => {
 
     if (game.time == 60 * 60 * 10) {
       dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 60 * 10,
+        time: 4000,
         message: 'NUCLEAR MISSILES INCOMING',
       });
     }
     if (game.time > (60 * 60 * 10)) {
       freq = 1;
-      altProb = 0.02;
+      altProb = 0.001;
       nukeProb = 0.1;
     }
 
     if (game.time == 60 * 60 * 12) {
       dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 60 * 10,
+        time: 4000,
         message: 'MISSILES INCOMING TWICE AS OFTEN',
       });
     }
     if (game.time > (60 * 60 * 12)) {
       freq = 0.5;
-      altProb = 0.04;
+      altProb = 0.01;
       nukeProb = 0.1;
     }
     let alternateSide = Math.random() < altProb;

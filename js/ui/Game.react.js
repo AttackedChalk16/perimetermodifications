@@ -58,7 +58,7 @@ function Game(props: Props): React.Node {
     initGameOverSystem(store);
     initPheromoneWorkerSystem(store);
     initMissileAttackSystem(store);
-    // initRainSystem(store);
+    initRainSystem(store);
     // initUpgradeSystem(store);
     registerHotkeys(dispatch);
   }, [gameID]);
@@ -241,6 +241,7 @@ function Ticker(props) {
         top: 100,
         left: 120,
         opacity: shouldUseIndex ? index : 1,
+        pointerEvents: 'none',
         textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff',
       }}
     >

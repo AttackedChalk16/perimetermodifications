@@ -31,11 +31,13 @@ const Entities = {
   FOOD: require('./food.js'),
   AGENT: require('./agent.js'),
   TOKEN: require('./token.js'),
+  SUN: require('./sun.js'),
 
   BASIC_TURRET: require('./basicTurret.js'),
   TURBINE: require('./turbine.js'),
   FAST_TURRET: require('./turret.js'),
   MISSILE_TURRET: require('./missileTurret.js'),
+  SOLAR_PANEL: require('./solarPanel.js'),
   LASER_TURRET: require('./laserTurret.js'),
 
   DYNAMITE: require('./dynamite.js'),
