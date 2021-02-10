@@ -6,17 +6,17 @@
 
 
 - - - - - - ISSUES - - - - - -
-  - have missiles coming in waves
-  - fluids not coming out of a single horizontal opening
   - show base HP next to Missiles Survived
     - or perhaps show a ticker?
 
 
 - - - - - - TODO - - - - - -
-  - interpolate mouse events
-    - only linearly? Or use linearization algorithm?
+  - minimap for viewing the surface
+    - turrets, bullets, lasers, missiles
+    - base + some dirt? or just only actual surface?
+    - placed in bottom right?
+  - render the entity in the cards for the HUDS
   - bunker buster missile that attacks dirt
-  - Turn placement palette cards into buttons to look like antocracy controls
   - get gameplay tracking set back up again
     - leaderboard with most missiles survived?
   - main menu
@@ -28,13 +28,7 @@
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
-  - minimap for viewing the surface
-    - turrets, bullets, lasers, missiles
-    - base + some dirt? or just only actual surface?
-    - placed in bottom right?
-  - mode with no missiles
   - HUDs
-    - render the entity in the cards for the HUDS
     - show on position info card whether location is placeable/collectable
     - flicker resources when you spend them
   - plants
@@ -62,6 +56,7 @@
 
 
 - - - - - - - BUGS - - - - - - -
+  - fluids not coming out of a single horizontal opening
   - pheromones:
     - colony pheromone can get disrupted somehow, eventually preventing all pheromone clearing
   - coal:

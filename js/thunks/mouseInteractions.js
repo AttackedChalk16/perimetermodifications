@@ -13,7 +13,7 @@ const {
   isNeighboringColonyPher, isAboveSomething,
 } = require('../selectors/mouseInteractionSelectors');
 
-const handleCollect = (state, dispatch, gridPos, ignorePrevPos) => {
+const handleCollect = (state, dispatch, gridPos, ignorePrevPos, ignoreColony) => {
   const game = state.game;
   // if (!state.game.mouse.isLeftDown) return;
 
@@ -23,12 +23,12 @@ const handleCollect = (state, dispatch, gridPos, ignorePrevPos) => {
     game.prevInteractPosition != null &&
     equals(game.prevInteractPosition, gridPos)
   ) {
-    return;
+    return false;
   }
 
   // only can collect entities that are connected to the colony
-  if (!isNeighboringColonyPher(game, gridPos)) {
-    return;
+  if (!ignoreColony && !isNeighboringColonyPher(game, gridPos)) {
+    return false;
   }
 
   const entities = lookupInGrid(game.grid, gridPos)
@@ -39,6 +39,7 @@ const handleCollect = (state, dispatch, gridPos, ignorePrevPos) => {
   //&& e.type != 'AGENT');
 
   dispatch({type: 'COLLECT_ENTITIES', entities, position: gridPos});
+  return true;
 }
 
 const handlePlace = (state, dispatch, gridPos, ignorePrevPos) => {

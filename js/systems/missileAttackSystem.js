@@ -14,75 +14,87 @@ const initMissileAttackSystem = (store) => {
     if (game.time == time) return;
     time = game.time;
 
-    if (game.pauseMissiles) return;
+    const config = globalConfig.config.difficulty[game.difficulty];
 
-    let freq = 0; // time in seconds
+    const gameSeconds = game.totalGameTime / 1000;
+    let shouldLaunch = false;
     let altProb = 0;
     let nukeProb = 0;
+    let busterProb = 0;
+    let missileFrequency = game.missileFrequency;
+    let inWave = false;
 
-    if (game.time == 1) {
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'WARNING - MISSILES INCOMING IN 1 MINUTE',
-      });
+    // see if we're in a wave
+    if (game.waveIndex < config.waves.length) {
+      // if done with current wave, go up to the next wave index
+      if (
+        gameSeconds >
+        config.waves[game.waveIndex].start + config.waves[game.waveIndex].duration
+      ) {
+        inWave = false;
+        missileFrequency = config.startFrequency;
+        doWaveOver(dispatch, game, missileFrequency);
+
+        // else check if we're in the current wave
+      } else if (gameSeconds > config.waves[game.waveIndex].start) {
+        inWave = true;
+        missileFrequency = config.waves[game.waveIndex].frequency;
+        doStartWave(dispatch, game, missileFrequency);
+      }
+
+      // else check if we're on the infinite final waves
+    } else {
+      const finalWave = config.waves[config.waves.length - 1];
+      const index = game.waveIndex - config.waves.length + 1;
+      // finished current infinite wave
+      if (
+        gameSeconds >
+        finalWave.start + (config.finalWaveDelay * index) + finalWave.duration
+      ) {
+        inWave = false;
+        missileFrequency = config.startFrequency;
+        doWaveOver(dispatch, game, missileFrequency);
+
+        // else check if we're in the current infinite wave
+      } else if (gameSeconds > finalWave.start + config.finalWaveDelay * index) {
+        inWave = true;
+        missileFrequency = finalWave.frequency;
+        doStartWave(dispatch, game, missileFrequency);
+      }
     }
 
-    if (game.time == 60 * 60 * 1) {
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING EVERY 5 - 10 SECONDS',
-      });
-    }
-    if (game.time > (60 * 60 * 1)) {
-      freq = 5;
-    }
-
-    if (game.time == 60 * 60 * 5) {
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING TWICE AS OFTEN',
-      });
-    }
-    if (game.time > (60 * 60 * 5)) {
-      freq = 2;
-    }
-
-    if (game.time == 60 * 60 * 9) {
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING TWICE AS OFTEN',
-      });
-    }
-    if (game.time > (60 * 60 * 9)) {
-      freq = 1;
-    }
-
-    if (game.time == 60 * 60 * 10) {
+    if (!game.sentNukeWarning && gameSeconds > config.nukeTime) {
+      dispatch({type: 'SET_SENT_WARNING', warning: 'sentNukeWarning'});
       dispatch({type: 'SET_TICKER_MESSAGE',
         time: 4000,
         message: 'NUCLEAR MISSILES INCOMING',
       });
+      nukeProb = 0.1;
     }
-    if (game.time > (60 * 60 * 10)) {
-      freq = 1;
-      altProb = 0.001;
+    if (!game.sentBusterWarning && gameSeconds > config.busterTime) {
+      dispatch({type: 'SET_SENT_WARNING', warning: 'sentBusterWarning'});
+      dispatch({type: 'SET_TICKER_MESSAGE',
+        time: 4000,
+        message: 'NUCLEAR MISSILES INCOMING',
+      });
       nukeProb = 0.1;
     }
 
-    if (game.time == 60 * 60 * 12) {
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING TWICE AS OFTEN',
-      });
-    }
-    if (game.time > (60 * 60 * 12)) {
-      freq = 0.5;
-      altProb = 0.01;
-      nukeProb = 0.1;
-    }
     let alternateSide = Math.random() < altProb;
     let isNuke = Math.random() < nukeProb;
-    if (time > 1 && time % (freq * 60) == 0) {
+    let isBuster = Math.random() < busterProb;
+
+    if (
+      gameSeconds > config.startTime &&
+      gameSeconds > game.lastMissileLaunchTime + missileFrequency
+    ) {
+      shouldLaunch = true;
+    }
+    if (game.pauseMissiles) {
+      shouldLaunch = false;
+    }
+
+    if (shouldLaunch) {
       const playerID = 2;
       let pos = {x: randomIn(2, 5), y: randomIn(25, 45)};
       let theta = -1 * randomIn(25, 75) / 100;
@@ -95,10 +107,30 @@ const initMissileAttackSystem = (store) => {
 
       const warhead = Entities[isNuke ? 'NUKE' : 'DYNAMITE'].make(game, null, playerID);
       const missile = Entities.MISSILE.make(game, pos, playerID, warhead, theta, velocity);
+      dispatch({type: 'SET_LAST_MISSILE_TIME'});
       dispatch({type: 'CREATE_ENTITY', entity: missile});
     }
 
   });
 };
+
+function doWaveOver(dispatch, game, missileFrequency) {
+  if (game.inWave) {
+    dispatch({type: 'SET_IN_WAVE', inWave: false});
+    dispatch({type: 'SET_WAVE_INDEX', waveIndex: game.waveIndex + 1});
+    dispatch({type: 'SET_MISSILE_FREQUENCY', missileFrequency});
+  }
+}
+
+function doStartWave(dispatch, game, missileFrequency) {
+  if (!game.inWave) {
+    dispatch({type: 'SET_IN_WAVE', inWave: true});
+    dispatch({type: 'SET_MISSILE_FREQUENCY', missileFrequency});
+    dispatch({type: 'SET_TICKER_MESSAGE',
+      time: 4000,
+      message: 'WAVE OF MISSILES INCOMING',
+    });
+  }
+}
 
 module.exports = {initMissileAttackSystem};

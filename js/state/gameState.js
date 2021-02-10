@@ -51,6 +51,16 @@ const initBaseState = (
     gaiaID: 0,
     numPlayers,
 
+    // for tracking difficulty and missiles
+    difficulty: 'NORMAL',
+    lastMissileLaunchTime: 0,
+    missileFrequency: Infinity,
+    inWave: false,
+    waveIndex: 0,
+    lastWaveTime: 0,
+    sentNukeWarning: false,
+    sentBusterWarning: false,
+
     // for tracking game time
     prevTickTime: 0,
     totalGameTime: 0,

@@ -24,6 +24,34 @@ var config = {
   dispersingPheromoneUpdateRate: 6,
   gravity: -100,
 
+  // all times in seconds
+  difficulty: {
+    EASY: {
+      startTime: 10,
+      startFrequency: 7,
+      waves: [{ start: 5 * 60, duration: 20, frequency: 1 }],
+      finalWaveDelay: 180, // time between each wave after all waves exhausted
+      busterTime: 10 * 60,
+      nukeTime: 12 * 60
+    },
+    NORMAL: {
+      startTime: 1 * 60,
+      startFrequency: 6,
+      waves: [{ start: 5 * 60, duration: 15, frequency: 1 }, { start: 8 * 60, duration: 30, frequency: 1 }, { start: 11 * 60, duration: 15, frequency: 0.5 }, { start: 14 * 60, duration: 30, frequency: 0.5 }, { start: 18 * 60, duration: 30, frequency: 0.2 }, { start: 20 * 60, duration: 30, frequency: 0.2 }],
+      finalWaveDelay: 120, // time between each wave after all waves exhausted
+      busterTime: 10 * 60,
+      nukeTime: 12 * 60
+    },
+    HARD: {
+      startTime: 1,
+      startFrequency: 4,
+      waves: [{ start: 0.5 * 60, duration: 15, frequency: 1 }, { start: 1 * 60, duration: 15, frequency: 1 }],
+      finalWaveDelay: 30, // time between each wave after all waves exhausted
+      busterTime: 8 * 60 * 1000,
+      nukeTime: 10 * 60 * 1000
+    }
+  },
+
   proceduralFrequencies: {
     STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
     IRON: { numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10 },
@@ -2726,6 +2754,47 @@ var gameReducer = function gameReducer(game, action) {
         game.timeSinceLastRain = 0;
         return game;
       }
+    case 'SET_DIFFICULTY':
+      {
+        var difficulty = action.difficulty;
+
+        game.difficulty = difficulty;
+        game.missileFrequency = globalConfig.config.difficulty[difficulty].startFrequency;
+        return game;
+      }
+    case 'SET_LAST_MISSILE_TIME':
+      {
+        game.lastMissileLaunchTime = game.totalGameTime / 1000;
+        return game;
+      }
+    case 'SET_IN_WAVE':
+      {
+        var inWave = action.inWave;
+
+        game.inWave = inWave;
+        return game;
+      }
+    case 'SET_MISSILE_FREQUENCY':
+      {
+        var missileFrequency = action.missileFrequency;
+
+        game.missileFrequency = missileFrequency;
+        return game;
+      }
+    case 'SET_WAVE_INDEX':
+      {
+        var waveIndex = action.waveIndex;
+
+        game.waveIndex = waveIndex;
+        return game;
+      }
+    case 'SET_SENT_WARNING':
+      {
+        var warning = action.warning;
+
+        game[warning] = true;
+        return game;
+      }
     case 'COLLECT_ENTITIES':
       {
         var _entities = action.entities,
@@ -3253,6 +3322,12 @@ var rootReducer = function rootReducer(state, action) {
     case 'PAUSE_MISSILES':
     case 'PAUSE_POWER_CONSUMPTION':
     case 'SET_TICKER_MESSAGE':
+    case 'SET_DIFFICULTY':
+    case 'SET_LAST_MISSILE_TIME':
+    case 'SET_MISSILE_FREQUENCY':
+    case 'SET_WAVE_INDEX':
+    case 'SET_SENT_WARNING':
+    case 'SET_IN_WAVE':
     case 'SUBTRACT_BASE_RESOURCES':
     case 'ENQUEUE_ENTITY_ACTION':
       {
@@ -9061,6 +9136,16 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
     gaiaID: 0,
     numPlayers: numPlayers,
 
+    // for tracking difficulty and missiles
+    difficulty: 'NORMAL',
+    lastMissileLaunchTime: 0,
+    missileFrequency: Infinity,
+    inWave: false,
+    waveIndex: 0,
+    lastWaveTime: 0,
+    sentNukeWarning: false,
+    sentBusterWarning: false,
+
     // for tracking game time
     prevTickTime: 0,
     totalGameTime: 0,
@@ -9123,6 +9208,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
       isLeftDown: false,
       isRightDown: false,
       downPos: { x: 0, y: 0 },
+      prevPos: { x: 0, y: 0 },
       curPos: { x: 0, y: 0 },
       curPixel: { x: 0, y: 0 },
       prevPixel: { x: 0, y: 0 }
@@ -9514,75 +9600,78 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
     if (game.time == time) return;
     time = game.time;
 
-    if (game.pauseMissiles) return;
+    var config = globalConfig.config.difficulty[game.difficulty];
 
-    var freq = 0; // time in seconds
+    var gameSeconds = game.totalGameTime / 1000;
+    var shouldLaunch = false;
     var altProb = 0;
     var nukeProb = 0;
+    var busterProb = 0;
+    var missileFrequency = game.missileFrequency;
+    var inWave = false;
 
-    if (game.time == 1) {
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'WARNING - MISSILES INCOMING IN 1 MINUTE'
-      });
+    // see if we're in a wave
+    if (game.waveIndex < config.waves.length) {
+      // if done with current wave, go up to the next wave index
+      if (gameSeconds > config.waves[game.waveIndex].start + config.waves[game.waveIndex].duration) {
+        inWave = false;
+        missileFrequency = config.startFrequency;
+        doWaveOver(dispatch, game, missileFrequency);
+
+        // else check if we're in the current wave
+      } else if (gameSeconds > config.waves[game.waveIndex].start) {
+        inWave = true;
+        missileFrequency = config.waves[game.waveIndex].frequency;
+        doStartWave(dispatch, game, missileFrequency);
+      }
+
+      // else check if we're on the infinite final waves
+    } else {
+      var finalWave = config.waves[config.waves.length - 1];
+      var index = game.waveIndex - config.waves.length + 1;
+      // finished current infinite wave
+      if (gameSeconds > finalWave.start + config.finalWaveDelay * index + finalWave.duration) {
+        inWave = false;
+        missileFrequency = config.startFrequency;
+        doWaveOver(dispatch, game, missileFrequency);
+
+        // else check if we're in the current infinite wave
+      } else if (gameSeconds > finalWave.start + config.finalWaveDelay * index) {
+        inWave = true;
+        missileFrequency = finalWave.frequency;
+        doStartWave(dispatch, game, missileFrequency);
+      }
     }
 
-    if (game.time == 60 * 60 * 1) {
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING EVERY 5 - 10 SECONDS'
-      });
-    }
-    if (game.time > 60 * 60 * 1) {
-      freq = 5;
-    }
-
-    if (game.time == 60 * 60 * 5) {
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING TWICE AS OFTEN'
-      });
-    }
-    if (game.time > 60 * 60 * 5) {
-      freq = 2;
-    }
-
-    if (game.time == 60 * 60 * 9) {
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING TWICE AS OFTEN'
-      });
-    }
-    if (game.time > 60 * 60 * 9) {
-      freq = 1;
-    }
-
-    if (game.time == 60 * 60 * 10) {
+    if (!game.sentNukeWarning && gameSeconds > config.nukeTime) {
+      dispatch({ type: 'SET_SENT_WARNING', warning: 'sentNukeWarning' });
       dispatch({ type: 'SET_TICKER_MESSAGE',
         time: 4000,
         message: 'NUCLEAR MISSILES INCOMING'
       });
+      nukeProb = 0.1;
     }
-    if (game.time > 60 * 60 * 10) {
-      freq = 1;
-      altProb = 0.001;
+    if (!game.sentBusterWarning && gameSeconds > config.busterTime) {
+      dispatch({ type: 'SET_SENT_WARNING', warning: 'sentBusterWarning' });
+      dispatch({ type: 'SET_TICKER_MESSAGE',
+        time: 4000,
+        message: 'NUCLEAR MISSILES INCOMING'
+      });
       nukeProb = 0.1;
     }
 
-    if (game.time == 60 * 60 * 12) {
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'MISSILES INCOMING TWICE AS OFTEN'
-      });
-    }
-    if (game.time > 60 * 60 * 12) {
-      freq = 0.5;
-      altProb = 0.01;
-      nukeProb = 0.1;
-    }
     var alternateSide = Math.random() < altProb;
     var isNuke = Math.random() < nukeProb;
-    if (time > 1 && time % (freq * 60) == 0) {
+    var isBuster = Math.random() < busterProb;
+
+    if (gameSeconds > config.startTime && gameSeconds > game.lastMissileLaunchTime + missileFrequency) {
+      shouldLaunch = true;
+    }
+    if (game.pauseMissiles) {
+      shouldLaunch = false;
+    }
+
+    if (shouldLaunch) {
       var playerID = 2;
       var pos = { x: randomIn(2, 5), y: randomIn(25, 45) };
       var theta = -1 * randomIn(25, 75) / 100;
@@ -9595,10 +9684,30 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
 
       var warhead = Entities[isNuke ? 'NUKE' : 'DYNAMITE'].make(game, null, playerID);
       var missile = Entities.MISSILE.make(game, pos, playerID, warhead, theta, velocity);
+      dispatch({ type: 'SET_LAST_MISSILE_TIME' });
       dispatch({ type: 'CREATE_ENTITY', entity: missile });
     }
   });
 };
+
+function doWaveOver(dispatch, game, missileFrequency) {
+  if (game.inWave) {
+    dispatch({ type: 'SET_IN_WAVE', inWave: false });
+    dispatch({ type: 'SET_WAVE_INDEX', waveIndex: game.waveIndex + 1 });
+    dispatch({ type: 'SET_MISSILE_FREQUENCY', missileFrequency: missileFrequency });
+  }
+}
+
+function doStartWave(dispatch, game, missileFrequency) {
+  if (!game.inWave) {
+    dispatch({ type: 'SET_IN_WAVE', inWave: true });
+    dispatch({ type: 'SET_MISSILE_FREQUENCY', missileFrequency: missileFrequency });
+    dispatch({ type: 'SET_TICKER_MESSAGE',
+      time: 4000,
+      message: 'WAVE OF MISSILES INCOMING'
+    });
+  }
+}
 
 module.exports = { initMissileAttackSystem: initMissileAttackSystem };
 },{"../config":1,"../entities/registry":21,"../utils/stochastic":107}],69:[function(require,module,exports){
@@ -9630,7 +9739,7 @@ var initMouseControlsSystem = function initMouseControlsSystem(store, handlers) 
   // } = handlers;
 
   if (handlers.mouseMove) {
-    document.onmousemove = throttle(moveHandler, [store, handlers], 6);
+    document.onmousemove = throttle(moveHandler, [store, handlers], 12);
     document.ontouchmove = function (ev) {
       if (ev.target.id === 'canvas') {
         ev.preventDefault();
@@ -10109,18 +10218,18 @@ var _require8 = require('../selectors/mouseInteractionSelectors'),
     isNeighboringColonyPher = _require8.isNeighboringColonyPher,
     isAboveSomething = _require8.isAboveSomething;
 
-var handleCollect = function handleCollect(state, dispatch, gridPos, ignorePrevPos) {
+var handleCollect = function handleCollect(state, dispatch, gridPos, ignorePrevPos, ignoreColony) {
   var game = state.game;
   // if (!state.game.mouse.isLeftDown) return;
 
   // don't interact with the same position twice
   if (!ignorePrevPos && game.prevInteractPosition != null && equals(game.prevInteractPosition, gridPos)) {
-    return;
+    return false;
   }
 
   // only can collect entities that are connected to the colony
-  if (!isNeighboringColonyPher(game, gridPos)) {
-    return;
+  if (!ignoreColony && !isNeighboringColonyPher(game, gridPos)) {
+    return false;
   }
 
   var entities = lookupInGrid(game.grid, gridPos).map(function (id) {
@@ -10133,6 +10242,7 @@ var handleCollect = function handleCollect(state, dispatch, gridPos, ignorePrevP
   //&& e.type != 'AGENT');
 
   dispatch({ type: 'COLLECT_ENTITIES', entities: entities, position: gridPos });
+  return true;
 };
 
 var handlePlace = function handlePlace(state, dispatch, gridPos, ignorePrevPos) {
@@ -10593,15 +10703,19 @@ module.exports = Checkbox;
 },{"react":144}],80:[function(require,module,exports){
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var React = require('react');
 
 function Divider(props) {
+  var style = props.style;
+
   return React.createElement('div', {
-    style: {
+    style: _extends({
       width: '100%',
       height: '0px',
       border: '1px solid black'
-    }
+    }, style)
   });
 }
 
@@ -11183,6 +11297,8 @@ module.exports = ExperimentalSidebar;
 },{"./Components/Button.react":78,"./Components/Checkbox.react":79,"./Components/Divider.react":80,"./Components/Dropdown.react":81,"./Components/Slider.react":86,"react":144}],88:[function(require,module,exports){
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var React = require('react');
 var Button = require('./Components/Button.react');
 var Canvas = require('./Canvas.react');
@@ -11410,10 +11526,28 @@ function registerHotkeys(dispatch) {
 function configureMouseHandlers(game) {
   var handlers = {
     mouseMove: function mouseMove(state, dispatch, gridPos) {
-      if (state.game.mouse.isLeftDown) {
-        handleCollect(state, dispatch, gridPos);
-      } else if (state.game.mouse.isRightDown) {
-        handlePlace(state, dispatch, gridPos);
+      var dim = inLine(gridPos, state.game.mouse.prevPos);
+      if (dim) {
+        var firstCollectedSucceeded = false;
+        for (var i = 1; i <= dim.dist; i++) {
+          var pos = _extends({}, state.game.mouse.prevPos);
+          pos[dim.dim] += i * dim.mult;
+          if (state.game.mouse.isLeftDown) {
+            var success = handleCollect(state, dispatch, pos, false, i > 1 && firstCollectedSucceeded /* ignore colony */
+            );
+            if (success && i == 1) {
+              firstCollectedSucceeded = true;
+            }
+          } else if (state.game.mouse.isRightDown) {
+            handlePlace(state, dispatch, pos);
+          }
+        }
+      } else {
+        if (state.game.mouse.isLeftDown) {
+          handleCollect(state, dispatch, gridPos);
+        } else if (state.game.mouse.isRightDown) {
+          handlePlace(state, dispatch, gridPos);
+        }
       }
     },
     leftDown: function leftDown(state, dispatch, gridPos) {
@@ -11427,6 +11561,16 @@ function configureMouseHandlers(game) {
     }
   };
   return handlers;
+}
+
+function inLine(pos, prevPos) {
+  if (pos.x == prevPos.x && Math.abs(pos.y - prevPos.y) > 1) {
+    return { dim: 'y', dist: Math.abs(pos.y - prevPos.y), mult: pos.y > prevPos.y ? 1 : -1 };
+  }
+  if (pos.y == prevPos.y && Math.abs(pos.x - prevPos.x) > 1) {
+    return { dim: 'x', dist: Math.abs(pos.x - prevPos.x), mult: pos.x > prevPos.x ? 1 : -1 };
+  }
+  return false;
 }
 
 function Ticker(props) {
@@ -12807,6 +12951,11 @@ function Lobby(props) {
       loadingProgress = _useState8[0],
       setLoadingProgress = _useState8[1];
 
+  var _useState9 = useState('NORMAL'),
+      _useState10 = _slicedToArray(_useState9, 2),
+      difficulty = _useState10[0],
+      setDifficulty = _useState10[1];
+
   // on mount
 
 
@@ -12854,6 +13003,10 @@ function Lobby(props) {
                 dispatch({ type: 'DISMISS_MODAL' });
                 dispatch({ type: 'SET_SCREEN', screen: 'GAME' });
                 dispatch({ type: 'START_TICK' });
+                dispatch({ type: 'SET_DIFFICULTY', difficulty: difficulty });
+                if (difficulty == 'EASY') {
+                  dispatch({ type: 'PAUSE_MISSILES', pauseMissiles: true });
+                }
               }
             }
           }]
@@ -12904,21 +13057,71 @@ function Lobby(props) {
         null,
         '~Alpha~'
       ),
+      React.createElement(
+        'h2',
+        { style: { fontSize: '4em', marginBottom: 0 } },
+        'Play:'
+      ),
       React.createElement(Button, {
         style: {
           width: '100%',
           height: 50,
           fontSize: '2em',
-          color: 'white',
           borderRadius: '8px',
           cursor: 'pointer'
         },
         disabled: loading != '' || isLoaded,
-        label: 'Play',
+        label: 'Easy',
         onClick: function onClick() {
+          setDifficulty('EASY');
           setLoading("Loading..");
         }
       }),
+      React.createElement(
+        'div',
+        { style: { marginBottom: 12 } },
+        'Missiles don\'t start coming at you until you\'re ready'
+      ),
+      React.createElement(Button, {
+        style: {
+          width: '100%',
+          height: 50,
+          fontSize: '2em',
+          borderRadius: '8px',
+          cursor: 'pointer'
+        },
+        disabled: loading != '' || isLoaded,
+        label: 'Normal',
+        onClick: function onClick() {
+          setDifficulty('NORMAL');
+          setLoading("Loading..");
+        }
+      }),
+      React.createElement(
+        'div',
+        { style: { marginBottom: 12 } },
+        'Missiles come at you in waves of increasing difficulty'
+      ),
+      React.createElement(Button, {
+        style: {
+          width: '100%',
+          height: 50,
+          fontSize: '2em',
+          borderRadius: '8px',
+          cursor: 'pointer'
+        },
+        disabled: loading != '' || isLoaded,
+        label: 'Hard',
+        onClick: function onClick() {
+          setDifficulty('HARD');
+          setLoading("Loading..");
+        }
+      }),
+      React.createElement(
+        'div',
+        { style: { marginBottom: 12 } },
+        'Missiles come at you relentlessly from the start'
+      ),
       React.createElement(
         'h3',
         null,
@@ -12931,10 +13134,10 @@ function Lobby(props) {
 }
 
 function MadeBy(props) {
-  var _useState9 = useState(0),
-      _useState10 = _slicedToArray(_useState9, 2),
-      rerender = _useState10[0],
-      setRerender = _useState10[1];
+  var _useState11 = useState(0),
+      _useState12 = _slicedToArray(_useState11, 2),
+      rerender = _useState12[0],
+      setRerender = _useState12[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
@@ -12998,20 +13201,20 @@ function MadeBy(props) {
 function LevelEditor(props) {
   var dispatch = props.dispatch;
 
-  var _useState11 = useState('mediumDemoLevel'),
-      _useState12 = _slicedToArray(_useState11, 2),
-      level = _useState12[0],
-      setLevel = _useState12[1];
-
-  var _useState13 = useState(true),
+  var _useState13 = useState('mediumDemoLevel'),
       _useState14 = _slicedToArray(_useState13, 2),
-      useLevel = _useState14[0],
-      setUseLevel = _useState14[1];
+      level = _useState14[0],
+      setLevel = _useState14[1];
 
-  var _useState15 = useState(0),
+  var _useState15 = useState(true),
       _useState16 = _slicedToArray(_useState15, 2),
-      rerender = _useState16[0],
-      setRerender = _useState16[1];
+      useLevel = _useState16[0],
+      setUseLevel = _useState16[1];
+
+  var _useState17 = useState(0),
+      _useState18 = _slicedToArray(_useState17, 2),
+      rerender = _useState18[0],
+      setRerender = _useState18[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
@@ -13597,7 +13800,8 @@ function TopBar(props) {
         style: {
           // float: 'left',
           paddingLeft: 8,
-          display: 'inline-block'
+          display: 'inline-block',
+          color: 'black'
         }
       },
       React.createElement(AudioWidget, {
@@ -13633,7 +13837,17 @@ function TopBar(props) {
             }
           }
         })
-      )
+      ),
+      game.difficulty == 'EASY' ? React.createElement(
+        'div',
+        null,
+        React.createElement(Button, {
+          label: game.pauseMissiles ? 'Send Missiles' : 'Pause Missiles',
+          onClick: function onClick() {
+            return dispatch({ type: 'PAUSE_MISSILES', pauseMissiles: !game.pauseMissiles });
+          }
+        })
+      ) : null
     ),
     React.createElement(
       'div',
@@ -13715,6 +13929,11 @@ function instructionsModal(dispatch) {
           React.createElement(
             'div',
             null,
+            'Arrow Keys: move screen'
+          ),
+          React.createElement(
+            'div',
+            null,
             'Left Click: collect non-fluid resource'
           ),
           React.createElement(
@@ -13726,11 +13945,6 @@ function instructionsModal(dispatch) {
             'div',
             null,
             'NOTE: resources can only be collected/placed if there is a path to the base. A red cursor means collection/placement is blocked, green cursor means it is possible'
-          ),
-          React.createElement(
-            'div',
-            null,
-            'Arrow Keys: move screen'
           )
         ),
         React.createElement(
@@ -13751,7 +13965,10 @@ function instructionsModal(dispatch) {
             'Survive as long as you can!'
           )
         ),
-        React.createElement(Divider, null),
+        React.createElement(Divider, { style: {
+            marginTop: 6,
+            marginBottom: 6
+          } }),
         React.createElement(
           'div',
           null,

@@ -224,6 +224,36 @@ const gameReducer = (game: Game, action: Action): Game => {
       game.timeSinceLastRain = 0;
       return game;
     }
+    case 'SET_DIFFICULTY': {
+      const {difficulty} = action;
+      game.difficulty = difficulty;
+      game.missileFrequency = globalConfig.config.difficulty[difficulty].startFrequency;
+      return game;
+    }
+    case 'SET_LAST_MISSILE_TIME': {
+      game.lastMissileLaunchTime = game.totalGameTime / 1000;
+      return game;
+    }
+    case 'SET_IN_WAVE': {
+      const {inWave} = action;
+      game.inWave = inWave;
+      return game;
+    }
+    case 'SET_MISSILE_FREQUENCY': {
+      const {missileFrequency} = action;
+      game.missileFrequency = missileFrequency;
+      return game;
+    }
+    case 'SET_WAVE_INDEX': {
+      const {waveIndex} = action;
+      game.waveIndex = waveIndex;
+      return game;
+    }
+    case 'SET_SENT_WARNING': {
+      const {warning} = action;
+      game[warning] = true;
+      return game;
+    }
     case 'COLLECT_ENTITIES': {
       const {entities, position} = action;
       if (position != null) {

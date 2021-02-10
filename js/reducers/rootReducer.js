@@ -226,6 +226,12 @@ const rootReducer = (state: State, action: Action): State => {
     case 'PAUSE_MISSILES':
     case 'PAUSE_POWER_CONSUMPTION':
     case 'SET_TICKER_MESSAGE':
+    case 'SET_DIFFICULTY':
+    case 'SET_LAST_MISSILE_TIME':
+    case 'SET_MISSILE_FREQUENCY':
+    case 'SET_WAVE_INDEX':
+    case 'SET_SENT_WARNING':
+    case 'SET_IN_WAVE':
     case 'SUBTRACT_BASE_RESOURCES':
     case 'ENQUEUE_ENTITY_ACTION': {
       if (!state.game) return state;

@@ -62,6 +62,7 @@ function TopBar(props) {
           // float: 'left',
           paddingLeft: 8,
           display: 'inline-block',
+          color: 'black',
         }}
       >
         <AudioWidget
@@ -95,6 +96,14 @@ function TopBar(props) {
             }}
           />
         </div>
+        {game.difficulty == 'EASY' ?
+          (<div>
+            <Button
+              label={game.pauseMissiles ? 'Send Missiles' : 'Pause Missiles'}
+              onClick={() => dispatch({type: 'PAUSE_MISSILES', pauseMissiles: !game.pauseMissiles})}
+            />
+          </div>) : null
+        }
       </div>
       <div
         style={{
@@ -148,18 +157,21 @@ function instructionsModal(dispatch) {
       body={(<span style={{textAlign: 'initial'}}>
         <div>
           <div style={{textAlign: 'center'}}><b>Controls:</b></div>
+          <div>Arrow Keys: move screen</div>
           <div>Left Click: collect non-fluid resource</div>
           <div>Right Click: place selected resource or building</div>
           <div>NOTE: resources can only be collected/placed if there is a path
               to the base. A red cursor means collection/placement is blocked, green
               cursor means it is possible</div>
-          <div>Arrow Keys: move screen</div>
         </div>
         <div>
           <div style={{textAlign: 'center'}}><b>Goal:</b></div>
           <div>Survive as long as you can!</div>
         </div>
-        <Divider />
+        <Divider style={{
+          marginTop: 6,
+          marginBottom: 6,
+        }} />
         <div>
           Additional information about how resources interact can be displayed
           by hovering over each resource in the selector at the top of the screen

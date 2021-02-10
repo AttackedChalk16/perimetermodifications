@@ -24,6 +24,34 @@ var config = {
   dispersingPheromoneUpdateRate: 6,
   gravity: -100,
 
+  // all times in seconds
+  difficulty: {
+    EASY: {
+      startTime: 10,
+      startFrequency: 7,
+      waves: [{ start: 5 * 60, duration: 20, frequency: 1 }],
+      finalWaveDelay: 180, // time between each wave after all waves exhausted
+      busterTime: 10 * 60,
+      nukeTime: 12 * 60
+    },
+    NORMAL: {
+      startTime: 1 * 60,
+      startFrequency: 6,
+      waves: [{ start: 5 * 60, duration: 15, frequency: 1 }, { start: 8 * 60, duration: 30, frequency: 1 }, { start: 11 * 60, duration: 15, frequency: 0.5 }, { start: 14 * 60, duration: 30, frequency: 0.5 }, { start: 18 * 60, duration: 30, frequency: 0.2 }, { start: 20 * 60, duration: 30, frequency: 0.2 }],
+      finalWaveDelay: 120, // time between each wave after all waves exhausted
+      busterTime: 10 * 60,
+      nukeTime: 12 * 60
+    },
+    HARD: {
+      startTime: 1,
+      startFrequency: 4,
+      waves: [{ start: 0.5 * 60, duration: 15, frequency: 1 }, { start: 1 * 60, duration: 15, frequency: 1 }],
+      finalWaveDelay: 30, // time between each wave after all waves exhausted
+      busterTime: 8 * 60 * 1000,
+      nukeTime: 10 * 60 * 1000
+    }
+  },
+
   proceduralFrequencies: {
     STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
     IRON: { numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10 },

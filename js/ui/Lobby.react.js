@@ -30,6 +30,7 @@ function Lobby(props: Props): React.Node {
   const [loading, setLoading] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [difficulty, setDifficulty] = useState('NORMAL');
 
   // on mount
   useEffect(() => {
@@ -81,6 +82,10 @@ function Lobby(props: Props): React.Node {
                 dispatch({type: 'DISMISS_MODAL'});
                 dispatch({type: 'SET_SCREEN', screen: 'GAME'});
                 dispatch({type: 'START_TICK'});
+                dispatch({type: 'SET_DIFFICULTY', difficulty});
+                if (difficulty == 'EASY') {
+                  dispatch({type: 'PAUSE_MISSILES', pauseMissiles: true});
+                }
               }
             }
           }]}
@@ -119,21 +124,61 @@ function Lobby(props: Props): React.Node {
       >
         <h1>perimeter</h1>
         <h3>~Alpha~</h3>
+        <h2 style={{fontSize: '4em', marginBottom: 0}}>Play:</h2>
         <Button
           style={{
             width: '100%',
             height: 50,
             fontSize: '2em',
-            color: 'white',
             borderRadius: '8px',
             cursor: 'pointer',
           }}
           disabled={loading != '' || isLoaded}
-          label="Play"
+          label="Easy"
           onClick={() => {
+            setDifficulty('EASY');
             setLoading("Loading..");
           }}
         />
+        <div style={{marginBottom: 12}}>
+          Missiles don't start coming at you until you're ready
+        </div>
+        <Button
+          style={{
+            width: '100%',
+            height: 50,
+            fontSize: '2em',
+            borderRadius: '8px',
+            cursor: 'pointer',
+          }}
+          disabled={loading != '' || isLoaded}
+          label="Normal"
+          onClick={() => {
+            setDifficulty('NORMAL');
+            setLoading("Loading..");
+          }}
+        />
+        <div style={{marginBottom: 12}}>
+          Missiles come at you in waves of increasing difficulty
+        </div>
+        <Button
+          style={{
+            width: '100%',
+            height: 50,
+            fontSize: '2em',
+            borderRadius: '8px',
+            cursor: 'pointer',
+          }}
+          disabled={loading != '' || isLoaded}
+          label="Hard"
+          onClick={() => {
+            setDifficulty('HARD');
+            setLoading("Loading..");
+          }}
+        />
+        <div style={{marginBottom: 12}}>
+          Missiles come at you relentlessly from the start
+        </div>
         <h3>{loading}</h3>
       </div>
       <LevelEditor dispatch={dispatch} />
