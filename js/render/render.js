@@ -60,7 +60,7 @@ const renderFrame = (game: Game): void => {
   ctx.fillRect(0, 0, globalConfig.config.canvasWidth, globalConfig.config.canvasHeight);
 
   const pxWidth = globalConfig.config.canvasWidth / 4;
-  const pxHeight = pxWidth * (game.viewHeight / game.viewWidth);
+  const pxHeight = 0.6 * pxWidth;
   if (!game.maxMinimap) {
     const bigDims = {
       pxWidth: globalConfig.config.canvasWidth,
@@ -71,23 +71,23 @@ const renderFrame = (game: Game): void => {
     };
     const miniDims = {
       pxWidth,
-      pxHeight,
-      viewWidth: game.viewWidth * 2,
-      viewHeight: game.viewHeight * 2,
+      pxHeight: 0.6 * pxWidth,
+      viewWidth: game.gridWidth,
+      viewHeight: 60,
       viewPos: {
-        x: game.viewPos.x - game.viewWidth / 2,
-        y: game.viewPos.y - game.viewHeight / 2,
+        x: 0,
+        y: 0,
       },
     };
     // HACK: only pxWidth/pxHeight can really actually be set in main view
     renderView(canvas, ctx, game, bigDims);
-    // ctx.save();
-    // ctx.translate(
-    //   globalConfig.config.canvasWidth - pxWidth - 8,
-    //   8,
-    // );
-    // renderMinimap(ctx, game, miniDims);
-    // ctx.restore();
+    ctx.save();
+    ctx.translate(
+      globalConfig.config.canvasWidth - pxWidth - 8,
+      globalConfig.config.canvasHeight - pxHeight - 8,
+    );
+    renderMinimap(ctx, game, miniDims);
+    ctx.restore();
   } else {
     const nextViewPos = {
       x: game.viewPos.x - game.viewWidth / 2,

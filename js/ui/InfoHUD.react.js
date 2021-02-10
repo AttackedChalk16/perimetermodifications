@@ -37,6 +37,7 @@ const InfoHUD = (props): React.Node => {
     .map(e => (<EntityInfoCard key={'info_' + e.id} entity={e} />));
 
   const temp = getTemperature(game, mousePos);
+  const maxLight = pheromones.LIGHT.quantity;
 
   return (
     <div
@@ -47,7 +48,7 @@ const InfoHUD = (props): React.Node => {
         <div><b>Position: </b></div>
         <div>x: {mousePos.x} y: {mousePos.y}</div>
         <div><b>Temperature</b>: {temp}</div>
-        <div><b>Sun Light</b>: {sunLight}</div>
+        <div><b>Sun Light</b>: {(sunLight / maxLight * 100).toFixed(0)}%</div>
       </InfoCard>
       {entityInfoCards}
       {pheromoneInfoCards}

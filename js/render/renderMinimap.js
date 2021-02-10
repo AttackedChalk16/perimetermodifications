@@ -10,6 +10,7 @@ const {renderWormCanvas} = require('./renderSegmented');
 const {
   getInterpolatedPos, getSpriteAndOffset, getInterpolatedTheta,
 } = require('../selectors/sprites');
+const {Entities} = require('../entities/registry');
 
 import type {Game, Vector, Entity} from '../types';
 
@@ -60,10 +61,29 @@ const renderMinimap = (ctx, game: Game, dims: Dimensions): void => {
   for (const id of game.DOODAD) renderEntity(ctx, game, dims, id, renderTile);
   for (const id of game.DIRT) renderEntity(ctx, game, dims, id, renderTile);
   for (const id of game.STONE) renderEntity(ctx, game, dims, id, renderTile);
-  for (const id of game.FOOD) renderEntity(ctx, game, dims, id, renderTile);
 
-  for (const id of game.WORM) renderEntity(ctx, game, dims, id, renderWormCanvas);
-  for (const id of game.AGENT) renderEntity(ctx, game, dims, id, renderPill);
+  for (const id of game.BASIC_TURRET)
+    renderEntity(ctx, game, dims, id, Entities.BASIC_TURRET.render);
+  for (const id of game.FAST_TURRET)
+    renderEntity(ctx, game, dims, id, Entities.FAST_TURRET.render);
+  for (const id of game.MISSILE_TURRET)
+    renderEntity(ctx, game, dims, id, Entities.MISSILE_TURRET.render);
+  for (const id of game.LASER_TURRET)
+    renderEntity(ctx, game, dims, id, Entities.LASER_TURRET.render);
+
+  for (const id of game.MISSILE)
+    renderEntity(ctx, game, dims, id, Entities.MISSILE.render);
+  for (const id of game.BULLET)
+    renderEntity(ctx, game, dims, id, Entities.BULLET.render);
+
+  for (const id of game.DYNAMITE)
+    renderEntity(ctx, game, dims, id, Entities.DYNAMITE.render);
+  for (const id of game.NUKE)
+    renderEntity(ctx, game, dims, id, Entities.NUKE.render);
+
+  for (const id of game.BASE)
+    renderEntity(ctx, game, dims, id, Entities.BASE.render);
+
 
   ctx.restore();
 };
@@ -74,18 +94,18 @@ const renderEntity = (ctx, game, dims, id, renderFn): void => {
   if (!onMinimap(dims, entity) && entity.type != 'DOODAD') {
     return;
   }
-  if (entity.isAgent) {
-    // interpolate position between previous position and current position
-    entity = {
-      ...entity,
-      position: getInterpolatedPos(game, entity),
-      theta: getInterpolatedTheta(game, entity),
-    };
-  }
-  renderFn(ctx, game, dims, entity);
+  // if (entity.isAgent) {
+  //   // interpolate position between previous position and current position
+  //   entity = {
+  //     ...entity,
+  //     position: getInterpolatedPos(game, entity),
+  //     theta: getInterpolatedTheta(game, entity),
+  //   };
+  // }
+  renderFn(ctx, game, entity, dims);
 };
 
-const renderTile = (ctx, game, dims, entity): void => {
+const renderTile = (ctx, game, entity, dims): void => {
   if (entity == null) return;
   switch (entity.type) {
     case 'FOOD':
@@ -133,7 +153,7 @@ const renderTile = (ctx, game, dims, entity): void => {
   }
 };
 
-const renderPill = (ctx, game, dims, entity): void => {
+const renderPill = (ctx, game, entity, dims): void => {
   if (!onMinimapSmall(dims, entity)) return;
   ctx.save();
   if (entity.playerID == game.playerID) {

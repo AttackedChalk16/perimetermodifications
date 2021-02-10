@@ -29,7 +29,7 @@ var config = {
     EASY: {
       startTime: 10,
       startFrequency: 7,
-      waves: [{ start: 5 * 60, duration: 20, frequency: 1 }],
+      waves: [{ start: 5 * 60, duration: 20, frequency: 1 }, { start: 10 * 60, duration: 20, frequency: 0.75 }],
       finalWaveDelay: 180, // time between each wave after all waves exhausted
       busterTime: 10 * 60,
       nukeTime: 12 * 60
@@ -37,16 +37,16 @@ var config = {
     NORMAL: {
       startTime: 1 * 60,
       startFrequency: 6,
-      waves: [{ start: 5 * 60, duration: 15, frequency: 1 }, { start: 8 * 60, duration: 30, frequency: 1 }, { start: 11 * 60, duration: 15, frequency: 0.5 }, { start: 14 * 60, duration: 30, frequency: 0.5 }, { start: 18 * 60, duration: 30, frequency: 0.2 }, { start: 20 * 60, duration: 30, frequency: 0.2 }],
+      waves: [{ start: 5 * 60, duration: 15, frequency: 1 }, { start: 8 * 60, duration: 30, frequency: 0.75 }, { start: 11 * 60, duration: 15, frequency: 0.5 }, { start: 14 * 60, duration: 30, frequency: 0.5 }, { start: 18 * 60, duration: 30, frequency: 0.2 }, { start: 20 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 120, // time between each wave after all waves exhausted
       busterTime: 10 * 60,
       nukeTime: 12 * 60
     },
     HARD: {
       startTime: 1,
-      startFrequency: 4,
-      waves: [{ start: 0.5 * 60, duration: 15, frequency: 1 }, { start: 1 * 60, duration: 15, frequency: 1 }],
-      finalWaveDelay: 30, // time between each wave after all waves exhausted
+      startFrequency: 3,
+      waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
+      finalWaveDelay: 60, // time between each wave after all waves exhausted
       busterTime: 8 * 60 * 1000,
       nukeTime: 10 * 60 * 1000
     }

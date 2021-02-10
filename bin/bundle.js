@@ -29,7 +29,7 @@ var config = {
     EASY: {
       startTime: 10,
       startFrequency: 7,
-      waves: [{ start: 5 * 60, duration: 20, frequency: 1 }],
+      waves: [{ start: 5 * 60, duration: 20, frequency: 1 }, { start: 10 * 60, duration: 20, frequency: 0.75 }],
       finalWaveDelay: 180, // time between each wave after all waves exhausted
       busterTime: 10 * 60,
       nukeTime: 12 * 60
@@ -37,16 +37,16 @@ var config = {
     NORMAL: {
       startTime: 1 * 60,
       startFrequency: 6,
-      waves: [{ start: 5 * 60, duration: 15, frequency: 1 }, { start: 8 * 60, duration: 30, frequency: 1 }, { start: 11 * 60, duration: 15, frequency: 0.5 }, { start: 14 * 60, duration: 30, frequency: 0.5 }, { start: 18 * 60, duration: 30, frequency: 0.2 }, { start: 20 * 60, duration: 30, frequency: 0.2 }],
+      waves: [{ start: 5 * 60, duration: 15, frequency: 1 }, { start: 8 * 60, duration: 30, frequency: 0.75 }, { start: 11 * 60, duration: 15, frequency: 0.5 }, { start: 14 * 60, duration: 30, frequency: 0.5 }, { start: 18 * 60, duration: 30, frequency: 0.2 }, { start: 20 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 120, // time between each wave after all waves exhausted
       busterTime: 10 * 60,
       nukeTime: 12 * 60
     },
     HARD: {
       startTime: 1,
-      startFrequency: 4,
-      waves: [{ start: 0.5 * 60, duration: 15, frequency: 1 }, { start: 1 * 60, duration: 15, frequency: 1 }],
-      finalWaveDelay: 30, // time between each wave after all waves exhausted
+      startFrequency: 3,
+      waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
+      finalWaveDelay: 60, // time between each wave after all waves exhausted
       busterTime: 8 * 60 * 1000,
       nukeTime: 10 * 60 * 1000
     }
@@ -4523,7 +4523,7 @@ var renderFrame = function renderFrame(game) {
   ctx.fillRect(0, 0, globalConfig.config.canvasWidth, globalConfig.config.canvasHeight);
 
   var pxWidth = globalConfig.config.canvasWidth / 4;
-  var pxHeight = pxWidth * (game.viewHeight / game.viewWidth);
+  var pxHeight = 0.6 * pxWidth;
   if (!game.maxMinimap) {
     var bigDims = {
       pxWidth: globalConfig.config.canvasWidth,
@@ -4534,23 +4534,20 @@ var renderFrame = function renderFrame(game) {
     };
     var miniDims = {
       pxWidth: pxWidth,
-      pxHeight: pxHeight,
-      viewWidth: game.viewWidth * 2,
-      viewHeight: game.viewHeight * 2,
+      pxHeight: 0.6 * pxWidth,
+      viewWidth: game.gridWidth,
+      viewHeight: 60,
       viewPos: {
-        x: game.viewPos.x - game.viewWidth / 2,
-        y: game.viewPos.y - game.viewHeight / 2
+        x: 0,
+        y: 0
       }
     };
     // HACK: only pxWidth/pxHeight can really actually be set in main view
     renderView(canvas, ctx, game, bigDims);
-    // ctx.save();
-    // ctx.translate(
-    //   globalConfig.config.canvasWidth - pxWidth - 8,
-    //   8,
-    // );
-    // renderMinimap(ctx, game, miniDims);
-    // ctx.restore();
+    ctx.save();
+    ctx.translate(globalConfig.config.canvasWidth - pxWidth - 8, globalConfig.config.canvasHeight - pxHeight - 8);
+    renderMinimap(ctx, game, miniDims);
+    ctx.restore();
   } else {
     var nextViewPos = {
       x: game.viewPos.x - game.viewWidth / 2,
@@ -5216,8 +5213,6 @@ module.exports = { renderHealthBar: renderHealthBar };
 },{"../utils/gridHelpers":104,"../utils/vectors":108}],48:[function(require,module,exports){
 'use strict';
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 var _require = require('../utils/vectors'),
     subtract = _require.subtract,
     add = _require.add,
@@ -5243,6 +5238,9 @@ var _require5 = require('../selectors/sprites'),
     getInterpolatedPos = _require5.getInterpolatedPos,
     getSpriteAndOffset = _require5.getSpriteAndOffset,
     getInterpolatedTheta = _require5.getInterpolatedTheta;
+
+var _require6 = require('../entities/registry'),
+    Entities = _require6.Entities;
 
 var renderMinimap = function renderMinimap(ctx, game, dims) {
   var pxWidth = dims.pxWidth,
@@ -5355,9 +5353,10 @@ var renderMinimap = function renderMinimap(ctx, game, dims) {
   var _iteratorError4 = undefined;
 
   try {
-    for (var _iterator4 = game.FOOD[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+    for (var _iterator4 = game.BASIC_TURRET[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
       var _id3 = _step4.value;
-      renderEntity(ctx, game, dims, _id3, renderTile);
+
+      renderEntity(ctx, game, dims, _id3, Entities.BASIC_TURRET.render);
     }
   } catch (err) {
     _didIteratorError4 = true;
@@ -5379,9 +5378,10 @@ var renderMinimap = function renderMinimap(ctx, game, dims) {
   var _iteratorError5 = undefined;
 
   try {
-    for (var _iterator5 = game.WORM[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+    for (var _iterator5 = game.FAST_TURRET[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
       var _id4 = _step5.value;
-      renderEntity(ctx, game, dims, _id4, renderWormCanvas);
+
+      renderEntity(ctx, game, dims, _id4, Entities.FAST_TURRET.render);
     }
   } catch (err) {
     _didIteratorError5 = true;
@@ -5403,9 +5403,10 @@ var renderMinimap = function renderMinimap(ctx, game, dims) {
   var _iteratorError6 = undefined;
 
   try {
-    for (var _iterator6 = game.AGENT[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+    for (var _iterator6 = game.MISSILE_TURRET[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
       var _id5 = _step6.value;
-      renderEntity(ctx, game, dims, _id5, renderPill);
+
+      renderEntity(ctx, game, dims, _id5, Entities.MISSILE_TURRET.render);
     }
   } catch (err) {
     _didIteratorError6 = true;
@@ -5422,6 +5423,156 @@ var renderMinimap = function renderMinimap(ctx, game, dims) {
     }
   }
 
+  var _iteratorNormalCompletion7 = true;
+  var _didIteratorError7 = false;
+  var _iteratorError7 = undefined;
+
+  try {
+    for (var _iterator7 = game.LASER_TURRET[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+      var _id6 = _step7.value;
+
+      renderEntity(ctx, game, dims, _id6, Entities.LASER_TURRET.render);
+    }
+  } catch (err) {
+    _didIteratorError7 = true;
+    _iteratorError7 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion7 && _iterator7.return) {
+        _iterator7.return();
+      }
+    } finally {
+      if (_didIteratorError7) {
+        throw _iteratorError7;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion8 = true;
+  var _didIteratorError8 = false;
+  var _iteratorError8 = undefined;
+
+  try {
+    for (var _iterator8 = game.MISSILE[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+      var _id7 = _step8.value;
+
+      renderEntity(ctx, game, dims, _id7, Entities.MISSILE.render);
+    }
+  } catch (err) {
+    _didIteratorError8 = true;
+    _iteratorError8 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion8 && _iterator8.return) {
+        _iterator8.return();
+      }
+    } finally {
+      if (_didIteratorError8) {
+        throw _iteratorError8;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion9 = true;
+  var _didIteratorError9 = false;
+  var _iteratorError9 = undefined;
+
+  try {
+    for (var _iterator9 = game.BULLET[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+      var _id8 = _step9.value;
+
+      renderEntity(ctx, game, dims, _id8, Entities.BULLET.render);
+    }
+  } catch (err) {
+    _didIteratorError9 = true;
+    _iteratorError9 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion9 && _iterator9.return) {
+        _iterator9.return();
+      }
+    } finally {
+      if (_didIteratorError9) {
+        throw _iteratorError9;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion10 = true;
+  var _didIteratorError10 = false;
+  var _iteratorError10 = undefined;
+
+  try {
+    for (var _iterator10 = game.DYNAMITE[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+      var _id9 = _step10.value;
+
+      renderEntity(ctx, game, dims, _id9, Entities.DYNAMITE.render);
+    }
+  } catch (err) {
+    _didIteratorError10 = true;
+    _iteratorError10 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion10 && _iterator10.return) {
+        _iterator10.return();
+      }
+    } finally {
+      if (_didIteratorError10) {
+        throw _iteratorError10;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion11 = true;
+  var _didIteratorError11 = false;
+  var _iteratorError11 = undefined;
+
+  try {
+    for (var _iterator11 = game.NUKE[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+      var _id10 = _step11.value;
+
+      renderEntity(ctx, game, dims, _id10, Entities.NUKE.render);
+    }
+  } catch (err) {
+    _didIteratorError11 = true;
+    _iteratorError11 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion11 && _iterator11.return) {
+        _iterator11.return();
+      }
+    } finally {
+      if (_didIteratorError11) {
+        throw _iteratorError11;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion12 = true;
+  var _didIteratorError12 = false;
+  var _iteratorError12 = undefined;
+
+  try {
+    for (var _iterator12 = game.BASE[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+      var _id11 = _step12.value;
+
+      renderEntity(ctx, game, dims, _id11, Entities.BASE.render);
+    }
+  } catch (err) {
+    _didIteratorError12 = true;
+    _iteratorError12 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion12 && _iterator12.return) {
+        _iterator12.return();
+      }
+    } finally {
+      if (_didIteratorError12) {
+        throw _iteratorError12;
+      }
+    }
+  }
+
   ctx.restore();
 };
 
@@ -5431,17 +5582,18 @@ var renderEntity = function renderEntity(ctx, game, dims, id, renderFn) {
   if (!onMinimap(dims, entity) && entity.type != 'DOODAD') {
     return;
   }
-  if (entity.isAgent) {
-    // interpolate position between previous position and current position
-    entity = _extends({}, entity, {
-      position: getInterpolatedPos(game, entity),
-      theta: getInterpolatedTheta(game, entity)
-    });
-  }
-  renderFn(ctx, game, dims, entity);
+  // if (entity.isAgent) {
+  //   // interpolate position between previous position and current position
+  //   entity = {
+  //     ...entity,
+  //     position: getInterpolatedPos(game, entity),
+  //     theta: getInterpolatedTheta(game, entity),
+  //   };
+  // }
+  renderFn(ctx, game, entity, dims);
 };
 
-var renderTile = function renderTile(ctx, game, dims, entity) {
+var renderTile = function renderTile(ctx, game, entity, dims) {
   if (entity == null) return;
   switch (entity.type) {
     case 'FOOD':
@@ -5487,7 +5639,7 @@ var renderTile = function renderTile(ctx, game, dims, entity) {
   }
 };
 
-var renderPill = function renderPill(ctx, game, dims, entity) {
+var renderPill = function renderPill(ctx, game, entity, dims) {
   if (!onMinimapSmall(dims, entity)) return;
   ctx.save();
   if (entity.playerID == game.playerID) {
@@ -5551,7 +5703,7 @@ var onMinimap = function onMinimap(dims, entity) {
 module.exports = {
   renderMinimap: renderMinimap
 };
-},{"../selectors/misc":52,"../selectors/sprites":56,"../utils/gridHelpers":104,"../utils/vectors":108,"./renderSegmented":49}],49:[function(require,module,exports){
+},{"../entities/registry":21,"../selectors/misc":52,"../selectors/sprites":56,"../utils/gridHelpers":104,"../utils/vectors":108,"./renderSegmented":49}],49:[function(require,module,exports){
 'use strict';
 
 var _require = require('../selectors/sprites'),
@@ -11656,6 +11808,7 @@ var InfoHUD = function InfoHUD(props) {
   });
 
   var temp = getTemperature(game, mousePos);
+  var maxLight = pheromones.LIGHT.quantity;
 
   return React.createElement(
     'div',
@@ -11702,7 +11855,8 @@ var InfoHUD = function InfoHUD(props) {
           'Sun Light'
         ),
         ': ',
-        sunLight
+        (sunLight / maxLight * 100).toFixed(0),
+        '%'
       )
     ),
     entityInfoCards,
