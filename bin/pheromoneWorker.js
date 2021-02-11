@@ -389,7 +389,7 @@ var pheromones = {
     quantity: 120,
     decayAmount: 12,
     decayRate: 1, // how much it decays per tick
-    color: 'rgb(255, 0, 0)',
+    color: 'rgb(100, 205, 226)',
     tileIndex: 1,
 
     blockingTypes: [].concat(nonMoltenPheromoneBlockingTypes),

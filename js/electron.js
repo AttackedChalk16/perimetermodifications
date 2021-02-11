@@ -2,6 +2,10 @@
 const {app, BrowserWindow, nativeImage} = require('electron');
 const path = require('path');
 
+// HACK for windows to not install stuff multiple times
+// see: https://www.electronforge.io/config/makers/squirrel.windows
+if (require('electron-squirrel-startup')) return app.quit();
+
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -21,7 +25,7 @@ function createWindow () {
   mainWindow.setFullScreen(true);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 }
 const image = nativeImage.createFromPath(
   app.getAppPath() + "/favicon.ico"
