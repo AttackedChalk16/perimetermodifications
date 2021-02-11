@@ -47,7 +47,7 @@ var config = {
       startFrequency: 3,
       waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 60, // time between each wave after all waves exhausted
-      busterTime: 8 * 60 * 1000,
+      busterTime: 8, // 60 * 1000,
       nukeTime: 10 * 60 * 1000
     }
   },
@@ -1472,6 +1472,8 @@ var make = function make(game, position, playerID, warhead, theta, velocity, tar
     ballisticPosition: _extends({}, position),
     ballisticTheta: theta,
     initialTheta: theta,
+
+    isPiercing: false,
 
     targetID: targetID,
 
@@ -4188,6 +4190,9 @@ var getMissileSprite = function getMissileSprite(game, missile) {
   var img = game.sprites.MISSILE;
   if (missile.warhead != null && missile.warhead.type == 'NUKE') {
     img = game.sprites.NUKE_MISSILE;
+  }
+  if (missile.isPiercing) {
+    img = game.sprites.BUNKER_BUSTER;
   }
   var dur = 6;
   var numFrames = 3;

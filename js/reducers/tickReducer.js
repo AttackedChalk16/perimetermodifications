@@ -245,9 +245,17 @@ const updateBallistics = (game): void => {
         collisions.forEach(e => {
           if (alreadyDamaged[e.id]) return;
           alreadyDamaged[e.id] = true;
+          if (ballistic.isPiercing) {
+            ballistic.hp -= e.hp / 20;
+          }
           dealDamageToEntity(game, e, ballistic.damage);
         });
-        queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+
+
+        if (!ballistic.isPiercing || ballistic.hp <= 0) {
+          queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+        }
+
         continue;
       }
     }

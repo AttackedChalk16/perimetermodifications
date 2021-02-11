@@ -6,18 +6,19 @@ const initSpriteSheetSystem = (store) => {
   const state = store.getState();
 
 
-  loadSprite(dispatch, state, 'URANIUM', './img/Food2.png');
-  loadSprite(dispatch, state, 'DIRT', './img/Dirt3.png');
-  loadSprite(dispatch, state, 'IRON', './img/Iron1.png');
-  loadSprite(dispatch, state, 'STEEL', './img/Steel1.png');
-  loadSprite(dispatch, state, 'COAL', './img/Coal1.png');
-  loadSprite(dispatch, state, 'HOT_COAL', './img/Hot Coal.png');
-  loadSprite(dispatch, state, 'STONE', './img/Stone1.png');
-  loadSprite(dispatch, state, 'SULPHUR', './img/Brick1.png');
-  loadSprite(dispatch, state, 'ICE', './img/Kitchen1.png');
+  loadSprite(dispatch, state, 'URANIUM', './img/URANIUM.png');
+  loadSprite(dispatch, state, 'DIRT', './img/DIRT.png');
+  loadSprite(dispatch, state, 'IRON', './img/IRON.png');
+  loadSprite(dispatch, state, 'STEEL', './img/STEEL.png');
+  loadSprite(dispatch, state, 'COAL', './img/COAL.png');
+  loadSprite(dispatch, state, 'HOT_COAL', './img/HOT_COAL.png');
+  loadSprite(dispatch, state, 'STONE', './img/STONE.png');
+  loadSprite(dispatch, state, 'SULPHUR', './img/SULPHUR.png');
+  loadSprite(dispatch, state, 'ICE', './img/ICE.png');
 
   loadSprite(dispatch, state, 'MISSILE', './img/Missile2.png');
   loadSprite(dispatch, state, 'NUKE_MISSILE', './img/NukeMissile1.png');
+  loadSprite(dispatch, state, 'BUNKER_BUSTER', './img/BunkerBuster1.png');
   loadSprite(dispatch, state, 'BASIC_TURRET', './img/Basic_turret1.png');
   loadSprite(dispatch, state, 'FAST_TURRET', './img/Fast_turret1.png');
   loadSprite(dispatch, state, 'LASER_TURRET', './img/Laser_turret.png');

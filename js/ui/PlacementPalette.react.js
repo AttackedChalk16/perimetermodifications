@@ -79,7 +79,7 @@ function PlaceEntityCard(props) {
         border={isSelected ? '2px solid orange' : null}
         opacity={quantity != null && quantity > 0 ? null : 0.5}
       >
-        <div><b>{entityType}</b></div>
+        <div><Resource resource={entityType} /></div>
         <div>{quantity.toFixed(1)}</div>
       </InfoCard>
       {hover}
@@ -116,7 +116,7 @@ function PlaceBuildingCard(props) {
         border={isSelected ? '2px solid orange' : null}
         opacity={canAffordBuilding(base, cost) ? null : 0.5}
       >
-        <div><b>{entityType}</b></div>
+        <Resource resource={entityType} />
         <div>Cost:</div>
         {costBreakdown}
       </InfoCard>
@@ -145,7 +145,7 @@ function HoverCard(props) {
             key={"hoverDesc_" + entityType + "_" + term + depth}
             className="displayChildOnHover"
           >
-            <b><span style={{color: 'steelblue'}}>{term}</span></b>
+            <Resource resource={term} />
             <HoverCard entityType={term} depth={depth + 1} />
           </div>
         );
@@ -169,7 +169,7 @@ function HoverCard(props) {
             key={"hoverHowTo_" + entityType + "_" + term + depth}
             className="displayChildOnHover"
           >
-            <b><span style={{color: 'steelblue'}}>{term}</span></b>
+            <Resource resource={term} />
             <HoverCard entityType={term} depth={depth + 1} />
           </div>
         );
@@ -201,6 +201,182 @@ function HoverCard(props) {
         <div>{hoverableDescription}</div>
         {howToMake != null ? (<div><b>Made From: </b>{hoverableHowToMake}</div>) : null}
       </InfoCard>
+    </div>
+  );
+}
+
+function Resource(props) {
+  let {resource} = props;
+  if (resource == 'HOT COAL') {
+    resource = 'HOT_COAL';
+  }
+
+  let image = null;
+  switch (resource) {
+    case 'DIRT':
+    case 'STONE':
+    case 'COAL':
+    case 'HOT_COAL':
+    case 'IRON':
+    case 'STEEL':
+    case 'SULPHUR':
+    case 'ICE':
+    case 'URANIUM':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            position: 'relative',
+            overflow: 'hidden',
+            width: 16,
+            height: 16,
+          }}
+        >
+          <img
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: -64,
+            }}
+            src={"./img/" + resource + ".png"}
+          />
+        </div>
+      );
+      break;
+    case 'TURBINE':
+    case 'SOLAR_PANEL':
+      image = (
+        <img
+          width={16}
+          height={16}
+          src={"./img/" + resource + ".png"}
+        />
+      );
+      break;
+    case 'BASIC_TURRET':
+    case 'FAST_TURRET':
+    case 'MISSILE_TURRET':
+    case 'LASER_TURRET':
+      image = (
+        <img
+          width={16}
+          height={16}
+          src={"./img/TURRET.png"}
+        />
+      );
+      break;
+    case 'SAND':
+    case 'MOLTEN_SAND':
+    case 'MOLTEN_IRON':
+    case 'MOLTEN_STEEL':
+    case 'WATER':
+    case 'STEAM':
+    case 'SULPHUR_DIOXIDE':
+    case 'OIL':
+    case 'HOT_OIL':
+    case 'HEAT':
+    case 'COLD':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            width: 16,
+            height: 16,
+            border: '1px solid black',
+            backgroundColor: globalConfig.pheromones[resource].color,
+          }}
+        ></div>
+      );
+      break;
+    case 'POWER':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            width: 16,
+            height: 16,
+            border: '1px solid black',
+            backgroundColor: globalConfig.pheromones.SAND.color,
+          }}
+        ></div>
+      );
+      break;
+    case 'FLUID':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            width: 16,
+            height: 16,
+            border: '1px solid black',
+            backgroundColor: globalConfig.pheromones.WATER.color,
+          }}
+        ></div>
+      );
+      break;
+    case 'GAS':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            width: 16,
+            height: 16,
+            border: '1px solid black',
+            backgroundColor: globalConfig.pheromones.STEAM.color,
+          }}
+        ></div>
+      );
+      break;
+    case 'SILICON':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            width: 16,
+            height: 16,
+            backgroundColor: '#006400',
+          }}
+        ></div>
+      );
+      break;
+    case 'GLASS':
+      image = (
+        <div
+          style={{
+            display: 'inline-block',
+            position: 'relative',
+            overflow: 'hidden',
+            width: 16,
+            height: 16,
+          }}
+        >
+          <img
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: -64,
+              opacity: 0.7,
+            }}
+            src={"./img/STEEL.png"}
+          />
+        </div>
+      );
+      break;
+  }
+
+  return (
+    <div
+      style={{
+        display: 'inline-block',
+      }}
+    >
+      <b><span style={{color: 'steelblue'}}>{resource}</span></b>
+      <div style={{
+        display: 'inline-block',
+        marginLeft: 2,
+        verticalAlign: 'top',
+      }}
+      >{image}</div>
     </div>
   );
 }

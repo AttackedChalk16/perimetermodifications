@@ -144,6 +144,9 @@ const getMissileSprite = (game: Game, missile: Missile): Object => {
   if (missile.warhead != null && missile.warhead.type == 'NUKE') {
     img = game.sprites.NUKE_MISSILE;
   }
+  if (missile.isPiercing) {
+    img = game.sprites.BUNKER_BUSTER;
+  }
   let dur = 6;
   let numFrames = 3;
   let index = Math.floor(((missile.id + game.time) % (dur * numFrames)) / dur);

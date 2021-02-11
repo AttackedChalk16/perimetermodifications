@@ -11,30 +11,16 @@
 
 
 - - - - - - TODO - - - - - -
-  - render the entity in the cards for the HUDS
-    - screenshot:
-      - turret
-      - solar panel
-      - turbine
-    - tile cutting into borderless
-    - pheromone-colored div for pheromones
-    - special cases
-      - fluid, gas, power
-  - bunker buster missile that attacks dirt
-    - have missile take damage back from dirt, etc. instead of die
-    - don't need missile to deal damage, just have it auto-kill targets
-      until it dies
-  - get gameplay tracking set back up again
-    - leaderboard with most missiles survived?
   - main menu
     - background gif
-    - play options?
   - electron application
     - add button to quit in lobby AND in game
     - make sure to target windows too
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
+  - get gameplay tracking set back up again
+    - leaderboard with most missiles survived?
   - HUDs
     - show on position info card whether location is placeable/collectable
     - flicker resources when you spend them

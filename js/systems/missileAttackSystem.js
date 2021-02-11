@@ -16,6 +16,10 @@ const initMissileAttackSystem = (store) => {
 
     const config = globalConfig.config.difficulty[game.difficulty];
 
+    if (game.pauseMissiles) {
+      return;
+    }
+
     const gameSeconds = game.totalGameTime / 1000;
     let shouldLaunch = false;
     let altProb = 0;
@@ -63,35 +67,36 @@ const initMissileAttackSystem = (store) => {
       }
     }
 
-    if (!game.sentNukeWarning && gameSeconds > config.nukeTime) {
-      dispatch({type: 'SET_SENT_WARNING', warning: 'sentNukeWarning'});
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'NUCLEAR MISSILES INCOMING',
-      });
+    if (gameSeconds > config.nukeTime) {
+      if (!game.sentNukeWarning) {
+        dispatch({type: 'SET_SENT_WARNING', warning: 'sentNukeWarning'});
+        dispatch({type: 'SET_TICKER_MESSAGE',
+          time: 4000,
+          message: 'NUCLEAR MISSILES INCOMING',
+        });
+      }
       nukeProb = 0.1;
     }
-    if (!game.sentBusterWarning && gameSeconds > config.busterTime) {
-      dispatch({type: 'SET_SENT_WARNING', warning: 'sentBusterWarning'});
-      dispatch({type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'NUCLEAR MISSILES INCOMING',
-      });
-      nukeProb = 0.1;
+    if (gameSeconds > config.busterTime) {
+      if (!game.sentBusterWarning) {
+        dispatch({type: 'SET_SENT_WARNING', warning: 'sentBusterWarning'});
+        dispatch({type: 'SET_TICKER_MESSAGE',
+          time: 4000,
+          message: 'BUNKER BUSTER MISSILES INCOMING',
+        });
+      }
+      busterProb = 0.5;
     }
 
     let alternateSide = Math.random() < altProb;
     let isNuke = Math.random() < nukeProb;
-    let isBuster = Math.random() < busterProb;
+    let isBuster = Math.random() < busterProb && !isNuke;
 
     if (
       gameSeconds > config.startTime &&
       gameSeconds > game.lastMissileLaunchTime + missileFrequency
     ) {
       shouldLaunch = true;
-    }
-    if (game.pauseMissiles) {
-      shouldLaunch = false;
     }
 
     if (shouldLaunch) {
@@ -107,6 +112,9 @@ const initMissileAttackSystem = (store) => {
 
       const warhead = Entities[isNuke ? 'NUKE' : 'DYNAMITE'].make(game, null, playerID);
       const missile = Entities.MISSILE.make(game, pos, playerID, warhead, theta, velocity);
+      if (isBuster) {
+        missile.isPiercing = true;
+      }
       dispatch({type: 'SET_LAST_MISSILE_TIME'});
       dispatch({type: 'CREATE_ENTITY', entity: missile});
     }

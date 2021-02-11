@@ -64,6 +64,8 @@ const make = (
     ballisticTheta: theta,
     initialTheta: theta,
 
+    isPiercing: false,
+
     targetID,
 
     prevPositions: [add(position, {x: config.width / 2, y: config.height / 2})],

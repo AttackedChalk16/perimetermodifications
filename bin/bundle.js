@@ -47,7 +47,7 @@ var config = {
       startFrequency: 3,
       waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 60, // time between each wave after all waves exhausted
-      busterTime: 8 * 60 * 1000,
+      busterTime: 8, // 60 * 1000,
       nukeTime: 10 * 60 * 1000
     }
   },
@@ -1472,6 +1472,8 @@ var make = function make(game, position, playerID, warhead, theta, velocity, tar
     ballisticPosition: _extends({}, position),
     ballisticTheta: theta,
     initialTheta: theta,
+
+    isPiercing: false,
 
     targetID: targetID,
 
@@ -3825,9 +3827,16 @@ var updateBallistics = function updateBallistics(game) {
         collisions.forEach(function (e) {
           if (alreadyDamaged[e.id]) return;
           alreadyDamaged[e.id] = true;
+          if (ballistic.isPiercing) {
+            ballistic.hp -= e.hp / 10;
+          }
           dealDamageToEntity(game, e, ballistic.damage);
         });
-        queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+
+        if (!ballistic.isPiercing || ballistic.hp <= 0) {
+          queueAction(game, ballistic, makeAction(game, ballistic, 'DIE'));
+        }
+
         return 'continue';
       }
     }
@@ -6857,6 +6866,9 @@ var getMissileSprite = function getMissileSprite(game, missile) {
   if (missile.warhead != null && missile.warhead.type == 'NUKE') {
     img = game.sprites.NUKE_MISSILE;
   }
+  if (missile.isPiercing) {
+    img = game.sprites.BUNKER_BUSTER;
+  }
   var dur = 6;
   var numFrames = 3;
   var index = Math.floor((missile.id + game.time) % (dur * numFrames) / dur);
@@ -9754,6 +9766,10 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
 
     var config = globalConfig.config.difficulty[game.difficulty];
 
+    if (game.pauseMissiles) {
+      return;
+    }
+
     var gameSeconds = game.totalGameTime / 1000;
     var shouldLaunch = false;
     var altProb = 0;
@@ -9795,32 +9811,33 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
       }
     }
 
-    if (!game.sentNukeWarning && gameSeconds > config.nukeTime) {
-      dispatch({ type: 'SET_SENT_WARNING', warning: 'sentNukeWarning' });
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'NUCLEAR MISSILES INCOMING'
-      });
+    if (gameSeconds > config.nukeTime) {
+      if (!game.sentNukeWarning) {
+        dispatch({ type: 'SET_SENT_WARNING', warning: 'sentNukeWarning' });
+        dispatch({ type: 'SET_TICKER_MESSAGE',
+          time: 4000,
+          message: 'NUCLEAR MISSILES INCOMING'
+        });
+      }
       nukeProb = 0.1;
     }
-    if (!game.sentBusterWarning && gameSeconds > config.busterTime) {
-      dispatch({ type: 'SET_SENT_WARNING', warning: 'sentBusterWarning' });
-      dispatch({ type: 'SET_TICKER_MESSAGE',
-        time: 4000,
-        message: 'NUCLEAR MISSILES INCOMING'
-      });
-      nukeProb = 0.1;
+    if (gameSeconds > config.busterTime) {
+      if (!game.sentBusterWarning) {
+        dispatch({ type: 'SET_SENT_WARNING', warning: 'sentBusterWarning' });
+        dispatch({ type: 'SET_TICKER_MESSAGE',
+          time: 4000,
+          message: 'BUNKER BUSTER MISSILES INCOMING'
+        });
+      }
+      busterProb = 0.5;
     }
 
     var alternateSide = Math.random() < altProb;
     var isNuke = Math.random() < nukeProb;
-    var isBuster = Math.random() < busterProb;
+    var isBuster = Math.random() < busterProb && !isNuke;
 
     if (gameSeconds > config.startTime && gameSeconds > game.lastMissileLaunchTime + missileFrequency) {
       shouldLaunch = true;
-    }
-    if (game.pauseMissiles) {
-      shouldLaunch = false;
     }
 
     if (shouldLaunch) {
@@ -9836,6 +9853,9 @@ var initMissileAttackSystem = function initMissileAttackSystem(store) {
 
       var warhead = Entities[isNuke ? 'NUKE' : 'DYNAMITE'].make(game, null, playerID);
       var missile = Entities.MISSILE.make(game, pos, playerID, warhead, theta, velocity);
+      if (isBuster) {
+        missile.isPiercing = true;
+      }
       dispatch({ type: 'SET_LAST_MISSILE_TIME' });
       dispatch({ type: 'CREATE_ENTITY', entity: missile });
     }
@@ -10247,18 +10267,19 @@ var initSpriteSheetSystem = function initSpriteSheetSystem(store) {
 
   var state = store.getState();
 
-  loadSprite(dispatch, state, 'URANIUM', './img/Food2.png');
-  loadSprite(dispatch, state, 'DIRT', './img/Dirt3.png');
-  loadSprite(dispatch, state, 'IRON', './img/Iron1.png');
-  loadSprite(dispatch, state, 'STEEL', './img/Steel1.png');
-  loadSprite(dispatch, state, 'COAL', './img/Coal1.png');
-  loadSprite(dispatch, state, 'HOT_COAL', './img/Hot Coal.png');
-  loadSprite(dispatch, state, 'STONE', './img/Stone1.png');
-  loadSprite(dispatch, state, 'SULPHUR', './img/Brick1.png');
-  loadSprite(dispatch, state, 'ICE', './img/Kitchen1.png');
+  loadSprite(dispatch, state, 'URANIUM', './img/URANIUM.png');
+  loadSprite(dispatch, state, 'DIRT', './img/DIRT.png');
+  loadSprite(dispatch, state, 'IRON', './img/IRON.png');
+  loadSprite(dispatch, state, 'STEEL', './img/STEEL.png');
+  loadSprite(dispatch, state, 'COAL', './img/COAL.png');
+  loadSprite(dispatch, state, 'HOT_COAL', './img/HOT_COAL.png');
+  loadSprite(dispatch, state, 'STONE', './img/STONE.png');
+  loadSprite(dispatch, state, 'SULPHUR', './img/SULPHUR.png');
+  loadSprite(dispatch, state, 'ICE', './img/ICE.png');
 
   loadSprite(dispatch, state, 'MISSILE', './img/Missile2.png');
   loadSprite(dispatch, state, 'NUKE_MISSILE', './img/NukeMissile1.png');
+  loadSprite(dispatch, state, 'BUNKER_BUSTER', './img/BunkerBuster1.png');
   loadSprite(dispatch, state, 'BASIC_TURRET', './img/Basic_turret1.png');
   loadSprite(dispatch, state, 'FAST_TURRET', './img/Fast_turret1.png');
   loadSprite(dispatch, state, 'LASER_TURRET', './img/Laser_turret.png');
@@ -13611,11 +13632,7 @@ function PlaceEntityCard(props) {
       React.createElement(
         'div',
         null,
-        React.createElement(
-          'b',
-          null,
-          entityType
-        )
+        React.createElement(Resource, { resource: entityType })
       ),
       React.createElement(
         'div',
@@ -13668,15 +13685,7 @@ function PlaceBuildingCard(props) {
         border: isSelected ? '2px solid orange' : null,
         opacity: canAffordBuilding(base, cost) ? null : 0.5
       },
-      React.createElement(
-        'div',
-        null,
-        React.createElement(
-          'b',
-          null,
-          entityType
-        )
-      ),
+      React.createElement(Resource, { resource: entityType }),
       React.createElement(
         'div',
         null,
@@ -13721,15 +13730,7 @@ function HoverCard(props) {
               key: "hoverDesc_" + entityType + "_" + term + depth,
               className: 'displayChildOnHover'
             },
-            React.createElement(
-              'b',
-              null,
-              React.createElement(
-                'span',
-                { style: { color: 'steelblue' } },
-                term
-              )
-            ),
+            React.createElement(Resource, { resource: term }),
             React.createElement(HoverCard, { entityType: term, depth: depth + 1 })
           ));
           hoverableDescription.push(' ');
@@ -13775,15 +13776,7 @@ function HoverCard(props) {
               key: "hoverHowTo_" + entityType + "_" + _term + depth,
               className: 'displayChildOnHover'
             },
-            React.createElement(
-              'b',
-              null,
-              React.createElement(
-                'span',
-                { style: { color: 'steelblue' } },
-                _term
-              )
-            ),
+            React.createElement(Resource, { resource: _term }),
             React.createElement(HoverCard, { entityType: _term, depth: depth + 1 })
           ));
           hoverableHowToMake.push(' ');
@@ -13849,6 +13842,181 @@ function HoverCard(props) {
         ),
         hoverableHowToMake
       ) : null
+    )
+  );
+}
+
+function Resource(props) {
+  var resource = props.resource;
+
+  if (resource == 'HOT COAL') {
+    resource = 'HOT_COAL';
+  }
+
+  var image = null;
+  switch (resource) {
+    case 'DIRT':
+    case 'STONE':
+    case 'COAL':
+    case 'HOT_COAL':
+    case 'IRON':
+    case 'STEEL':
+    case 'SULPHUR':
+    case 'ICE':
+    case 'URANIUM':
+      image = React.createElement(
+        'div',
+        {
+          style: {
+            display: 'inline-block',
+            position: 'relative',
+            overflow: 'hidden',
+            width: 16,
+            height: 16
+          }
+        },
+        React.createElement('img', {
+          style: {
+            position: 'absolute',
+            top: 0,
+            left: -64
+          },
+          src: "./img/" + resource + ".png"
+        })
+      );
+      break;
+    case 'TURBINE':
+    case 'SOLAR_PANEL':
+      image = React.createElement('img', {
+        width: 16,
+        height: 16,
+        src: "./img/" + resource + ".png"
+      });
+      break;
+    case 'BASIC_TURRET':
+    case 'FAST_TURRET':
+    case 'MISSILE_TURRET':
+    case 'LASER_TURRET':
+      image = React.createElement('img', {
+        width: 16,
+        height: 16,
+        src: "./img/TURRET.png"
+      });
+      break;
+    case 'SAND':
+    case 'MOLTEN_SAND':
+    case 'MOLTEN_IRON':
+    case 'MOLTEN_STEEL':
+    case 'WATER':
+    case 'STEAM':
+    case 'SULPHUR_DIOXIDE':
+    case 'OIL':
+    case 'HOT_OIL':
+    case 'HEAT':
+    case 'COLD':
+      image = React.createElement('div', {
+        style: {
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          border: '1px solid black',
+          backgroundColor: globalConfig.pheromones[resource].color
+        }
+      });
+      break;
+    case 'POWER':
+      image = React.createElement('div', {
+        style: {
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          border: '1px solid black',
+          backgroundColor: globalConfig.pheromones.SAND.color
+        }
+      });
+      break;
+    case 'FLUID':
+      image = React.createElement('div', {
+        style: {
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          border: '1px solid black',
+          backgroundColor: globalConfig.pheromones.WATER.color
+        }
+      });
+      break;
+    case 'GAS':
+      image = React.createElement('div', {
+        style: {
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          border: '1px solid black',
+          backgroundColor: globalConfig.pheromones.STEAM.color
+        }
+      });
+      break;
+    case 'SILICON':
+      image = React.createElement('div', {
+        style: {
+          display: 'inline-block',
+          width: 16,
+          height: 16,
+          backgroundColor: '#006400'
+        }
+      });
+      break;
+    case 'GLASS':
+      image = React.createElement(
+        'div',
+        {
+          style: {
+            display: 'inline-block',
+            position: 'relative',
+            overflow: 'hidden',
+            width: 16,
+            height: 16
+          }
+        },
+        React.createElement('img', {
+          style: {
+            position: 'absolute',
+            top: 0,
+            left: -64,
+            opacity: 0.7
+          },
+          src: "./img/STEEL.png"
+        })
+      );
+      break;
+  }
+
+  return React.createElement(
+    'div',
+    {
+      style: {
+        display: 'inline-block'
+      }
+    },
+    React.createElement(
+      'b',
+      null,
+      React.createElement(
+        'span',
+        { style: { color: 'steelblue' } },
+        resource
+      )
+    ),
+    React.createElement(
+      'div',
+      { style: {
+          display: 'inline-block',
+          marginLeft: 2,
+          verticalAlign: 'top'
+        }
+      },
+      image
     )
   );
 }
