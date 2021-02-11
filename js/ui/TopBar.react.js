@@ -4,6 +4,7 @@ const AudioWidget = require('./Components/AudioWidget.react');
 const Button = require('./Components/Button.react');
 const Divider = require('./Components/Divider.react');
 const Modal = require('./Components/Modal.react');
+const QuitButton = require('../ui/components/QuitButton.react');
 const globalConfig = require('../config');
 const {getDisplayTime, isElectron} = require('../utils/helpers');
 const InfoCard = require('../ui/components/InfoCard.react');
@@ -65,15 +66,7 @@ function TopBar(props) {
           color: 'black',
         }}
       >
-        {!isElectron() ? null : (
-          <Button
-            label="Quit"
-            onClick={() => {
-              window.electron.quit();
-            }}
-          />
-          )
-        }
+        <QuitButton isInGame={true} dispatch={dispatch} />
         <div>
           <Button
             label="Instructions"

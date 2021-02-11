@@ -9,10 +9,7 @@
 
 
 - - - - - - TODO - - - - - -
-  - electron application
-    - isElectron function
-    - add button to quit in lobby AND in game
-    - make sure to target windows too
+  - make sure to target windows too
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -

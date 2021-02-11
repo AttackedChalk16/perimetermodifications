@@ -6137,8 +6137,9 @@ function isMobile() {
   });
 }
 
+// HACK: when we're in electron window.require is a function
 function isElectron() {
-  return window.electron != null;
+  return window.require != null;
 }
 
 module.exports = {

@@ -8,10 +8,11 @@ const Checkbox = require('./components/Checkbox.react');
 const Dropdown = require('./components/Dropdown.react');
 const Divider = require('./components/Divider.react');
 const Modal = require('../ui/components/Modal.react');
+const QuitButton = require('../ui/components/QuitButton.react');
 const levels = require('../levels/levels');
 const {loadLevel} = require('../thunks/levelThunks');
 const {initSpriteSheetSystem} = require('../systems/spriteSheetSystem');
-const {isMobile, isElectron} = require('../utils/helpers');
+const {isMobile} = require('../utils/helpers');
 const globalConfig = require('../config');
 const {useState, useEffect, useMemo} = React;
 
@@ -114,22 +115,7 @@ function Lobby(props: Props): React.Node {
 
   return (
     <span>
-      {!isElectron() ? null : (
-        <div
-          style={{
-            margin: 5,
-            borderRadius: 8,
-            left: 5,
-          }}
-        >
-          <Button
-            label="Quit"
-            onClick={() => {
-              window.electron.quit();
-            }}
-          />
-        </div>)
-      }
+      <QuitButton isInGame={false} dispatch={dispatch} />
       <div
         style={{
           margin: 'auto',

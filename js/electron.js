@@ -9,6 +9,7 @@ function createWindow () {
     height: 800,
     webPreferences: {
       //preload: path.join(__dirname, 'preload.js')
+      nodeIntegration: true,
     },
     icon: path.join(__dirname, 'favicon.png')
   });
@@ -20,7 +21,7 @@ function createWindow () {
   mainWindow.setFullScreen(true);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 }
 const image = nativeImage.createFromPath(
   app.getAppPath() + "/favicon.ico"
@@ -47,4 +48,3 @@ app.on('window-all-closed', function () {
   app.quit()
 });
 
-window.electron = app;
