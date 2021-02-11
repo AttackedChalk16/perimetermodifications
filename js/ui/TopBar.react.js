@@ -5,7 +5,7 @@ const Button = require('./Components/Button.react');
 const Divider = require('./Components/Divider.react');
 const Modal = require('./Components/Modal.react');
 const globalConfig = require('../config');
-const {getDisplayTime} = require('../utils/helpers');
+const {getDisplayTime, isElectron} = require('../utils/helpers');
 const InfoCard = require('../ui/components/InfoCard.react');
 const PlacementPalette = require('../ui/PlacementPalette.react');
 const {memo} = React;
@@ -65,16 +65,15 @@ function TopBar(props) {
           color: 'black',
         }}
       >
-        <AudioWidget
-          audioFiles={globalConfig.config.audioFiles}
-          isShuffled={false}
-          isMuted={isMuted}
-          setIsMuted={() => {
-            store.dispatch({type: 'SET_IS_MUTED', isMuted: !isMuted});
-          }}
-          style={{
-          }}
-        />
+        {!isElectron() ? null : (
+          <Button
+            label="Quit"
+            onClick={() => {
+              window.electron.quit();
+            }}
+          />
+          )
+        }
         <div>
           <Button
             label="Instructions"

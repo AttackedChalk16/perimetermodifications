@@ -6,14 +6,11 @@
 
 
 - - - - - - ISSUES - - - - - -
-  - show base HP next to Missiles Survived
-    - or perhaps show a ticker?
 
 
 - - - - - - TODO - - - - - -
-  - main menu
-    - background gif
   - electron application
+    - isElectron function
     - add button to quit in lobby AND in game
     - make sure to target windows too
 
@@ -50,8 +47,6 @@
 
 - - - - - - - BUGS - - - - - - -
   - fluids not coming out of a single horizontal opening
-  - pheromones:
-    - colony pheromone can get disrupted somehow, eventually preventing all pheromone clearing
   - coal:
     - can strand molten pheromones that don't interact with anything
   - turbines:
@@ -59,7 +54,6 @@
     - acceleration may work better than speed for e.g. contradictory flows
     - reducing pherToGive doesn't actually slow down an array of turbines
   - bullets can shoot through 1-thick walls
-  - using game.time for missiles doesn't quite work due to fps issues
 
 
 - - - - - - - REFACTORS - - - - - - -

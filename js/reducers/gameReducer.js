@@ -70,12 +70,20 @@ const gameReducer = (game: Game, action: Action): Game => {
       return game;
     }
     case 'SET_TICKER_MESSAGE': {
-      const {message, time} = action;
-      game.ticker = {
-        message,
-        time,
-        max: time,
-      };
+      const {message, time, isMini} = action;
+      if (!isMini) {
+        game.ticker = {
+          message,
+          time,
+          max: time,
+        };
+      } else {
+        game.miniTicker = {
+          message,
+          time,
+          max: time,
+        };
+      }
       return game;
     }
     case 'CREATE_ENTITY': {

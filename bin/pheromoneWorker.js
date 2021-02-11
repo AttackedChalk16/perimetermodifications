@@ -47,7 +47,7 @@ var config = {
       startFrequency: 3,
       waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 60, // time between each wave after all waves exhausted
-      busterTime: 8, // 60 * 1000,
+      busterTime: 8 * 60 * 1000,
       nukeTime: 10 * 60 * 1000
     }
   },
@@ -56,12 +56,12 @@ var config = {
     STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
     IRON: { numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10 },
     COAL: { numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10 },
-    ICE: { numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8 },
     WATER: { numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14 },
     SAND: { numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8 },
     OIL: { numMin: 2, numMax: 4, sizeMin: 6, sizeMax: 12 },
     SULPHUR: { numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4 },
     GLASS: { numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4 },
+    ICE: { numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 5 },
     URANIUM: { numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 3 }
   },
 
@@ -6137,12 +6137,17 @@ function isMobile() {
   });
 }
 
+function isElectron() {
+  return window.electron != null;
+}
+
 module.exports = {
   clamp: clamp, closeTo: closeTo, sameArray: sameArray, thetaToDir: thetaToDir,
   isDiagonalTheta: isDiagonalTheta, isDiagonalMove: isDiagonalMove,
   encodePosition: encodePosition, decodePosition: decodePosition,
   getDisplayTime: getDisplayTime, isMobile: isMobile,
-  throttle: throttle
+  throttle: throttle,
+  isElectron: isElectron
 };
 },{"./vectors":46}],45:[function(require,module,exports){
 "use strict";

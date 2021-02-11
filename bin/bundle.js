@@ -47,7 +47,7 @@ var config = {
       startFrequency: 3,
       waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 60, // time between each wave after all waves exhausted
-      busterTime: 8, // 60 * 1000,
+      busterTime: 8 * 60 * 1000,
       nukeTime: 10 * 60 * 1000
     }
   },
@@ -56,12 +56,12 @@ var config = {
     STONE: { numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12 },
     IRON: { numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10 },
     COAL: { numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10 },
-    ICE: { numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8 },
     WATER: { numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14 },
     SAND: { numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8 },
     OIL: { numMin: 2, numMax: 4, sizeMin: 6, sizeMax: 12 },
     SULPHUR: { numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4 },
     GLASS: { numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4 },
+    ICE: { numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 5 },
     URANIUM: { numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 3 }
   },
 
@@ -2474,13 +2474,22 @@ var gameReducer = function gameReducer(game, action) {
     case 'SET_TICKER_MESSAGE':
       {
         var message = action.message,
-            time = action.time;
+            time = action.time,
+            isMini = action.isMini;
 
-        game.ticker = {
-          message: message,
-          time: time,
-          max: time
-        };
+        if (!isMini) {
+          game.ticker = {
+            message: message,
+            time: time,
+            max: time
+          };
+        } else {
+          game.miniTicker = {
+            message: message,
+            time: time,
+            max: time
+          };
+        }
         return game;
       }
     case 'CREATE_ENTITY':
@@ -3827,8 +3836,15 @@ var updateBallistics = function updateBallistics(game) {
         collisions.forEach(function (e) {
           if (alreadyDamaged[e.id]) return;
           alreadyDamaged[e.id] = true;
-          if (ballistic.isPiercing) {
-            ballistic.hp -= e.hp / 10;
+          if (ballistic.isPiercing && e.isCollectable) {
+            ballistic.hp -= e.hp / 20;
+          }
+          if (e.type == 'BASE') {
+            game.miniTicker = {
+              time: 3000,
+              max: 3000,
+              message: 'BASE HIT'
+            };
           }
           dealDamageToEntity(game, e, ballistic.damage);
         });
@@ -4442,10 +4458,18 @@ var updateRain = function updateRain(game) {
 };
 
 var updateTicker = function updateTicker(game) {
-  if (game.ticker == null) return;
-  game.ticker.time -= game.timeSinceLastTick;
-  if (game.ticker.time <= 0) {
-    game.ticker = null;
+  if (game.ticker != null) {
+    game.ticker.time -= game.timeSinceLastTick;
+    if (game.ticker.time <= 0) {
+      game.ticker = null;
+    }
+  }
+
+  if (game.miniTicker != null) {
+    game.miniTicker.time -= game.timeSinceLastTick;
+    if (game.miniTicker.time <= 0) {
+      game.miniTicker = null;
+    }
   }
 };
 
@@ -9391,6 +9415,7 @@ var initBaseState = function initBaseState(gridSize, numPlayers) {
     tutorialFlags: {},
 
     ticker: null,
+    miniTicker: null,
 
     gameOver: false,
     missilesSurvived: 0,
@@ -11623,6 +11648,7 @@ function Game(props) {
       tick: game.time,
       game: game
     }),
+    React.createElement(MiniTicker, { miniTicker: game.miniTicker }),
     React.createElement(BottomBar, { dispatch: dispatch,
       game: game,
       mousePos: game.mouse.curPos
@@ -11769,6 +11795,36 @@ function Ticker(props) {
       }
     },
     ticker.message
+  );
+}
+
+function MiniTicker(props) {
+  var miniTicker = props.miniTicker;
+
+  if (miniTicker == null) return null;
+
+  var shouldUseIndex = miniTicker.time < 60 || miniTicker.max - miniTicker.time < 60;
+  var index = miniTicker.time / 60;
+  if (miniTicker.max - miniTicker.time < 60) {
+    index = (miniTicker.max - miniTicker.time) / 60;
+  }
+
+  return React.createElement(
+    'h2',
+    {
+      style: {
+        padding: 0,
+        margin: 0,
+        position: 'absolute',
+        top: window.innerHeight - 200,
+        left: window.innerWidth - 420,
+        opacity: shouldUseIndex ? index : 1,
+        pointerEvents: 'none',
+        color: 'red',
+        textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff'
+      }
+    },
+    miniTicker.message
   );
 }
 
@@ -13092,7 +13148,8 @@ var _require2 = require('../systems/spriteSheetSystem'),
     initSpriteSheetSystem = _require2.initSpriteSheetSystem;
 
 var _require3 = require('../utils/helpers'),
-    isMobile = _require3.isMobile;
+    isMobile = _require3.isMobile,
+    isElectron = _require3.isElectron;
 
 var globalConfig = require('../config');
 var useState = React.useState,
@@ -13131,9 +13188,29 @@ function Lobby(props) {
       difficulty = _useState10[0],
       setDifficulty = _useState10[1];
 
+  // handle screen size change specifically for background gif
+
+
+  var _useState11 = useState(0),
+      _useState12 = _slicedToArray(_useState11, 2),
+      rerender = _useState12[0],
+      setRerender = _useState12[1];
+
+  var onresize = function onresize() {
+    return setRerender(rerender + 1);
+  };
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  useEffect(function () {
+    window.addEventListener('resize', onresize);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    return function () {
+      window.removeEventListener('resize', onresize);
+    };
+  }, [rerender]);
+
   // on mount
-
-
   useEffect(function () {
     initSpriteSheetSystem(store);
     // axios
@@ -13198,19 +13275,22 @@ function Lobby(props) {
   return React.createElement(
     'span',
     null,
-    React.createElement(AudioWidget, {
-      audioFiles: globalConfig.config.audioFiles,
-      isShuffled: false,
-      isMuted: state.isMuted,
-      setIsMuted: function setIsMuted() {
-        store.dispatch({ type: 'SET_IS_MUTED', isMuted: !state.isMuted });
+    !isElectron() ? null : React.createElement(
+      'div',
+      {
+        style: {
+          margin: 5,
+          borderRadius: 8,
+          left: 5
+        }
       },
-      style: {
-        margin: 5,
-        borderRadius: 8,
-        left: 5
-      }
-    }),
+      React.createElement(Button, {
+        label: 'Quit',
+        onClick: function onClick() {
+          window.electron.quit();
+        }
+      })
+    ),
     React.createElement(
       'div',
       {
@@ -13223,6 +13303,26 @@ function Lobby(props) {
         }
       },
       React.createElement(
+        'div',
+        {
+          style: {
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            display: 'inline',
+            zIndex: -1,
+            opacity: 0.3
+          }
+        },
+        React.createElement('img', {
+          width: width,
+          height: height,
+          src: 'img/perimeterBackground1.gif'
+        })
+      ),
+      React.createElement(
         'h1',
         null,
         'perimeter'
@@ -13230,7 +13330,7 @@ function Lobby(props) {
       React.createElement(
         'h3',
         null,
-        '~Alpha~'
+        '~Beta~'
       ),
       React.createElement(
         'h2',
@@ -13309,10 +13409,10 @@ function Lobby(props) {
 }
 
 function MadeBy(props) {
-  var _useState11 = useState(0),
-      _useState12 = _slicedToArray(_useState11, 2),
-      rerender = _useState12[0],
-      setRerender = _useState12[1];
+  var _useState13 = useState(0),
+      _useState14 = _slicedToArray(_useState13, 2),
+      rerender = _useState14[0],
+      setRerender = _useState14[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
@@ -13359,16 +13459,6 @@ function MadeBy(props) {
           'Ben Eskildsen'
         )
       )
-    ),
-    React.createElement(
-      'div',
-      null,
-      'Music by\xA0',
-      React.createElement(
-        'b',
-        null,
-        'Clay Wirsing'
-      )
     )
   );
 }
@@ -13376,20 +13466,20 @@ function MadeBy(props) {
 function LevelEditor(props) {
   var dispatch = props.dispatch;
 
-  var _useState13 = useState('mediumDemoLevel'),
-      _useState14 = _slicedToArray(_useState13, 2),
-      level = _useState14[0],
-      setLevel = _useState14[1];
-
-  var _useState15 = useState(true),
+  var _useState15 = useState('mediumDemoLevel'),
       _useState16 = _slicedToArray(_useState15, 2),
-      useLevel = _useState16[0],
-      setUseLevel = _useState16[1];
+      level = _useState16[0],
+      setLevel = _useState16[1];
 
-  var _useState17 = useState(0),
+  var _useState17 = useState(true),
       _useState18 = _slicedToArray(_useState17, 2),
-      rerender = _useState18[0],
-      setRerender = _useState18[1];
+      useLevel = _useState18[0],
+      setUseLevel = _useState18[1];
+
+  var _useState19 = useState(0),
+      _useState20 = _slicedToArray(_useState19, 2),
+      rerender = _useState20[0],
+      setRerender = _useState20[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
@@ -14033,7 +14123,8 @@ var Modal = require('./Components/Modal.react');
 var globalConfig = require('../config');
 
 var _require = require('../utils/helpers'),
-    getDisplayTime = _require.getDisplayTime;
+    getDisplayTime = _require.getDisplayTime,
+    isElectron = _require.isElectron;
 
 var InfoCard = require('../ui/components/InfoCard.react');
 var PlacementPalette = require('../ui/PlacementPalette.react');
@@ -14126,14 +14217,11 @@ function TopBar(props) {
           color: 'black'
         }
       },
-      React.createElement(AudioWidget, {
-        audioFiles: globalConfig.config.audioFiles,
-        isShuffled: false,
-        isMuted: isMuted,
-        setIsMuted: function setIsMuted() {
-          store.dispatch({ type: 'SET_IS_MUTED', isMuted: !isMuted });
-        },
-        style: {}
+      !isElectron() ? null : React.createElement(Button, {
+        label: 'Quit',
+        onClick: function onClick() {
+          window.electron.quit();
+        }
       }),
       React.createElement(
         'div',
@@ -14573,12 +14661,17 @@ function isMobile() {
   });
 }
 
+function isElectron() {
+  return window.electron != null;
+}
+
 module.exports = {
   clamp: clamp, closeTo: closeTo, sameArray: sameArray, thetaToDir: thetaToDir,
   isDiagonalTheta: isDiagonalTheta, isDiagonalMove: isDiagonalMove,
   encodePosition: encodePosition, decodePosition: decodePosition,
   getDisplayTime: getDisplayTime, isMobile: isMobile,
-  throttle: throttle
+  throttle: throttle,
+  isElectron: isElectron
 };
 },{"./vectors":108}],106:[function(require,module,exports){
 'use strict';

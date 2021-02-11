@@ -245,8 +245,15 @@ const updateBallistics = (game): void => {
         collisions.forEach(e => {
           if (alreadyDamaged[e.id]) return;
           alreadyDamaged[e.id] = true;
-          if (ballistic.isPiercing) {
+          if (ballistic.isPiercing && e.isCollectable) {
             ballistic.hp -= e.hp / 20;
+          }
+          if (e.type == 'BASE') {
+            game.miniTicker = {
+              time: 3000,
+              max: 3000,
+              message: 'BASE HIT',
+            };
           }
           dealDamageToEntity(game, e, ballistic.damage);
         });
@@ -793,10 +800,18 @@ const updateRain = (game): void => {
 }
 
 const updateTicker = (game): void => {
-  if (game.ticker == null) return;
-  game.ticker.time -= game.timeSinceLastTick;
-  if (game.ticker.time <= 0) {
-    game.ticker = null;
+  if (game.ticker != null) {
+    game.ticker.time -= game.timeSinceLastTick;
+    if (game.ticker.time <= 0) {
+      game.ticker = null;
+    }
+  }
+
+  if (game.miniTicker != null) {
+    game.miniTicker.time -= game.timeSinceLastTick;
+    if (game.miniTicker.time <= 0) {
+      game.miniTicker = null;
+    }
   }
 };
 

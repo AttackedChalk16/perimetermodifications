@@ -105,10 +105,15 @@ function isMobile() {
   });
 }
 
+function isElectron() {
+  return window.electron != null;
+}
+
 module.exports = {
 	clamp, closeTo, sameArray, thetaToDir,
   isDiagonalTheta, isDiagonalMove,
   encodePosition, decodePosition,
   getDisplayTime, isMobile,
   throttle,
+  isElectron,
 };

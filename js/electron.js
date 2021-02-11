@@ -45,4 +45,6 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
   app.quit()
-})
+});
+
+window.electron = app;

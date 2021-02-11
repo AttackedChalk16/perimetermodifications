@@ -143,6 +143,7 @@ const initBaseState = (
     },
 
     ticker: null,
+    miniTicker: null,
 
     gameOver: false,
     missilesSurvived: 0,

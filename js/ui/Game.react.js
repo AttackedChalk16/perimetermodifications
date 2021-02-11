@@ -124,6 +124,7 @@ function Game(props: Props): React.Node {
         tick={game.time}
         game={game}
       />
+      <MiniTicker miniTicker={game.miniTicker} />
       <BottomBar dispatch={dispatch}
         game={game}
         mousePos={game.mouse.curPos}
@@ -277,6 +278,35 @@ function Ticker(props) {
       }}
     >
       {ticker.message}
+    </h2>
+  );
+}
+
+function MiniTicker(props) {
+  const {miniTicker} = props;
+  if (miniTicker == null) return null;
+
+  const shouldUseIndex = miniTicker.time < 60 || miniTicker.max - miniTicker.time < 60;
+  let index = miniTicker.time / 60;
+  if (miniTicker.max - miniTicker.time < 60) {
+    index = (miniTicker.max - miniTicker.time) / 60;
+  }
+
+  return (
+    <h2
+      style={{
+        padding: 0,
+        margin: 0,
+        position: 'absolute',
+        top: window.innerHeight - 200,
+        left: window.innerWidth - 420,
+        opacity: shouldUseIndex ? index : 1,
+        pointerEvents: 'none',
+        color: 'red',
+        textShadow: '-1px -1px 0 #FFF, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff',
+      }}
+    >
+      {miniTicker.message}
     </h2>
   );
 }

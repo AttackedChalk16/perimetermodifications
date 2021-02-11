@@ -11,7 +11,7 @@ const Modal = require('../ui/components/Modal.react');
 const levels = require('../levels/levels');
 const {loadLevel} = require('../thunks/levelThunks');
 const {initSpriteSheetSystem} = require('../systems/spriteSheetSystem');
-const {isMobile} = require('../utils/helpers');
+const {isMobile, isElectron} = require('../utils/helpers');
 const globalConfig = require('../config');
 const {useState, useEffect, useMemo} = React;
 
@@ -31,6 +31,20 @@ function Lobby(props: Props): React.Node {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [difficulty, setDifficulty] = useState('NORMAL');
+
+  // handle screen size change specifically for background gif
+  const [rerender, setRerender] = useState(0);
+  const onresize = () => setRerender(rerender + 1);
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  useEffect(() => {
+    window.addEventListener('resize', onresize);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    return (() => {
+      window.removeEventListener('resize', onresize);
+    });
+  }, [rerender]);
 
   // on mount
   useEffect(() => {
@@ -100,19 +114,22 @@ function Lobby(props: Props): React.Node {
 
   return (
     <span>
-      <AudioWidget
-        audioFiles={globalConfig.config.audioFiles}
-        isShuffled={false}
-        isMuted={state.isMuted}
-        setIsMuted={() => {
-          store.dispatch({type: 'SET_IS_MUTED', isMuted: !state.isMuted});
-        }}
-        style={{
-          margin: 5,
-          borderRadius: 8,
-          left: 5,
-        }}
-      />
+      {!isElectron() ? null : (
+        <div
+          style={{
+            margin: 5,
+            borderRadius: 8,
+            left: 5,
+          }}
+        >
+          <Button
+            label="Quit"
+            onClick={() => {
+              window.electron.quit();
+            }}
+          />
+        </div>)
+      }
       <div
         style={{
           margin: 'auto',
@@ -122,8 +139,26 @@ function Lobby(props: Props): React.Node {
           fontFamily: '"Courier New", sans-serif',
         }}
       >
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            display: 'inline',
+            zIndex: -1,
+            opacity: 0.3,
+          }}
+        >
+          <img
+            width={width}
+            height={height}
+            src={'img/perimeterBackground1.gif'}
+          />
+        </div>
         <h1>perimeter</h1>
-        <h3>~Alpha~</h3>
+        <h3>~Beta~</h3>
         <h2 style={{fontSize: '4em', marginBottom: 0}}>Play:</h2>
         <Button
           style={{
@@ -224,12 +259,6 @@ function MadeBy(props) {
             }}
             href="https://www.benhub.io" target="_blank">Ben Eskildsen
           </a>
-        </b>
-      </div>
-      <div>
-        Music by&nbsp;
-        <b>
-          Clay Wirsing
         </b>
       </div>
     </div>

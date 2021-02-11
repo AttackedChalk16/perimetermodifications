@@ -68,12 +68,12 @@ const config = {
     STONE: {numMin: 1, numMax: 2, sizeMin: 4, sizeMax: 12},
     IRON: {numMin: 7, numMax: 10, sizeMin: 5, sizeMax: 10},
     COAL: {numMin: 6, numMax: 10, sizeMin: 6, sizeMax: 10},
-    ICE: {numMin: 1, numMax: 2, sizeMin: 2, sizeMax: 8},
     WATER: {numMin: 2, numMax: 5, sizeMin: 7, sizeMax: 14},
     SAND: {numMin: 1, numMax: 3, sizeMin: 5, sizeMax: 8},
     OIL: {numMin: 2, numMax: 4, sizeMin: 6, sizeMax: 12},
     SULPHUR: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
     GLASS: {numMin: 0, numMax: 1, sizeMin: 3, sizeMax: 4},
+    ICE: {numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 5},
     URANIUM: {numMin: 1, numMax: 2, sizeMin: 3, sizeMax: 3},
   },
 
