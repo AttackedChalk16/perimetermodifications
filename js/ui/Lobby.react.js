@@ -12,7 +12,7 @@ const QuitButton = require('../ui/components/QuitButton.react');
 const levels = require('../levels/levels');
 const {loadLevel} = require('../thunks/levelThunks');
 const {initSpriteSheetSystem} = require('../systems/spriteSheetSystem');
-const {isMobile} = require('../utils/helpers');
+const {isMobile, isElectron} = require('../utils/helpers');
 const globalConfig = require('../config');
 const {useState, useEffect, useMemo} = React;
 
@@ -32,6 +32,7 @@ function Lobby(props: Props): React.Node {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [difficulty, setDifficulty] = useState('NORMAL');
+  const [isRevisit, setIsRevisit] = useState(!!localStorage.getItem('isRevisit'));
 
   // handle screen size change specifically for background gif
   const [rerender, setRerender] = useState(0);
@@ -50,13 +51,15 @@ function Lobby(props: Props): React.Node {
   // on mount
   useEffect(() => {
     initSpriteSheetSystem(store);
-    // axios
-    //   .post('/visit', {
-    //     hostname: window.location.hostname, path: '/index', isUnique: !isRevisit, map: 'lobby',
-    //   })
-    //   .then(() => {
-    //     localStorage.setItem('isRevisit', true);
-    //   });
+    if (!isElectron()) {
+      axios
+        .post('/visit', {
+          hostname: window.location.hostname, path: '/index', isUnique: !isRevisit, map: 'lobby',
+        })
+        .then(() => {
+          localStorage.setItem('isRevisit', true);
+        });
+    }
   }, []);
 
   // on start click
@@ -86,14 +89,16 @@ function Lobby(props: Props): React.Node {
             disabled: !isLoaded,
             onClick: () => {
               if (isLoaded) {
-                // const isUnique = !!!localStorage.getItem('revisit_' + level);
-                // axios
-                //   .post('/visit', {
-                //     hostname: window.location.hostname, path: '/game', map: level, isUnique,
-                //   })
-                //   .then(() => {
-                //     localStorage.setItem('revisit_' + level, true);
-                //   });
+                if (!isElectron()) {
+                  const isUnique = !!!localStorage.getItem('revisit_' + level);
+                  axios
+                    .post('/visit', {
+                      hostname: window.location.hostname, path: '/game', map: difficulty, isUnique,
+                    })
+                    .then(() => {
+                      localStorage.setItem('revisit_' + level, true);
+                    });
+                }
                 dispatch({type: 'DISMISS_MODAL'});
                 dispatch({type: 'SET_SCREEN', screen: 'GAME'});
                 dispatch({type: 'START_TICK'});

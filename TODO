@@ -10,11 +10,11 @@
 
 - - - - - - TODO - - - - - -
   - make sure to target windows too
+  - get gameplay tracking set back up again
+    - leaderboard with most missiles survived?
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
-  - get gameplay tracking set back up again
-    - leaderboard with most missiles survived?
   - HUDs
     - show on position info card whether location is placeable/collectable
     - flicker resources when you spend them

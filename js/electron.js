@@ -4,7 +4,7 @@ const path = require('path');
 
 // HACK for windows to not install stuff multiple times
 // see: https://www.electronforge.io/config/makers/squirrel.windows
-if (require('electron-squirrel-startup')) return app.quit();
+if (require('electron-squirrel-startup')) app.quit();
 
 function createWindow () {
   // Create the browser window.

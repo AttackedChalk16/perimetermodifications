@@ -13149,7 +13149,8 @@ var _require2 = require('../systems/spriteSheetSystem'),
     initSpriteSheetSystem = _require2.initSpriteSheetSystem;
 
 var _require3 = require('../utils/helpers'),
-    isMobile = _require3.isMobile;
+    isMobile = _require3.isMobile,
+    isElectron = _require3.isElectron;
 
 var globalConfig = require('../config');
 var useState = React.useState,
@@ -13188,13 +13189,18 @@ function Lobby(props) {
       difficulty = _useState10[0],
       setDifficulty = _useState10[1];
 
+  var _useState11 = useState(!!localStorage.getItem('isRevisit')),
+      _useState12 = _slicedToArray(_useState11, 2),
+      isRevisit = _useState12[0],
+      setIsRevisit = _useState12[1];
+
   // handle screen size change specifically for background gif
 
 
-  var _useState11 = useState(0),
-      _useState12 = _slicedToArray(_useState11, 2),
-      rerender = _useState12[0],
-      setRerender = _useState12[1];
+  var _useState13 = useState(0),
+      _useState14 = _slicedToArray(_useState13, 2),
+      rerender = _useState14[0],
+      setRerender = _useState14[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
@@ -13213,13 +13219,14 @@ function Lobby(props) {
   // on mount
   useEffect(function () {
     initSpriteSheetSystem(store);
-    // axios
-    //   .post('/visit', {
-    //     hostname: window.location.hostname, path: '/index', isUnique: !isRevisit, map: 'lobby',
-    //   })
-    //   .then(() => {
-    //     localStorage.setItem('isRevisit', true);
-    //   });
+    if (!isElectron()) {
+      console.log("here");
+      axios.post('/visit', {
+        hostname: window.location.hostname, path: '/index', isUnique: !isRevisit, map: 'lobby'
+      }).then(function () {
+        localStorage.setItem('isRevisit', true);
+      });
+    }
   }, []);
 
   // on start click
@@ -13244,14 +13251,14 @@ function Lobby(props) {
             disabled: !isLoaded,
             onClick: function onClick() {
               if (isLoaded) {
-                // const isUnique = !!!localStorage.getItem('revisit_' + level);
-                // axios
-                //   .post('/visit', {
-                //     hostname: window.location.hostname, path: '/game', map: level, isUnique,
-                //   })
-                //   .then(() => {
-                //     localStorage.setItem('revisit_' + level, true);
-                //   });
+                if (!isElectron()) {
+                  var isUnique = !!!localStorage.getItem('revisit_' + level);
+                  axios.post('/visit', {
+                    hostname: window.location.hostname, path: '/game', map: difficulty, isUnique: isUnique
+                  }).then(function () {
+                    localStorage.setItem('revisit_' + level, true);
+                  });
+                }
                 dispatch({ type: 'DISMISS_MODAL' });
                 dispatch({ type: 'SET_SCREEN', screen: 'GAME' });
                 dispatch({ type: 'START_TICK' });
@@ -13394,10 +13401,10 @@ function Lobby(props) {
 }
 
 function MadeBy(props) {
-  var _useState13 = useState(0),
-      _useState14 = _slicedToArray(_useState13, 2),
-      rerender = _useState14[0],
-      setRerender = _useState14[1];
+  var _useState15 = useState(0),
+      _useState16 = _slicedToArray(_useState15, 2),
+      rerender = _useState16[0],
+      setRerender = _useState16[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
@@ -13451,20 +13458,20 @@ function MadeBy(props) {
 function LevelEditor(props) {
   var dispatch = props.dispatch;
 
-  var _useState15 = useState('mediumDemoLevel'),
-      _useState16 = _slicedToArray(_useState15, 2),
-      level = _useState16[0],
-      setLevel = _useState16[1];
-
-  var _useState17 = useState(true),
+  var _useState17 = useState('mediumDemoLevel'),
       _useState18 = _slicedToArray(_useState17, 2),
-      useLevel = _useState18[0],
-      setUseLevel = _useState18[1];
+      level = _useState18[0],
+      setLevel = _useState18[1];
 
-  var _useState19 = useState(0),
+  var _useState19 = useState(true),
       _useState20 = _slicedToArray(_useState19, 2),
-      rerender = _useState20[0],
-      setRerender = _useState20[1];
+      useLevel = _useState20[0],
+      setUseLevel = _useState20[1];
+
+  var _useState21 = useState(0),
+      _useState22 = _slicedToArray(_useState21, 2),
+      rerender = _useState22[0],
+      setRerender = _useState22[1];
 
   var onresize = function onresize() {
     return setRerender(rerender + 1);
