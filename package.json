@@ -54,7 +54,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "icon": "/Users/ben/Code/MAD/favicon.ico",
+        "icon": "/Users/ben/Code/perimeter/favicon.ico",
         "asar": true
       },
       "makers": [
