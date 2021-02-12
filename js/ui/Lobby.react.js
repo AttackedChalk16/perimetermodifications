@@ -90,13 +90,13 @@ function Lobby(props: Props): React.Node {
             onClick: () => {
               if (isLoaded) {
                 if (!isElectron()) {
-                  const isUnique = !!!localStorage.getItem('revisit_' + level);
+                  const isUnique = !!!localStorage.getItem('revisit_' + difficulty);
                   axios
                     .post('/visit', {
                       hostname: window.location.hostname, path: '/game', map: difficulty, isUnique,
                     })
                     .then(() => {
-                      localStorage.setItem('revisit_' + level, true);
+                      localStorage.setItem('revisit_' + difficulty, true);
                     });
                 }
                 dispatch({type: 'DISMISS_MODAL'});
