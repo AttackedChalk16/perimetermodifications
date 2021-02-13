@@ -6,15 +6,24 @@
 
 
 - - - - - - ISSUES - - - - - -
+  - turbines still don't spin super readily
+  - water cycle is really water negative
+    - happening when steam goes through diagonals?
 
 
 - - - - - - TODO - - - - - -
-  - make sure to target windows too
-  - get gameplay tracking set back up again
-    - leaderboard with most missiles survived?
+  - electron
+    - windows
+      - build with npm run make -- -p win32
+      - needs .ico favicon
+      - needs proper path to the icon in package.json
+    - mac
+      - build with npm run make
+      - needs icns favicon
 
 
 - - - - - - NICE-TO-HAVE - - - - - - - -
+  - leaderboard with most missiles survived?
   - HUDs
     - show on position info card whether location is placeable/collectable
     - flicker resources when you spend them
