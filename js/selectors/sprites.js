@@ -5,10 +5,11 @@ const {
 } = require('../utils/vectors');
 const {getDuration, getFrame} = require('../simulation/actionQueue');
 const {
-  lookupInGrid, getPheromonesInCell,
+  lookupInGrid,
 } = require('../utils/gridHelpers');
 const {getNeighborPositions} = require('../selectors/neighbors');
 const {getPositionsInFront} = require('../selectors/misc');
+const {getPheromoneAtPosition} = require('../selectors/pheromones');
 const {thetaToDir, closeTo} = require('../utils/helpers');
 const globalConfig = require('../config');
 
@@ -215,7 +216,7 @@ const getPheromoneSprite = (
   const numFrames = 8;
   let img = game.sprites.PHEROMONE;
   const config = globalConfig.pheromones[pheromoneType];
-  const quantity = getPheromonesInCell(game.grid, position, playerID)[pheromoneType];
+  const quantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
   const progress = numFrames - Math.round((quantity / config.quantity) * numFrames);
   const obj = {
     img,
@@ -240,7 +241,7 @@ const getPheromoneSprite = (
   let neighborAmount = 0;
   let neighborPosition = null;
   for (const pos of neighborPositions) {
-    const candidateAmount = getPheromonesInCell(game.grid, pos, playerID)[pheromoneType];
+    const candidateAmount = getPheromoneAtPosition(game, pos, pheromoneType, playerID);
     if (candidateAmount > neighborAmount) {
       neighborAmount = candidateAmount;
       neighborPosition = pos;

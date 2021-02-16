@@ -65,11 +65,6 @@
 
 
 - - - - - - - REFACTORS - - - - - - -
-  - pheromone refactor
-    - getPheromoneAtPosition everywhere
-    - setPheromone checking for undefined value
-    - deleting the pheromone when you get to 0
-    - remove playerID concept from pheromones?
 
 
 - - - - - - - WON'T FIX - - - - - -

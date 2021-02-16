@@ -47,8 +47,8 @@ var config = {
       startFrequency: 3,
       waves: [{ start: 3 * 60, duration: 15, frequency: 1 }, { start: 5 * 60, duration: 30, frequency: 0.75 }, { start: 9 * 60, duration: 15, frequency: 0.5 }, { start: 11 * 60, duration: 30, frequency: 0.25 }, { start: 13 * 60, duration: 30, frequency: 0.1 }, { start: 15 * 60, duration: 30, frequency: 0.2 }],
       finalWaveDelay: 60, // time between each wave after all waves exhausted
-      busterTime: 8 * 60 * 1000,
-      nukeTime: 10 * 60 * 1000
+      busterTime: 8 * 60,
+      nukeTime: 10 * 60
     }
   },
 
@@ -3201,8 +3201,7 @@ var _require = require('../utils/vectors'),
 
 var _require2 = require('../utils/gridHelpers'),
     lookupInGrid = _require2.lookupInGrid,
-    getEntityPositions = _require2.getEntityPositions,
-    getPheromonesInCell = _require2.getPheromonesInCell;
+    getEntityPositions = _require2.getEntityPositions;
 
 var _require3 = require('./renderHealthBar'),
     renderHealthBar = _require3.renderHealthBar;
@@ -3848,6 +3847,8 @@ module.exports = {
 },{"../selectors/collisions":35,"../utils/gridHelpers":43,"../utils/vectors":46}],38:[function(require,module,exports){
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _require = require('../utils/vectors'),
     add = _require.add,
     multiply = _require.multiply,
@@ -3876,7 +3877,25 @@ var getPheromoneAtPosition = function getPheromoneAtPosition(game, position, typ
   var x = position.x,
       y = position.y;
 
+  if (!grid[x][y][playerID]) return 0;
   return grid[x][y][playerID][type] || 0;
+};
+
+var getAllPheromonesAtPosition = function getAllPheromonesAtPosition(game, position, playerID) {
+  var grid = game.grid;
+  if (!insideGrid(grid, position)) return [];
+
+  var pheromones = _extends({}, grid[position.x][position.y][playerID]);
+  if (pheromones == null) {
+    pheromones = {};
+  }
+  for (var pheromoneType in globalConfig.pheromones) {
+    if (!pheromones[pheromoneType]) {
+      pheromones[pheromoneType] = 0;
+    }
+  }
+
+  return pheromones;
 };
 
 var getTemperature = function getTemperature(game, position) {
@@ -4025,7 +4044,8 @@ module.exports = {
   getSourcesOfPheromoneType: getSourcesOfPheromoneType,
   getEntityPheromoneSources: getEntityPheromoneSources,
   getQuantityForStalePos: getQuantityForStalePos,
-  isPositionBlockingPheromone: isPositionBlockingPheromone
+  isPositionBlockingPheromone: isPositionBlockingPheromone,
+  getAllPheromonesAtPosition: getAllPheromonesAtPosition
 };
 },{"../config":1,"../selectors/neighbors":37,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],39:[function(require,module,exports){
 'use strict';
@@ -4044,8 +4064,7 @@ var _require2 = require('../simulation/actionQueue'),
     getFrame = _require2.getFrame;
 
 var _require3 = require('../utils/gridHelpers'),
-    lookupInGrid = _require3.lookupInGrid,
-    getPheromonesInCell = _require3.getPheromonesInCell;
+    lookupInGrid = _require3.lookupInGrid;
 
 var _require4 = require('../selectors/neighbors'),
     getNeighborPositions = _require4.getNeighborPositions;
@@ -4053,9 +4072,12 @@ var _require4 = require('../selectors/neighbors'),
 var _require5 = require('../selectors/misc'),
     getPositionsInFront = _require5.getPositionsInFront;
 
-var _require6 = require('../utils/helpers'),
-    thetaToDir = _require6.thetaToDir,
-    closeTo = _require6.closeTo;
+var _require6 = require('../selectors/pheromones'),
+    getPheromoneAtPosition = _require6.getPheromoneAtPosition;
+
+var _require7 = require('../utils/helpers'),
+    thetaToDir = _require7.thetaToDir,
+    closeTo = _require7.closeTo;
 
 var globalConfig = require('../config');
 
@@ -4264,7 +4286,7 @@ var getPheromoneSprite = function getPheromoneSprite(game, position, playerID, p
   var numFrames = 8;
   var img = game.sprites.PHEROMONE;
   var config = globalConfig.pheromones[pheromoneType];
-  var quantity = getPheromonesInCell(game.grid, position, playerID)[pheromoneType];
+  var quantity = getPheromoneAtPosition(game, position, pheromoneType, playerID);
   var progress = numFrames - Math.round(quantity / config.quantity * numFrames);
   var obj = {
     img: img,
@@ -4295,7 +4317,7 @@ var getPheromoneSprite = function getPheromoneSprite(game, position, playerID, p
     for (var _iterator = neighborPositions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var pos = _step.value;
 
-      var candidateAmount = getPheromonesInCell(game.grid, pos, playerID)[pheromoneType];
+      var candidateAmount = getPheromoneAtPosition(game, pos, pheromoneType, playerID);
       if (candidateAmount > neighborAmount) {
         neighborAmount = candidateAmount;
         neighborPosition = pos;
@@ -4549,7 +4571,7 @@ module.exports = {
   getSegmentHead: getSegmentHead,
   getSegmentTail: getSegmentTail
 };
-},{"../config":1,"../selectors/misc":36,"../selectors/neighbors":37,"../simulation/actionQueue":40,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],40:[function(require,module,exports){
+},{"../config":1,"../selectors/misc":36,"../selectors/neighbors":37,"../selectors/pheromones":38,"../simulation/actionQueue":40,"../utils/gridHelpers":43,"../utils/helpers":44,"../utils/vectors":46}],40:[function(require,module,exports){
 'use strict';
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -5795,6 +5817,11 @@ var setPheromone = function setPheromone(game, position, type, quantity, playerI
   var x = position.x,
       y = position.y;
 
+
+  if (!grid[x][y][playerID]) {
+    grid[x][y][playerID] = {};
+  }
+
   if (type != 'FOOD') {
     grid[x][y][playerID][type] = Math.min(quantity, config.quantity);
   } else {
@@ -5806,6 +5833,13 @@ var setPheromone = function setPheromone(game, position, type, quantity, playerI
       position: position,
       pheromoneType: type, quantity: quantity, playerID: playerID
     });
+  }
+
+  if (quantity == 0) {
+    delete grid[x][y][playerID][type];
+  }
+  if (Object.keys(grid[x][y][playerID]).length == 0) {
+    delete grid[x][y][playerID];
   }
 };
 
@@ -5927,12 +5961,6 @@ var initGrid = function initGrid(gridWidth, gridHeight, numPlayers) {
       var cell = {
         entities: []
       };
-      for (var i = 0; i < numPlayers; i++) {
-        cell[i] = {};
-        for (var pheromoneType in globalConfig.pheromones) {
-          cell[i][pheromoneType] = 0;
-        }
-      }
       col.push(cell);
     }
     grid.push(col);
@@ -5965,11 +5993,6 @@ var entityInsideGrid = function entityInsideGrid(game, entity) {
 var lookupInGrid = function lookupInGrid(grid, position) {
   if (!insideGrid(grid, position)) return [];
   return grid[position.x][position.y].entities;
-};
-
-var getPheromonesInCell = function getPheromonesInCell(grid, position, playerID) {
-  if (!insideGrid(grid, position)) return [];
-  return grid[position.x][position.y][playerID];
 };
 
 var insertInCell = function insertInCell(grid, position, entityID) {
@@ -6032,7 +6055,6 @@ module.exports = {
   lookupInGrid: lookupInGrid,
   insertInCell: insertInCell,
   deleteFromCell: deleteFromCell,
-  getPheromonesInCell: getPheromonesInCell,
   canvasToGrid: canvasToGrid,
   getEntityPositions: getEntityPositions,
   entityInsideGrid: entityInsideGrid

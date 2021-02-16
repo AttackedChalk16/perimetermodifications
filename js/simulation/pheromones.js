@@ -179,6 +179,11 @@ const setPheromone = (
   if (!insideGrid(grid, position)) return;
   const config = globalConfig.pheromones[type];
   const {x, y} = position;
+
+  if (!grid[x][y][playerID]) {
+    grid[x][y][playerID] = {};
+  }
+
   if (type != 'FOOD') {
     grid[x][y][playerID][type] = Math.min(
       quantity,
@@ -193,6 +198,13 @@ const setPheromone = (
       position,
       pheromoneType: type, quantity, playerID,
     });
+  }
+
+  if (quantity == 0) {
+    delete grid[x][y][playerID][type];
+  }
+  if (Object.keys(grid[x][y][playerID]).length == 0) {
+    delete grid[x][y][playerID];
   }
 }
 

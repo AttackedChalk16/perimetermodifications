@@ -59,8 +59,8 @@ const config = {
         {start: 15 * 60, duration: 30, frequency: 0.2},
       ],
       finalWaveDelay: 60, // time between each wave after all waves exhausted
-      busterTime: 8 * 60 * 1000,
-      nukeTime: 10 * 60 * 1000,
+      busterTime: 8 * 60,
+      nukeTime: 10 * 60,
     },
   },
 

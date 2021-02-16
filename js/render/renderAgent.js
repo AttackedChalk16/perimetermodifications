@@ -4,7 +4,7 @@ const {
   subtract, add, makeVector, vectorTheta, round, rotate, floor,
 } = require('../utils/vectors');
 const {
-  lookupInGrid, getEntityPositions, getPheromonesInCell,
+  lookupInGrid, getEntityPositions,
 } = require('../utils/gridHelpers');
 const {renderHealthBar} = require('./renderHealthBar');
 const {thetaToDir} = require('../utils/helpers');

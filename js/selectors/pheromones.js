@@ -16,7 +16,27 @@ const getPheromoneAtPosition = (
   const {grid} = game;
   if (!insideGrid(grid, position)) return 0;
   const {x, y} = position;
+  if (!grid[x][y][playerID]) return 0;
   return grid[x][y][playerID][type] || 0;
+};
+
+const getAllPheromonesAtPosition = (
+  game: Game, position: Vector, playerID: PlayerID,
+): {[PheromoneType]: number} => {
+  const grid = game.grid;
+  if (!insideGrid(grid, position)) return [];
+
+  let pheromones = {...grid[position.x][position.y][playerID]};
+  if (pheromones == null) {
+    pheromones = {};
+  }
+  for (const pheromoneType in globalConfig.pheromones) {
+    if (!pheromones[pheromoneType]) {
+      pheromones[pheromoneType] = 0;
+    }
+  }
+
+  return pheromones;
 };
 
 const getTemperature = (game: Game, position: Vector): number => {
@@ -138,4 +158,5 @@ module.exports = {
   getEntityPheromoneSources,
   getQuantityForStalePos,
   isPositionBlockingPheromone,
+  getAllPheromonesAtPosition,
 };

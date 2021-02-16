@@ -12,7 +12,7 @@ const {
   addSegmentToEntity,
 } = require('../simulation/entityOperations');
 const {
-  lookupInGrid, getPheromonesInCell, insideGrid,
+  lookupInGrid, insideGrid,
   entityInsideGrid, getEntityPositions,
 } = require('../utils/gridHelpers');
 const {
@@ -22,7 +22,7 @@ const {
   getPositionsInFront, getPositionsBehind, isFacing, canDoMove,
 } = require('../selectors/misc');
 const {
-  getPheromoneAtPosition,
+  getPheromoneAtPosition, getAllPheromonesAtPosition,
 } = require('../selectors/pheromones');
 const {
   getNeighborPositions, getNeighborEntities, areNeighbors,
@@ -141,9 +141,9 @@ const agentDecideMove = (game: Game, agent: Agent): Game => {
   const playerID = game.playerID;
   const baseScore = taskConfig.base;
 
-  const basePher = getPheromonesInCell(game.grid, agent.position, playerID);
+  const basePher = getAllPheromonesAtPosition(game, agent.position, playerID);
   const pheromoneNeighbors = freeNeighbors
-    .map(pos => getPheromonesInCell(game.grid, pos, playerID));
+    .map(pos => getAllPheromonesAtPosition(game, pos, playerID));
   let neighborScores = freeNeighbors.map(n => baseScore);
   for (let i = 0; i < freeNeighbors.length; i++) {
     const pos = freeNeighbors[i];
@@ -209,7 +209,7 @@ const agentDecideTask = (game, agent, nextPos): void => {
   const holdingFood = agent.holding != null && agent.holding.type == 'FOOD';
   const holdingDirt = agent.holding != null && agent.holding.type == 'DIRT';
 
-  const pherAtCell = getPheromonesInCell(game.grid, nextPos, agent.playerID);
+  const pherAtCell = getAllPheromonesAtPosition(game, nextPos, agent.playerID);
 
   return agent.task;
 }

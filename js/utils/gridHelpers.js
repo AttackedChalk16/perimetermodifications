@@ -16,12 +16,6 @@ const initGrid = (gridWidth: number, gridHeight: number, numPlayers: number): Gr
       const cell = {
         entities: [],
       };
-      for (let i = 0; i < numPlayers; i++) {
-        cell[i] = {};
-        for (const pheromoneType in globalConfig.pheromones) {
-          cell[i][pheromoneType] = 0;
-        }
-      }
       col.push(cell);
     }
     grid.push(col);
@@ -54,14 +48,6 @@ const lookupInGrid = (grid: Grid, position: Vector): Array<EntityID> => {
   if (!insideGrid(grid, position)) return [];
   return grid[position.x][position.y].entities;
 }
-
-
-const getPheromonesInCell = (
-  grid: Grid, position: Vector, playerID: PlayerID,
-): {[PheromoneType]: number} => {
-  if (!insideGrid(grid, position)) return [];
-  return grid[position.x][position.y][playerID];
-};
 
 
 const insertInCell = (grid: Grid, position: Vector, entityID: EntityID): boolean => {
@@ -126,7 +112,6 @@ module.exports = {
   lookupInGrid,
   insertInCell,
   deleteFromCell,
-  getPheromonesInCell,
   canvasToGrid,
   getEntityPositions,
   entityInsideGrid,

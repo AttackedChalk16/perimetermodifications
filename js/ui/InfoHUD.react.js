@@ -5,14 +5,17 @@ const {Entities} = require('../entities/registry');
 const {pheromones} = require('../config');
 const {encodePosition} = require('../utils/helpers');
 const InfoCard = require('../ui/components/InfoCard.react');
-const {lookupInGrid, getPheromonesInCell} = require('../utils/gridHelpers');
-const {getPheromoneAtPosition, getTemperature} = require('../selectors/pheromones');
+const {lookupInGrid} = require('../utils/gridHelpers');
+const {
+  getPheromoneAtPosition, getTemperature,
+  getAllPheromonesAtPosition,
+} = require('../selectors/pheromones');
 
 const InfoHUD = (props): React.Node => {
   const {mousePos, game} = props;
 
   const pheromoneInfoCards = [];
-  const pherInCell = getPheromonesInCell(game.grid, mousePos, 0 /* playerID */);
+  const pherInCell = getAllPheromonesAtPosition(game, mousePos, game.gaiaID);
   let sunLight = 0;
   for (const pherType in pherInCell) {
     if (pherType == 'HEAT' || pherType == 'COLD') continue;
