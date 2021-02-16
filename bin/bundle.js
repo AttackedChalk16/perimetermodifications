@@ -13220,7 +13220,6 @@ function Lobby(props) {
   useEffect(function () {
     initSpriteSheetSystem(store);
     if (!isElectron()) {
-      console.log("here");
       axios.post('/visit', {
         hostname: window.location.hostname, path: '/index', isUnique: !isRevisit, map: 'lobby'
       }).then(function () {
@@ -13252,11 +13251,11 @@ function Lobby(props) {
             onClick: function onClick() {
               if (isLoaded) {
                 if (!isElectron()) {
-                  var isUnique = !!!localStorage.getItem('revisit_' + level);
+                  var isUnique = !!!localStorage.getItem('revisit_' + difficulty);
                   axios.post('/visit', {
                     hostname: window.location.hostname, path: '/game', map: difficulty, isUnique: isUnique
                   }).then(function () {
-                    localStorage.setItem('revisit_' + level, true);
+                    localStorage.setItem('revisit_' + difficulty, true);
                   });
                 }
                 dispatch({ type: 'DISMISS_MODAL' });

@@ -30,7 +30,9 @@ function createWindow () {
 const image = nativeImage.createFromPath(
   app.getAppPath() + "/favicon.ico"
 );
-app.dock.setIcon(image);
+if (app.dock != null) {
+  app.dock.setIcon(image);
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

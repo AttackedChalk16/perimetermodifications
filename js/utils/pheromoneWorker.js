@@ -403,6 +403,9 @@ const updateDispersingPheromones = (game) => {
         } else {
           sendToOtherPhase = config.heatRate * pheromoneQuantity;
         }
+        if (phaseChangeTo == "STEAM") {
+          sendToOtherPhase *= 2;
+        }
         changedPhase = true;
       } else if (config.coolPoint && heat <= config.coolPoint && pheromoneQuantity > 0) {
         if (config.coolConcentration == null || pheromoneQuantity >= config.coolConcentration) {
@@ -603,10 +606,11 @@ const updateDispersingPheromones = (game) => {
               if (!nextTurbines[turbineID]) nextTurbines[turbineID] = 0;
               const dirTheta = vectorTheta(subtract(source.position, positionBelow));
               let dir = dirTheta > 0 ? 1 : -1;
+              dir = 1;
 
               // decrease amount of pheromone travelling in this direction
               if (pherToGive > 1) {
-                pherToGive = pherToGive - (pherToGive * 0.2);
+                // pherToGive = pherToGive - (pherToGive * 0.2);
               } else {
                 dir = 0;
               }

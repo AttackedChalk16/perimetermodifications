@@ -7,8 +7,10 @@
 
 - - - - - - ISSUES - - - - - -
   - turbines still don't spin super readily
+    - dealt with by increasing steam quantity and removing dir
   - water cycle is really water negative
     - happening when steam goes through diagonals?
+    - dealt with by doubling steam produced
 
 
 - - - - - - TODO - - - - - -
